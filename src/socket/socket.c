@@ -113,11 +113,11 @@ int socket_new_message (http_request_struct* client) {
             // here will check if the response has receive in first read of socket
             
             // check if header is in buffer memory
-            int body_max_size = json_get_int(client->server_config->conf, "body_max_buffer", 8192);
+            int body_buffer_max_size = json_get_int(client->server_config->conf, "body_max_buffer", 8192);
             char* body = client->header.data.end + 4; // jump for positions in pointer do jump '\r\n\r\n'
             int body_size = (int) strlen(body);
             
-            if (client->header.content_length <= body_max_size) {
+            if (client->header.content_length <= body_buffer_max_size) {
                 // valid size of content_lenght
             }
             
