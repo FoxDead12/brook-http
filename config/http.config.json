@@ -11,8 +11,9 @@
   "worker_processes": 4,
   
   "header_buffer": 1024,
+  
   "body_buffer": 4096,
-  "body_max_buffer": 10240
+  "body_max_buffer": 8192
   
 }
 

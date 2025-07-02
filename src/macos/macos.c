@@ -40,7 +40,9 @@ int init_kqueue_loop (http_main_struct* conf) {
             } else if (event.flags & EV_EOF) { // disconect socket
                 
                 http_request_struct *client = event.udata;
+                
                 add_descripter_to_queue(kq, client->socket, EVFILT_READ, EV_DELETE, 0, NULL);
+                
                 socket_disconect_connection(client);
                 
             } else if (event.filter == EVFILT_READ) { // data receive from socket

@@ -63,8 +63,11 @@ typedef struct {
     int socket;
     http_main_struct *server_config;
     http_request_header_struct header;
+    http_chain_s body;
 } http_request_struct;
 
+http_str_s http_str (char* data);
 int conv_str_to_int (http_str_s s);
+int comp_str_to_str (http_str_s a, http_str_s b);
 
 #endif /* types_h */
