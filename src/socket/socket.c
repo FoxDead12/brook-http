@@ -98,47 +98,42 @@ int socket_new_message (http_request_struct* client) {
         }
         
         if (comp_str_to_str(client->header.method, http_str("GET")) == 0 || comp_str_to_str(client->header.method, http_str("DELETE")) == 0) {
-            // execute the logic of request
+            handle_request(client);
             return 0;
         }
         
         if (comp_str_to_str(client->header.method, http_str("POST")) == 0 || comp_str_to_str(client->header.method, http_str("PATCH")) == 0) {
-
+            
             // TODO: need return error, the method post and patch need contain data, if is null need send empty json '{}'
             if (client->header.content_length == 0) {
                 socket_disconect_connection(client);
                 return 1;
             }
             
-            // here will check if the response has receive in first read of socket
+            // check if content-lenght is valid
+            int max_body_size = json_get_int(client->server_config->conf, "body_max_size", 100000000); // 100MB default max request
+            
+            // TODO: need return error, body pass limit
+            if (client->header.content_length > max_body_size) {
+                socket_disconect_connection(client);
+                return 1;
+            }
             
             // check if header is in buffer memory
-            int body_buffer_max_size = json_get_int(client->server_config->conf, "body_max_buffer", 8192);
             char* body = client->header.data.end + 4; // jump for positions in pointer do jump '\r\n\r\n'
             int body_size = (int) strlen(body);
             
-            if (client->header.content_length <= body_buffer_max_size) {
-                // valid size of content_lenght
-            }
-            
-            
+            // check if we has the entire body stored
             if (body_size == client->header.content_length) {
-                
-                // we already has the ALL body in our buffer
                 client->body.data = body;
                 client->body.length = body_size;
-                client->body.next = NULL;
-                
-            } else {
-                // we dont has all data in buffer
+                handle_request(client);
+                return 0;
             }
             
         }
                 
     } else {
-        
-        
-        
     }
     
     return 0;

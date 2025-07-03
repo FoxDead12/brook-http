@@ -12,8 +12,7 @@
   
   "header_buffer": 1024,
   
-  "body_buffer": 4096,
-  "body_max_buffer": 8192
+  "body_max_size": 5000000000
   
 }
 

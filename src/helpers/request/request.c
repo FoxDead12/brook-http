@@ -65,3 +65,12 @@ http_str_s parse_value_of_header (char* buffer, const char* header_name) {
     
     return s;
 }
+
+
+int handle_request (http_request_struct* cleint) {
+    
+    // TODO: valdiate route gatekeeper
+    // TODO: validate user has acess
+    
+    return 0;
+}
