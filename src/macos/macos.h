@@ -15,7 +15,8 @@
 
 #define MAX_EVENTS 24
 
+/*
 int init_kqueue_loop (http_main_struct* conf);
 int add_descripter_to_queue (int kqueue, int fd, int filtro, int flags, int fflags, void* udata);
-
+*/
 #endif /* macos_h */

@@ -13,12 +13,21 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include "../helpers/types/types.h"
-#include "../macos/macos.h"
+#include "../socket/socket.h"
 
-int init_workers_processes (http_main_struct* conf);
-int init_worker (http_main_struct* conf, int index);
-int worker_died (http_main_struct* conf, pid_t pid);
-int worker_event_loop (http_main_struct* conf);
+#ifdef __APPLE__
+    #include "../os/mac/mac.h"
+#endif
+
+int     init_workers_processes (http_main_struct* conf);
+pid_t   init_worker (http_main_struct* conf, int index);
+int     worker_died (http_main_struct* conf, pid_t pid);
+void    worker_event_loop (http_main_struct* conf);
+int     worker_accept_new_connection (http_worker_struct* worker, http_connection_struct **con);
+
+
 
 #endif /* worker_h */

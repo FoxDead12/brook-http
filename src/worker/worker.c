@@ -7,57 +7,96 @@
 
 #include "worker.h"
 
+// INIT TIME METHODS //
+
 int init_workers_processes (http_main_struct* conf) {
-    
+
     // create children process to handle connections
     for (int i = 0; i < conf->worker_processes; i++) {
-        init_worker(conf, i);
+        
+        pid_t child_pid = init_worker(conf, i);
+        
+        if (child_pid != HTTP_ERROR) {
+            conf->workers[i].pid = child_pid;
+        }
+        
     }
-    
-    return 0;
+
+    return HTTP_OK;
 }
 
-int init_worker (http_main_struct* conf, int index) {
-    
+pid_t init_worker (http_main_struct* conf, int index) {
+
     pid_t pid = fork();
 
     if (pid == -1) {
         perror("fork() can't create process");
-        return -1;
+        return HTTP_ERROR;
     }
-    
+
     if (pid == 0) {
         worker_event_loop(conf);
-        exit(0);
     }
-    
-    if (pid > 0) {
-        setpgid(pid, getpgrp());
-        conf->workers[index].pid = pid; // update parent process to store children pid
-    }
-    
-    return 0;
+
+    return pid;
 }
 
 int worker_died (http_main_struct* conf, pid_t pid) {
-    
+
     printf("worker process died %d\n", pid);
 
     for (int i = 0; i < conf->worker_processes; i++) {
         if (conf->workers[i].pid == pid) {
-            init_worker(conf, i);
+            pid_t child_pid = init_worker(conf, i);
+            
+            if (child_pid != HTTP_ERROR) {
+                conf->workers[i].pid = child_pid;
+            }
         }
     }
-    
-    return 0;
+
+    return HTTP_OK;
 }
 
-int worker_event_loop (http_main_struct* conf) {
+
+// RUN TIME METHODS //
+
+
+void worker_event_loop (http_main_struct* conf) {
 
     // where is necessary to handle kqueue in mac os and epoll in linux
     printf("worker process start %d\n", getpid());
-
-    init_kqueue_loop(conf);
     
-    return 0;
+    http_worker_struct worker;
+    worker.pid      =  getpid();
+    worker.server   =  conf;
+    
+#ifdef __APPLE__
+
+    kqueue_init(&worker);
+    
+#endif
+    
+    exit(HTTP_OK);
+    
+}
+
+int worker_accept_new_connection (http_worker_struct* worker, http_connection_struct **con) {
+    
+    struct sockaddr_in client_addr;
+    
+    int client_socket = socket_connection(worker->server->socket, (struct sockaddr_in*) &client_addr);
+    
+    if (client_socket <= 0) {
+        return HTTP_DONE; // ignore, when has multi process only one will catch the connection of socket
+    }
+    
+    (*con) = malloc(sizeof(http_connection_struct));
+    (*con)->worker = worker;
+    (*con)->socket = client_socket;
+    (*con)->port   = ntohs(client_addr.sin_port);                                // store client port
+    inet_ntop(AF_INET, &(client_addr.sin_addr), (*con)->ip, INET_ADDRSTRLEN);  // store client ipm
+
+    return HTTP_OK;
+    
 }

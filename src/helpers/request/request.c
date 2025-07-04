@@ -6,7 +6,7 @@
 //
 
 #include "request.h"
-
+/*
 int set_headers_of_request (http_request_struct *client) {
     
     client->header.method = parse_method_of_header(client->header.data.start);
@@ -73,4 +73,4 @@ int handle_request (http_request_struct* cleint) {
     // TODO: validate user has acess
     
     return 0;
-}
+}*/

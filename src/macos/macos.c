@@ -6,7 +6,7 @@
 //
 
 #include "macos.h"
-
+/*
 int init_kqueue_loop (http_main_struct* conf) {
     
     int kq = kqueue();
@@ -46,8 +46,13 @@ int init_kqueue_loop (http_main_struct* conf) {
                 socket_disconect_connection(client);
                 
             } else if (event.filter == EVFILT_READ) { // data receive from socket
-                
-                socket_new_message(event.udata);
+
+                http_request_struct *client = event.udata;
+
+                if (socket_new_message(client) == 1) {
+                    //close connection because is finish the connection
+                    add_descripter_to_queue(kq, client->socket, EVFILT_READ, EV_DELETE, 0, NULL);
+                }
                 
             } else if (event.fflags & NOTE_EXIT) { // parent process as dead
                 exit(0);
@@ -71,3 +76,4 @@ int add_descripter_to_queue (int kqueue, int fd, int filtro, int flags, int ffla
     return 0;
     
 }
+*/

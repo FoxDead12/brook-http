@@ -16,15 +16,17 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
+
 #include "../helpers/types/types.h"
 #include "../helpers/json/json.h"
-#include "../helpers/request/request.h"
 
 int socket_init (int port);
-http_request_struct* socket_new_connection (http_main_struct *conf);
-int socket_disconect_connection (http_request_struct *client);
+int socket_connection (int socket, struct sockaddr_in* client_addr);
 
-int socket_new_message (http_request_struct* client);
-int socket_message_http_header (http_request_struct* client);
+/*http_request_struct* socket_new_connection (http_main_struct *conf);
+int                  socket_disconect_connection (http_request_struct *client);
+
+int                  socket_new_message (http_request_struct* client);
+int                  socket_message_http_header (http_request_struct* client);*/
 
 #endif /* socket_h */
