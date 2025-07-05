@@ -68,8 +68,8 @@ void worker_event_loop (http_main_struct* conf) {
     printf("worker process start %d\n", getpid());
     
     http_worker_struct worker;
-    worker.pid      =  getpid();
-    worker.server   =  conf;
+    worker.pid           =  getpid();
+    worker.server        =  conf;
     
 #ifdef __APPLE__
 
@@ -94,9 +94,43 @@ int worker_accept_new_connection (http_worker_struct* worker, http_connection_st
     (*con) = malloc(sizeof(http_connection_struct));
     (*con)->worker = worker;
     (*con)->socket = client_socket;
-    (*con)->port   = ntohs(client_addr.sin_port);                                // store client port
-    inet_ntop(AF_INET, &(client_addr.sin_addr), (*con)->ip, INET_ADDRSTRLEN);  // store client ipm
+    (*con)->port   = ntohs(client_addr.sin_port);                                         // store client port
+    inet_ntop(AF_INET, &(client_addr.sin_addr), (*con)->ip, INET_ADDRSTRLEN);             // store client ipm
+    (*con)->b_header.size = json_get_int(worker->server->conf, "headers_buffer", 4) * 1024; // todo passe to worker config, to calculate size
+    
+    printf("Connection IP: %s Port: %d\n", (*con)->ip, (*con)->port);
+    
+    return HTTP_OK;
+    
+}
 
+int worker_read_connection (http_connection_struct *con) {
+    
+    // check if we has the header to be read
+    if (con->b_header.length == 0) {
+        
+        size_t size = con->b_header.size;
+        con->b_header.start = calloc(1, size + 1); // add one more case to put '\0', calloc reset all bytes so it's fine
+        
+        size_t b = socket_read(con->socket, con->b_header.start, size);
+        if (b == HTTP_NOT_OK) {
+            return HTTP_ERROR;
+        }
+        
+        con->b_header.end = strstr(con->b_header.start, "\r\n\r\n");
+        
+        if (con->b_header.end == NULL) {
+            return HTTP_ERROR;
+        }
+        
+        con->b_header.length = b;
+        
+        request_set_headers(con);
+        
+    }
+    
+    
+    
     return HTTP_OK;
     
 }

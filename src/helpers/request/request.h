@@ -12,9 +12,8 @@
 #include <string.h>
 #include "../types/types.h"
 
-http_str_s parse_method_of_header (char* buffer);
-http_str_s parse_value_of_header (char* buffer, const char* header_name);
-int set_headers_of_request (http_request_struct *client);
-int handle_request (http_request_struct* cleint);
+int         request_set_headers (http_connection_struct* con);
+http_str_s  request_parse_header_str (char* buffer, const char* header_name);
+int         request_parse_header_int (char* buffer, const char* header_name);
 
 #endif /* request_h */

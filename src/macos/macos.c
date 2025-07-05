@@ -37,7 +37,7 @@ int init_kqueue_loop (http_main_struct* conf) {
                 }
 
                 
-            } else if (event.flags & EV_EOF) { // disconect socket
+            } else if (event.flags & EV_EOF) { // disconect client socket
                 
                 http_request_struct *client = event.udata;
                 

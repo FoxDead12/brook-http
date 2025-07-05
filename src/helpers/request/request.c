@@ -6,6 +6,60 @@
 //
 
 #include "request.h"
+
+int request_set_headers (http_connection_struct* con) {
+        
+    con->request.headers.host = request_parse_header_str(con->b_header.start, "Host");
+    con->request.headers.connection = request_parse_header_str(con->b_header.start, "Connection");
+    con->request.headers.content_type = request_parse_header_str(con->b_header.start, "Content-Type");
+    con->request.headers.content_length = str_to_int(request_parse_header_str(con->b_header.start, "Content-Length"));
+    
+    return HTTP_OK;
+}
+
+http_str_s request_parse_header_str (char* buffer, const char* header_name) {
+    
+    http_str_s s;
+    s.length = 0;
+    s.data = NULL;
+    
+    char* h = strcasestr(buffer, header_name);
+    
+    if (h == NULL) {
+        return s;
+    }
+    
+    char *p = strchr(h, ':');
+    
+    if (p == NULL) {
+        return s;
+    }
+
+    // jump two dots ':'
+    p += 1;
+    
+    // jump white spaces
+    while (*p == ' ' || *p == '\t') p++;
+    
+    char* value = p;
+    char* value_end = strchr(value, '\r');
+    
+    s.length = (int)(value_end - value);
+    s.data = value;
+    
+    return s;
+    
+}
+
+
+int request_parse_header_int (char* buffer, const char* header_name) {
+    
+    
+    
+    return HTTP_OK;
+    
+}
+
 /*
 int set_headers_of_request (http_request_struct *client) {
     

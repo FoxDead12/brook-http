@@ -20,13 +20,9 @@
 #include "../helpers/types/types.h"
 #include "../helpers/json/json.h"
 
-int socket_init (int port);
-int socket_connection (int socket, struct sockaddr_in* client_addr);
+int     socket_init (int port);
+int     socket_connection (int socket, struct sockaddr_in* client_addr);
+size_t  socket_read (int socket, char* buffer, size_t buffer_size);
 
-/*http_request_struct* socket_new_connection (http_main_struct *conf);
-int                  socket_disconect_connection (http_request_struct *client);
-
-int                  socket_new_message (http_request_struct* client);
-int                  socket_message_http_header (http_request_struct* client);*/
 
 #endif /* socket_h */

@@ -10,9 +10,7 @@
   "port": 3001,
   "worker_processes": 4,
   
-  "header_buffer": 1024,
-  
-  "body_max_size": 5000000000
+  "headers_buffer": 4 // value in kb, 4KB
   
 }
 

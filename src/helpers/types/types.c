@@ -15,7 +15,7 @@ http_str_s http_str (char* data) {
     return a;
 }
 
-int conv_str_to_int (http_str_s s) {
+int str_to_int (http_str_s s) {
 
     if (s.data == NULL) {
         return 0;

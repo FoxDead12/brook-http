@@ -40,11 +40,18 @@ int handle_event (int kq, struct kevent e, http_worker_struct* worker) {
     if (e.ident == worker->server->socket) {
         
         // server socket accept new connection
+        http_connection_struct* conn = NULL;
         
-        http_connection_struct *conn = NULL;
         if (worker_accept_new_connection(worker, &conn) == HTTP_OK) {
-            kqueue_set_descriptor(kq, conn->socket, EVFILT_READ, EV_DELETE, 0, (void*) conn);
+            kqueue_set_descriptor(kq, conn->socket, EVFILT_READ, EV_ADD, 0, (void*) conn);
         }
+        
+    } else if (e.filter == EVFILT_READ) {
+        
+        // message to read
+        http_connection_struct* con = e.udata;
+        
+        worker_read_connection(con);
         
     }
     

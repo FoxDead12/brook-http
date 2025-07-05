@@ -52,22 +52,19 @@ int socket_connection (int socket, struct sockaddr_in* client_addr) {
     return accept(socket, (struct sockaddr*) client_addr, &size); // i wuant store the client data?
 }
 
-/*
-http_request_struct* socket_new_connection (http_main_struct *conf) {
-
-    int client = accept(conf->socket, NULL, NULL);
-
-    if (client <= 0) {
-        return NULL;
+size_t socket_read (int socket, char* buffer, size_t buffer_size) {
+        
+    size_t n = recv(socket, buffer, buffer_size, 0);
+    
+    if (n <= 0) {
+        return HTTP_ERROR;
     }
+    
+    return n;
+    
+}
 
-    http_request_struct *c = malloc(sizeof(http_request_struct));
-    c->socket = client;
-    c->server_config = conf;
 
-    return c;
-
-}*/
 /*
 int socket_disconect_connection (http_request_struct *client) {
 
