@@ -53,6 +53,10 @@ int handle_event (int kq, struct kevent e, http_worker_struct* worker) {
         
         worker_read_connection(con);
         
+    } else if (e.fflags & NOTE_EXIT) {
+        
+        exit(HTTP_OK);
+        
     }
     
     return HTTP_OK;

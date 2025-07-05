@@ -14,6 +14,7 @@
 #include <json-c/json.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <libpq-fe.h>
 
 #define HTTP_NOT_OK     -1
 #define HTTP_OK         0      // Server sucess
@@ -32,11 +33,14 @@ typedef struct http_worker_struct          http_worker_struct;
 typedef struct http_connection_struct      http_connection_struct;
 typedef struct http_request_headers_struct http_request_headers_struct;
 typedef struct http_request_struct         http_request_struct;
+typedef struct http_db_pool_struct http_db_pool_struct;
+
+
 
 
 struct http_str_s {
     char*       data;
-    int         length;
+    size_t      length;
 };
 
 struct http_table_s {
@@ -59,6 +63,11 @@ struct http_chain_s {
 
 
 
+struct http_db_pool_struct {
+    PGconn**        conns;
+    int             conns_number;
+    int*            conns_info;
+};
 
 
 
@@ -73,8 +82,9 @@ struct http_main_struct {
 };
 
 struct http_worker_struct {
-    pid_t               pid;
-    http_main_struct*   server;
+    pid_t                pid;
+    http_main_struct*    server;
+    http_db_pool_struct  pool;
 };
 
 
@@ -102,6 +112,7 @@ struct http_connection_struct {
     http_request_struct        request;
     http_worker_struct*        worker;
 };
+
 
 
 /*

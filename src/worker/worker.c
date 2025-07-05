@@ -67,9 +67,22 @@ void worker_event_loop (http_main_struct* conf) {
     // where is necessary to handle kqueue in mac os and epoll in linux
     printf("worker process start %d\n", getpid());
     
+    // init worket settings
     http_worker_struct worker;
     worker.pid           =  getpid();
     worker.server        =  conf;
+    
+    // init setting of db to worker
+    worker.pool.conns_number = json_get_int(conf->conf, "db_worker_connections", 4); // connections peer worker
+    worker.pool.conns_info   = malloc(sizeof(int) * worker.pool.conns_number);
+    worker.pool.conns        = malloc(sizeof(PGconn*) * worker.pool.conns_number); // create connection to database
+    init_db_connections(&worker.pool,
+                        json_get_str(
+                                     conf->conf,
+                                     "db_string_connection",
+                                     http_str("")
+                                     )
+                        );
     
 #ifdef __APPLE__
 
@@ -128,8 +141,6 @@ int worker_read_connection (http_connection_struct *con) {
         request_set_headers(con);
         
     }
-    
-    
     
     return HTTP_OK;
     

@@ -18,6 +18,7 @@
 #include "../helpers/types/types.h"
 #include "../socket/socket.h"
 #include "../helpers/request/request.h"
+#include "../db/db.h"
 
 #ifdef __APPLE__
     #include "../os/mac/mac.h"
