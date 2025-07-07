@@ -24,3 +24,10 @@ int init_db_connections (http_db_pool_struct* pool, http_str_s conn_str) {
     
     return 0;
 }
+
+int send_db_query_async (http_str_s query, http_connection_struct* con) {
+    
+    // adiconar conteudo a uma fila de espera
+    
+    return 0;
+}

@@ -51,8 +51,11 @@ int handle_event (int kq, struct kevent e, http_worker_struct* worker) {
         // message to read
         http_connection_struct* con = e.udata;
         
-        worker_read_connection(con);
+        if (worker_read_connection(con) != HTTP_DONE) {
+            kqueue_set_descriptor(kq, con->socket, EVFILT_READ, EV_DELETE, 0, NULL);
+        }
         
+                
     } else if (e.fflags & NOTE_EXIT) {
         
         exit(HTTP_OK);

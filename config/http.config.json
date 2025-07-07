@@ -10,7 +10,7 @@
   "port": 3001,
   "worker_processes": 4,
   
-  "db_string_connection": "host=localhost dbname=test user=postgres password=1234",
+  "db_string_connection": "host=localhost dbname=pos user=pos password=pos",
   "db_worker_connections": 4,
   
   "headers_buffer": 4 // value in kb, 4KB

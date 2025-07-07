@@ -76,13 +76,7 @@ void worker_event_loop (http_main_struct* conf) {
     worker.pool.conns_number = json_get_int(conf->conf, "db_worker_connections", 4); // connections peer worker
     worker.pool.conns_info   = malloc(sizeof(int) * worker.pool.conns_number);
     worker.pool.conns        = malloc(sizeof(PGconn*) * worker.pool.conns_number); // create connection to database
-    init_db_connections(&worker.pool,
-                        json_get_str(
-                                     conf->conf,
-                                     "db_string_connection",
-                                     http_str("")
-                                     )
-                        );
+    init_db_connections(&worker.pool, json_get_str(conf->conf, "db_string_connection", http_str("")));
     
 #ifdef __APPLE__
 
@@ -108,7 +102,7 @@ int worker_accept_new_connection (http_worker_struct* worker, http_connection_st
     (*con)->worker = worker;
     (*con)->socket = client_socket;
     (*con)->port   = ntohs(client_addr.sin_port);                                         // store client port
-    inet_ntop(AF_INET, &(client_addr.sin_addr), (*con)->ip, INET_ADDRSTRLEN);             // store client ipm
+    inet_ntop(AF_INET, &(client_addr.sin_addr), (*con)->ip, INET_ADDRSTRLEN);             // store client ip
     (*con)->b_header.size = json_get_int(worker->server->conf, "headers_buffer", 4) * 1024; // todo passe to worker config, to calculate size
     
     printf("Connection IP: %s Port: %d\n", (*con)->ip, (*con)->port);
@@ -139,6 +133,8 @@ int worker_read_connection (http_connection_struct *con) {
         con->b_header.length = b;
         
         request_set_headers(con);
+        
+        // now we assume we will execute query
         
     }
     
