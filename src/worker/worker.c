@@ -101,11 +101,11 @@ int worker_accept_new_connection (http_worker_struct* worker, http_connection_st
     (*con) = malloc(sizeof(http_connection_struct));
     (*con)->worker = worker;
     (*con)->socket = client_socket;
-    (*con)->port   = ntohs(client_addr.sin_port);                                         // store client port
-    inet_ntop(AF_INET, &(client_addr.sin_addr), (*con)->ip, INET_ADDRSTRLEN);             // store client ip
+    (*con)->port   = ntohs(client_addr.sin_port);                                           // store client port
+    inet_ntop(AF_INET, &(client_addr.sin_addr), (*con)->ip, INET_ADDRSTRLEN);               // store client ip
     (*con)->b_header.size = json_get_int(worker->server->conf, "headers_buffer", 4) * 1024; // todo passe to worker config, to calculate size
     
-    printf("Connection IP: %s Port: %d\n", (*con)->ip, (*con)->port);
+    printf("Connection Socket: %d IP: %s Port: %d\n", client_socket, (*con)->ip, (*con)->port);
     
     return HTTP_OK;
     
@@ -134,10 +134,24 @@ int worker_read_connection (http_connection_struct *con) {
         
         request_set_headers(con);
         
-        // now we assume we will execute query
-        
     }
     
     return HTTP_OK;
     
+}
+
+int worker_send_async_query (http_connection_struct* con, char* query) {
+    
+    int index = get_db_connection(&con->worker->pool);
+
+    if (index == HTTP_NOT_OK) {
+        return HTTP_DONE;
+    }
+    
+    PGconn* db = con->worker->pool.conns[index];
+    
+    printf("run query\n");
+    PQsendQuery(db, query);
+    
+    return HTTP_OK;
 }

@@ -17,17 +17,24 @@ int init_db_connections (http_db_pool_struct* pool, http_str_s conn_str) {
         // TODO: if exit, parent dont stop and will create more childrens
         if (PQstatus(pool->conns[i]) != CONNECTION_OK) {
             perror(PQerrorMessage(pool->conns[i]));
-            exit(0);
+            exit(HTTP_ERROR);
         }
         
     }
     
-    return 0;
+    return HTTP_OK;
 }
 
-int send_db_query_async (http_str_s query, http_connection_struct* con) {
+int get_db_connection (http_db_pool_struct* pool) {
     
-    // adiconar conteudo a uma fila de espera
+    for (int i = 0; i < pool->conns_number; i++) {
+        
+        if (pool->conns_info[i] == 0) {
+            pool->conns_info[i] = 1; // say connection is busy
+            return i; // free conection
+        }
+        
+    }
     
-    return 0;
+    return HTTP_NOT_OK;
 }

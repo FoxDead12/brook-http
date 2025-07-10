@@ -14,7 +14,13 @@ int kqueue_init (http_worker_struct* worker) {
     
     kqueue_set_descriptor(kq, worker->server->socket, EVFILT_READ, EV_ADD | EV_ENABLE, 0, NULL);
     kqueue_set_descriptor(kq, worker->server->pid, EVFILT_PROC, EV_ADD, NOTE_EXIT, NULL);
-
+        
+    for (int i = 0; i < worker->pool.conns_number; i++) {
+        int socket = PQsocket(worker->pool.conns[i]);
+        printf("socket: %d\n", socket);
+        kqueue_set_descriptor(kq, socket, EVFILT_READ, EV_ADD, 0, NULL);
+    }
+    
     while (1) {
         
         int n = kevent(kq, NULL, 0, kq_event_list, MAX_KQ_EVENTS, NULL);
@@ -48,14 +54,34 @@ int handle_event (int kq, struct kevent e, http_worker_struct* worker) {
         
     } else if (e.filter == EVFILT_READ) {
         
-        // message to read
         http_connection_struct* con = e.udata;
         
-        if (worker_read_connection(con) != HTTP_DONE) {
+        int r = worker_read_connection(con);
+        
+        if (r != HTTP_DONE) {
+            
             kqueue_set_descriptor(kq, con->socket, EVFILT_READ, EV_DELETE, 0, NULL);
+            
+            if (r == HTTP_OK) {
+                // add user trigger
+                kqueue_set_descriptor(kq, con->socket, EVFILT_USER, EV_ADD, NOTE_FFCOPY, NULL);
+                kqueue_set_descriptor(kq, con->socket, EVFILT_USER, EV_ENABLE, NOTE_TRIGGER, (void*) con);
+            }
+            
+        }
+                
+    } else if (e.filter == EVFILT_USER) {
+                
+        const char* query = "SELECT * FROM users";
+
+        http_connection_struct* con = e.udata;
+        
+        int r = worker_send_async_query(con, (char*) query);
+
+        if (r != HTTP_DONE) {
+            kqueue_set_descriptor(kq, con->socket, EVFILT_USER, EV_DELETE, 0, NULL);
         }
         
-                
     } else if (e.fflags & NOTE_EXIT) {
         
         exit(HTTP_OK);

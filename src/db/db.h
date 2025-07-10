@@ -17,5 +17,7 @@
 #include "../helpers/types/types.h"
 
 int init_db_connections (http_db_pool_struct* pool, http_str_s conn_str);
+int get_db_connection   (http_db_pool_struct* pool);
+
 
 #endif /* db_h */
