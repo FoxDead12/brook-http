@@ -88,6 +88,15 @@ void worker_event_loop (http_main_struct* conf) {
     
 }
 
+int worker_close_connection (http_connection_struct* con) {
+    
+    close(con->socket);
+    free(con->b_header.start);
+    free(con);
+    
+    return HTTP_OK;
+}
+
 int worker_accept_new_connection (http_worker_struct* worker, http_connection_struct **con) {
     
     struct sockaddr_in client_addr;
@@ -99,6 +108,7 @@ int worker_accept_new_connection (http_worker_struct* worker, http_connection_st
     }
     
     (*con) = malloc(sizeof(http_connection_struct));
+    (*con)->status = 0;
     (*con)->worker = worker;
     (*con)->socket = client_socket;
     (*con)->port   = ntohs(client_addr.sin_port);                                           // store client port
@@ -136,22 +146,48 @@ int worker_read_connection (http_connection_struct *con) {
         
     }
     
+    con->status = 1; // update status to build query and send to db
+    
     return HTTP_OK;
     
 }
 
-int worker_send_async_query (http_connection_struct* con, char* query) {
+int worker_build_and_send_async_query (http_connection_struct* con, char* query, int* socket) {
     
-    int index = get_db_connection(&con->worker->pool);
+    int index = get_db_free_connection(&con->worker->pool);
 
     if (index == HTTP_NOT_OK) {
         return HTTP_DONE;
     }
     
     PGconn* db = con->worker->pool.conns[index];
+    *socket = PQsocket(db);
     
-    printf("run query\n");
+    // build query
+    
     PQsendQuery(db, query);
+    
+    con->status = 2; // update status to handle the db response
+    
+    return HTTP_OK;
+}
+
+int worker_read_async_query (http_connection_struct* con, int socket) {
+    
+    
+    get_db_query_result(con, socket);
+    
+    const char *response =
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: text/plain\r\n"
+        "Content-Length: 13\r\n"
+        "Connection: close\r\n"
+        "\r\n"
+        "Hello, world!";
+
+    write(con->socket, response, strlen(response));
+    
+    worker_close_connection(con);
     
     return HTTP_OK;
 }

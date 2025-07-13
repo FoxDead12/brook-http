@@ -111,6 +111,7 @@ struct http_connection_struct {
     http_chain_s               c_body;
     http_request_struct        request;
     http_worker_struct*        worker;
+    int                        status; // 0 - read data from socket, 1 - build query, 2 - Get response from database
 };
 
 
