@@ -9,5 +9,8 @@
 #define query_h
 
 #include <stdio.h>
+#include "../types/types.h"
+
+int generate_query_from_request (http_connection_struct* con);
 
 #endif /* query_h */

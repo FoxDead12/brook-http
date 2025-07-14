@@ -19,6 +19,7 @@
 #include "../socket/socket.h"
 #include "../helpers/request/request.h"
 #include "../db/db.h"
+#include "../helpers/query/query.h"
 
 #ifdef __APPLE__
     #include "../os/mac/mac.h"

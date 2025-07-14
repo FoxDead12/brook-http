@@ -9,6 +9,9 @@
 
 int request_set_headers (http_connection_struct* con) {
         
+    con->request.method = parse_method_of_header(con->b_header.start);
+    con->request.url    = parse_url_of_header(con->b_header.start);
+    
     con->request.headers.host = request_parse_header_str(con->b_header.start, "Host");
     con->request.headers.connection = request_parse_header_str(con->b_header.start, "Connection");
     con->request.headers.content_type = request_parse_header_str(con->b_header.start, "Content-Type");
@@ -51,33 +54,11 @@ http_str_s request_parse_header_str (char* buffer, const char* header_name) {
     
 }
 
-
-int request_parse_header_int (char* buffer, const char* header_name) {
-    
-    
-    
-    return HTTP_OK;
-    
-}
-
-/*
-int set_headers_of_request (http_request_struct *client) {
-    
-    client->header.method = parse_method_of_header(client->header.data.start);
-    
-    client->header.content_type = parse_value_of_header(client->header.data.start, "Content-Type");
-    client->header.host = parse_value_of_header(client->header.data.start, "Host");
-    client->header.connection = parse_value_of_header(client->header.data.start, "Connection");
-    client->header.content_length = conv_str_to_int(parse_value_of_header(client->header.data.start, "Content-Length"));
-        
-    return 0;
-}
-
 http_str_s parse_method_of_header (char* buffer) {
     
     http_str_s s;
     s.length = 0;
-    s.data = 0;
+    s.data = NULL;
 
     char* method = strchr(buffer, ' ');
     
@@ -87,44 +68,29 @@ http_str_s parse_method_of_header (char* buffer) {
     return s;
 }
 
-http_str_s parse_value_of_header (char* buffer, const char* header_name) {
+http_str_s parse_url_of_header (char* buffer) {
     
     http_str_s s;
     s.length = 0;
     s.data = NULL;
+        
+    char* url = strchr(buffer, ' ');
+    url += 1;
     
-    char* h = strcasestr(buffer, header_name);
+    char* end = url;
     
-    if (h == NULL) {
-        return s;
+    while (*end != ' ') {
+        end += 1;
     }
     
-    char *p = strchr(h, ':');
+    char* end_line = strchr(buffer, '\r');
     
-    if (p == NULL) {
+    if (end >= end_line) {
         return s;
     }
 
-    // jump two dots ':'
-    p += 1;
-    
-    // jump white spaces
-    while (*p == ' ' || *p == '\t') p++;
-    
-    char* value = p;
-    char* value_end = strchr(value, '\r');
-    
-    s.length = (int)(value_end - value);
-    s.data = value;
+    s.length = end - url;
+    s.data = url;
     
     return s;
 }
-
-
-int handle_request (http_request_struct* cleint) {
-    
-    // TODO: valdiate route gatekeeper
-    // TODO: validate user has acess
-    
-    return 0;
-}*/

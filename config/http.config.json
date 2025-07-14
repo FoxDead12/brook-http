@@ -8,10 +8,10 @@
 {
 
   "port": 3001,
-  "worker_processes": 4,
+  "worker_processes": 10,
   
-  "db_string_connection": "host=localhost dbname=http_broker user=dx3 password=",
-  "db_worker_connections": 4,
+  "db_string_connection": "host=localhost dbname=http_broker user=dx3 password= sslmode=disable gssencmode=disable",
+  "db_worker_connections": 5,
   
   "headers_buffer": 4 // value in kb, 4KB
   

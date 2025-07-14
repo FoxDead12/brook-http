@@ -164,6 +164,7 @@ int worker_build_and_send_async_query (http_connection_struct* con, char* query,
     *socket = PQsocket(db);
     
     // build query
+    generate_query_from_request(con);
     
     PQsendQuery(db, query);
     
