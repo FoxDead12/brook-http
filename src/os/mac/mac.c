@@ -92,6 +92,11 @@ int handle_event (int kq, struct kevent e, http_worker_struct* worker) {
             kqueue_set_descriptor(kq, db_socket, EVFILT_READ, EV_ADD, 0, (void*) con);
         }
         
+    } else if (e.flags & EV_EOF)  {
+        
+        http_connection_struct* con = e.udata;
+        worker_close_connection(con);
+        
     } else if (e.fflags & NOTE_EXIT) {
         
         exit(HTTP_OK);
