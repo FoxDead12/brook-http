@@ -15,7 +15,8 @@ int socket_init (int port) {
     sv_addr.sin_family  = AF_INET;
     sv_addr.sin_port    = htons(port);
     sv_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK); // in this moment only allow local connections, if wuant anyone machine connecet put INADDR_ANY;
-
+    //sv_addr.sin_addr.s_addr = htonl(INADDR_ANY); // in this moment is open to internet
+    
     // create socket
     int s = socket(AF_INET, SOCK_STREAM, 0);
 
