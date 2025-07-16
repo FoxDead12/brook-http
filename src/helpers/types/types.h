@@ -37,7 +37,6 @@ typedef struct http_db_pool_struct http_db_pool_struct;
 
 
 
-
 struct http_str_s {
     char*       data;
     size_t      length;
@@ -100,6 +99,7 @@ struct http_request_headers_struct {
 struct http_request_struct {
     http_str_s                 method;
     http_str_s                 url;
+    http_str_s                 params;
     http_request_headers_struct headers;
 };
 
@@ -113,6 +113,7 @@ struct http_connection_struct {
     http_worker_struct*        worker;
     int                        status; // 0 - read data from socket, 1 - build query, 2 - Get response from database
 };
+
 
 
 

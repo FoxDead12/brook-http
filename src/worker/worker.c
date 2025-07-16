@@ -143,7 +143,7 @@ int worker_read_connection (http_connection_struct *con) {
         con->b_header.length = b;
         
         request_set_headers(con);
-        
+        // TODO, VALIDATE REQUEST
     }
     
     con->status = 1; // update status to build query and send to db

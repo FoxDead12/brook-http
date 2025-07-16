@@ -11,6 +11,7 @@ int request_set_headers (http_connection_struct* con) {
         
     con->request.method = parse_method_of_header(con->b_header.start);
     con->request.url    = parse_url_of_header(con->b_header.start);
+    con->request.params = parse_url_params_of_header(con->b_header.start);
     
     con->request.headers.host = request_parse_header_str(con->b_header.start, "Host");
     con->request.headers.connection = request_parse_header_str(con->b_header.start, "Connection");
@@ -73,24 +74,58 @@ http_str_s parse_url_of_header (char* buffer) {
     http_str_s s;
     s.length = 0;
     s.data = NULL;
-        
+     
+    char* line_end = strchr(buffer, '\r');
     char* url = strchr(buffer, ' ');
     url += 1;
     
+    if (url >= line_end) {
+        return s; // invalid position, pointer is not in first row of header
+    }
+    
+    if (*url != '/') {
+        return s; // invalid, dont start with '/' the url
+    }
+    
     char* end = url;
+    
+    while (*end != ' ' && *end != '?') {
+        end += 1;
+    }
+    
+    if (end >= line_end) {
+        return s;
+    }
+
+    s.length = end - url;
+    s.data   = url;
+    
+    return s;
+}
+
+http_str_s parse_url_params_of_header (char* buffer) {
+    
+    http_str_s s;
+    s.length = 0;
+    s.data = NULL;
+    
+    char* line_end = strchr(buffer, '\r');
+    
+    char* params = strchr(buffer, '?');
+    params += 1;
+    
+    if (params >= line_end) {
+        return s; // invalid position, pointer is not in first row of header
+    }
+    
+    char* end = params;
     
     while (*end != ' ') {
         end += 1;
     }
     
-    char* end_line = strchr(buffer, '\r');
-    
-    if (end >= end_line) {
-        return s;
-    }
-
-    s.length = end - url;
-    s.data = url;
+    s.length = end - params;
+    s.data   = params;
     
     return s;
 }
