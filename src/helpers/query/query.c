@@ -15,7 +15,16 @@ int generate_query_from_request (http_connection_struct* con) {
     printf("PARAMS: %.*s\n", con->request.params.length, con->request.params.data);
     printf("CONTENT_TYPE: %.*s\n",    con->request.headers.content_type.length, con->request.headers.content_type.data);
     
-    
+    /*
+   
+     What is needed:
+        resource    -> table
+        resource_id -> id if necessary
+        
+     
+        body  -> json payload (but we dont has body wet)
+     
+     */
     
     
     return HTTP_OK;

@@ -142,8 +142,10 @@ int worker_read_connection (http_connection_struct *con) {
         
         con->b_header.length = b;
         
-        request_set_headers(con);
-        // TODO, VALIDATE REQUEST
+        if (request_set_headers(con) == HTTP_ERROR) {
+            return HTTP_ERROR;
+        }
+        
     }
     
     con->status = 1; // update status to build query and send to db
@@ -174,7 +176,6 @@ int worker_build_and_send_async_query (http_connection_struct* con, char* query,
 }
 
 int worker_read_async_query (http_connection_struct* con, int socket) {
-    
     
     get_db_query_result(con, socket);
     

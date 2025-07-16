@@ -62,6 +62,9 @@ int handle_event (int kq, struct kevent e, http_worker_struct* worker) {
                     // add user trigger
                     kqueue_set_descriptor(kq, con->socket, EVFILT_USER, EV_ADD, NOTE_FFCOPY, NULL);
                     kqueue_set_descriptor(kq, con->socket, EVFILT_USER, EV_ENABLE, NOTE_TRIGGER, (void*) con);
+                    
+                } else if (r == HTTP_ERROR) {
+                    worker_close_connection(con);
                 }
                 
             }

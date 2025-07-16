@@ -15,6 +15,8 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <libpq-fe.h>
+#include <regex.h>
+
 
 #define HTTP_NOT_OK     -1
 #define HTTP_OK         0      // Server sucess
@@ -78,6 +80,7 @@ struct http_main_struct {
     int                 port;
     int                 worker_processes;
     http_worker_struct* workers; // only parent process will contain this array
+    regex_t             regex_header;
 };
 
 struct http_worker_struct {

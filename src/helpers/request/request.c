@@ -9,6 +9,12 @@
 
 int request_set_headers (http_connection_struct* con) {
         
+    // validate first line of header if is valid
+    int reg = regexec(&con->worker->server->regex_header, con->b_header.start, 0, NULL, 0);
+    if (reg == REG_NOMATCH) {
+        return HTTP_ERROR;
+    }
+        
     con->request.method = parse_method_of_header(con->b_header.start);
     con->request.url    = parse_url_of_header(con->b_header.start);
     con->request.params = parse_url_params_of_header(con->b_header.start);
@@ -77,6 +83,11 @@ http_str_s parse_url_of_header (char* buffer) {
      
     char* line_end = strchr(buffer, '\r');
     char* url = strchr(buffer, ' ');
+    
+    if (url == NULL) {
+        return s;
+    }
+    
     url += 1;
     
     if (url >= line_end) {
@@ -112,6 +123,10 @@ http_str_s parse_url_params_of_header (char* buffer) {
     char* line_end = strchr(buffer, '\r');
     
     char* params = strchr(buffer, '?');
+    if (params == NULL) {
+        return s;
+    }
+    
     params += 1;
     
     if (params >= line_end) {

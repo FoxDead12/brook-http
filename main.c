@@ -48,7 +48,15 @@ int main(int argc, const char * argv[]) {
     sv_conf.worker_processes  =  json_get_int(sv_conf.conf, "worker_processes", sv_conf.worker_processes);
     sv_conf.workers           =  malloc(sizeof(http_worker_struct) * sv_conf.worker_processes);
     sv_conf.socket            =  socket_init(sv_conf.port);
-
+    
+    int r = regcomp(&sv_conf.regex_header, json_get_str(sv_conf.conf, "regex_http_header", http_str("")).data, REG_EXTENDED);
+    if (r) {
+        fprintf(stderr, "Regex invalido: %s\n", json_get_str(sv_conf.conf, "regex_http_header", http_str("")).data);
+        return 1;
+    }
+    
+        
+    
 #if DEBUG
 
     worker_event_loop(&sv_conf);

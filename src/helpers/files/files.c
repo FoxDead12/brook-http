@@ -38,7 +38,7 @@ int read_json_file (json_object** conf, char* filename) {
         perror(filename);
         return 1;
     }
-    
+        
     // convert file data to json pointer
     *conf = json_tokener_parse(file_data);
 
