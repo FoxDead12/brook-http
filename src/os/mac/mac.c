@@ -85,7 +85,7 @@ int handle_event (int kq, struct kevent e, http_worker_struct* worker) {
         // my custom event, is to build query
         http_connection_struct* con = e.udata;
         
-        const char* query = "SELECT * FROM users";
+        const char* query = "SELECT * FROM users u LEFT JOIN products p ON u.id = p.user_id";
         
         int db_socket;
         int r = worker_build_and_send_async_query(con, (char*) query, &db_socket);

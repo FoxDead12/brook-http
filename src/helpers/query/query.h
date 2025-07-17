@@ -11,6 +11,10 @@
 #include <stdio.h>
 #include "../types/types.h"
 
-int generate_query_from_request (http_connection_struct* con);
+int         generate_query_from_request (http_connection_struct* con, PGconn* db);
+int         parse_resource_data         (http_connection_struct* con, http_str_s* resource, http_str_s* resource_id);
+http_str_s  select_query                (http_str_s* resource);
+http_str_s select_item_query            (http_str_s* resource, http_str_s* resource_id);
+http_str_s delete_item_query            (http_str_s* resource, http_str_s* resource_id);
 
 #endif /* query_h */

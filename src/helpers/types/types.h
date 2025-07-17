@@ -81,6 +81,7 @@ struct http_main_struct {
     int                 worker_processes;
     http_worker_struct* workers; // only parent process will contain this array
     regex_t             regex_header;
+    regex_t             regex_url;
 };
 
 struct http_worker_struct {
@@ -141,9 +142,8 @@ struct http_request_struct {
 };
 */
 
-http_str_s http_str (char* data);
-int conv_str_to_int (http_str_s s);
-int str_to_int (http_str_s s);
-
+http_str_s http_str        (char* data);
+int        str_to_int      (http_str_s s);
+int        comp_str_to_str (http_str_s a, http_str_s b);
 
 #endif /* types_h */

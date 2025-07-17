@@ -8,11 +8,13 @@
 #include "types.h"
 
 http_str_s http_str (char* data) {
+    
     http_str_s a;
     a.length = (int) strlen(data);
     a.data = data;
     
     return a;
+    
 }
 
 int str_to_int (http_str_s s) {

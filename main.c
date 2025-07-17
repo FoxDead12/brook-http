@@ -49,9 +49,19 @@ int main(int argc, const char * argv[]) {
     sv_conf.workers           =  malloc(sizeof(http_worker_struct) * sv_conf.worker_processes);
     sv_conf.socket            =  socket_init(sv_conf.port);
     
-    int r = regcomp(&sv_conf.regex_header, json_get_str(sv_conf.conf, "regex_http_header", http_str("")).data, REG_EXTENDED);
+    int r;
+    
+    r = regcomp(&sv_conf.regex_header, json_get_str(sv_conf.conf, "regex_http_header", http_str("")).data, REG_EXTENDED);
+    
     if (r) {
         fprintf(stderr, "Regex invalido: %s\n", json_get_str(sv_conf.conf, "regex_http_header", http_str("")).data);
+        return 1;
+    }
+    
+    r = regcomp(&sv_conf.regex_url, (const char*) "^/([A-Za-z0-9_-]+)(/([A-Za-z0-9_-]+))?", REG_EXTENDED);
+    
+    if (r) {
+        fprintf(stderr, "Regex url invalido\n");
         return 1;
     }
     

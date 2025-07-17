@@ -1,21 +1,14 @@
-//
-//  http.config.yml
-//  http-c-broker
-//
-//  Created by David Xavier on 24/06/2025.
-//
-
 {
 
   "port": 3001,
-  "worker_processes": 10,
-  
+  "worker_processes": 4,
+
   "db_string_connection": "host=localhost dbname=http_broker user=dx3 password= sslmode=disable gssencmode=disable",
   "db_worker_connections": 5,
-  
+
   "headers_buffer": 4, // value in kb, 4KB
-  
-  "regex_http_header": "(GET|POST|DELETE|OPTIONS|PATCH)[ \t]+/[^ \t\r\n]*[ \t]+HTTP/1\\.1\\r?"
+
+  "regex_http_header": "^(GET|POST|DELETE|OPTIONS|PATCH)[ \t]+(/[^ \t\r\n?]*)(\\?[^ \t\r\n]*)?[ \t]+HTTP/1\\.1\\r?"
 
 
 }
