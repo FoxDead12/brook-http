@@ -154,7 +154,7 @@ int worker_read_connection (http_connection_struct *con) {
     
 }
 
-int worker_build_and_send_async_query (http_connection_struct* con, char* query, int* socket) {
+int worker_build_and_send_async_query (http_connection_struct* con, int* socket) {
     
     int index = get_db_free_connection(&con->worker->pool);
 
@@ -177,15 +177,7 @@ int worker_read_async_query (http_connection_struct* con, int socket) {
     
     get_db_query_result(con, socket);
     
-    const char *response =
-        "HTTP/1.1 200 OK\r\n"
-        "Content-Type: text/plain\r\n"
-        "Content-Length: 13\r\n"
-        "Connection: close\r\n"
-        "\r\n"
-        "Hello, world!";
-
-    write(con->socket, response, strlen(response));
+    send_json_api_response(con);
     
     worker_close_connection(con);
     

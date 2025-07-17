@@ -20,6 +20,7 @@
 #include "../helpers/request/request.h"
 #include "../db/db.h"
 #include "../helpers/query/query.h"
+#include "../helpers/response/response.h"
 
 #ifdef __APPLE__
     #include "../os/mac/mac.h"
@@ -32,7 +33,7 @@ void    worker_event_loop (http_main_struct* conf);
 int     worker_accept_new_connection (http_worker_struct* worker, http_connection_struct **con);
 int     worker_close_connection (http_connection_struct* con);
 int     worker_read_connection (http_connection_struct *con);
-int     worker_build_and_send_async_query (http_connection_struct* con, char* query, int* socket);
+int     worker_build_and_send_async_query (http_connection_struct* con, int* socket);
 int     worker_read_async_query (http_connection_struct* con, int socket);
 
 #endif /* worker_h */

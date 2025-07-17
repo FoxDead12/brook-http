@@ -35,9 +35,9 @@ typedef struct http_worker_struct          http_worker_struct;
 typedef struct http_connection_struct      http_connection_struct;
 typedef struct http_request_headers_struct http_request_headers_struct;
 typedef struct http_request_struct         http_request_struct;
-typedef struct http_db_pool_struct http_db_pool_struct;
-
-
+typedef struct http_db_pool_struct         http_db_pool_struct;
+typedef struct http_response_struct        http_response_struct;
+typedef struct http_json_api_struct        http_json_api_struct;
 
 struct http_str_s {
     char*       data;
@@ -90,9 +90,6 @@ struct http_worker_struct {
     http_db_pool_struct  pool;
 };
 
-
-
-
 struct http_request_headers_struct {
     http_str_s                 host;
     http_str_s                 connection;
@@ -107,6 +104,16 @@ struct http_request_struct {
     http_request_headers_struct headers;
 };
 
+struct http_json_api_struct {
+    http_str_s              resource;
+    http_str_s              resource_id;
+    json_object*            b;
+};
+
+struct http_response_struct {
+    http_json_api_struct    json_api;
+};
+
 struct http_connection_struct {
     char                       ip[INET_ADDRSTRLEN];
     int                        port;
@@ -114,33 +121,12 @@ struct http_connection_struct {
     http_buffer_s              b_header;
     http_chain_s               c_body;
     http_request_struct        request;
+    http_response_struct       response;
     http_worker_struct*        worker;
     int                        status; // 0 - read data from socket, 1 - build query, 2 - Get response from database
 };
 
 
-
-
-/*
-struct http_request_header_struct {
-    http_buffer_s   data;
-    http_str_s      method;
-    http_str_s      url;
-    http_str_s      host;
-    http_str_s      connection;
-    http_str_s      content_type;
-    int             content_length;
-};
-
-struct http_request_struct {
-    int                        socket;
-    char                       ip[INET_ADDRSTRLEN];
-    int                        client_port;
-    http_request_header_struct header;
-    http_chain_s               body;
-    http_main_struct*          server_config;
-};
-*/
 
 http_str_s http_str        (char* data);
 int        str_to_int      (http_str_s s);

@@ -38,28 +38,33 @@ int generate_query_from_request (http_connection_struct* con, PGconn* db) {
     
     */
     
-    http_str_s resource;
-    http_str_s resource_id;
     http_str_s query;
-
-    if (parse_resource_data(con, &resource, &resource_id) == HTTP_ERROR) {
+     
+    // Get resource data from request
+    if (parse_resource_data(con, &con->response.json_api.resource, &con->response.json_api.resource_id) == HTTP_ERROR) {
         return HTTP_ERROR;
     }
-        
+    
+    http_str_s* resource    = &con->response.json_api.resource;
+    http_str_s* resource_id = &con->response.json_api.resource_id;
+            
+    // Generate query from template
     if (comp_str_to_str(con->request.method, http_str("GET")) == 0)  {
         
-        if (resource_id.length > 0) {
-            query = select_item_query(&resource, &resource_id);
+        if (resource_id->length > 0) {
+            query = select_item_query(resource, resource_id);
         } else {
-            query = select_query(&resource);
+            query = select_query(resource);
         }
         
     } else if (comp_str_to_str(con->request.method, http_str("DELETE")) == 0) {
-        query = delete_item_query(&resource, &resource_id);
+        query = delete_item_query(resource, resource_id);
     }
     
+    // Send query to database
     PQsendQuery(db, query.data);
     
+    // Free query
     free(query.data);
     
     return HTTP_OK;
