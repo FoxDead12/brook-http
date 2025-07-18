@@ -132,4 +132,7 @@ http_str_s http_str        (char* data);
 int        str_to_int      (http_str_s s);
 int        comp_str_to_str (http_str_s a, http_str_s b);
 
+
+#include "../response/response.h"
+
 #endif /* types_h */

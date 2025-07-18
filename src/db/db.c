@@ -72,7 +72,6 @@ int get_db_connection_from_socket (http_db_pool_struct* pool, int socket, PGconn
 }
 
 int get_db_query_result (http_connection_struct* con, int socket) {
-    
     PGconn* db;
     PGresult *res;
     
@@ -81,35 +80,44 @@ int get_db_query_result (http_connection_struct* con, int socket) {
     // create response body to generate the json api template
     http_str_s* resource    = &con->response.json_api.resource;
     http_str_s* resource_id = &con->response.json_api.resource_id;
+    
     con->response.json_api.b = json_object_new_object();
-    
     json_object* body = con->response.json_api.b;
-    
-    if (resource_id->length <= 0) {
-        json_object_object_add(body, "data", json_object_new_array());
-    }
-    
+        
     while ((res = PQgetResult(db)) != NULL) {
         
         ExecStatusType status = PQresultStatus(res);
-        printf("Status: %s\n", PQresStatus(status));
 
-        int nrows = PQntuples(res);
-        int ncols = PQnfields(res);
-
-        if (nrows > 0) {
-            if (resource_id->length > 0) {
-                json_object* row = json_object_new_object();
-                db_result_parse_row(res, row, resource, 0, ncols);
-                json_object_object_add(body, "data", row);
-            } else {
-                json_object* data = json_object_object_get(body, "data");
-                for (int i = 0; i < nrows; i++) {
+        if (status == PGRES_TUPLES_OK || status == PGRES_COMMAND_OK) {
+            
+            int nrows = PQntuples(res);
+            int ncols = PQnfields(res);
+            
+            if (nrows > 0) {
+                if (resource_id->length > 0) {
                     json_object* row = json_object_new_object();
-                    db_result_parse_row(res, row, resource, i, ncols);
-                    json_object_array_add(data, row);
+                    db_result_parse_row(res, row, resource, 0, ncols);
+                    json_object_object_add(body, "data", row);
+                } else {
+                    json_object_object_add(body, "data", json_object_new_array());
+                    json_object* data = json_object_object_get(body, "data");
+                    for (int i = 0; i < nrows; i++) {
+                        json_object* row = json_object_new_object();
+                        db_result_parse_row(res, row, resource, i, ncols);
+                        json_object_array_add(data, row);
+                    }
+                }
+            } else {
+                if (resource_id->length > 0 && status != PGRES_COMMAND_OK) {
+                    json_object* errors = build_json_api_error_obj(404, "HTTP_BROKER_ERROR_FOUND", "Resource not found");
+                    json_object_object_add(body, "errors", errors);
                 }
             }
+            
+        }
+        else {
+            json_object* errors = build_json_api_error_obj_from_db_result(res);
+            json_object_object_add(body, "errors", errors);
         }
         
         PQclear(res);

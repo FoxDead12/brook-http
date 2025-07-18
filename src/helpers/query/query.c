@@ -58,6 +58,12 @@ int generate_query_from_request (http_connection_struct* con, PGconn* db) {
         }
         
     } else if (comp_str_to_str(con->request.method, http_str("DELETE")) == 0) {
+        
+        if (resource_id->length <= 0) {
+            send_json_api_response_error(con, 400, "HTTP_BROKER_ERROR_ATTRIBUTE", "Is necessary ID in resource data");
+            return HTTP_ERROR;
+        }
+        
         query = delete_item_query(resource, resource_id);
     }
     
@@ -125,7 +131,7 @@ http_str_s delete_item_query (http_str_s* resource, http_str_s* resource_id) {
     s.length = 0;
     s.data   = NULL;
     
-    const char* template = "DELETE FROM %.*s WHERE id = %.*s";
+    const char* template = "DELETE FROM %.*s WHERE id = %.*s RETURNING *";
     s.length = asprintf(&s.data, template, resource->length, resource->data, resource_id->length, resource_id->data);
 
     return s;

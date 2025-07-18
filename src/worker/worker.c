@@ -166,7 +166,10 @@ int worker_build_and_send_async_query (http_connection_struct* con, int* socket)
     *socket = PQsocket(db);
     
     // build query
-    generate_query_from_request(con, db);
+    if (generate_query_from_request(con, db) == HTTP_ERROR) {
+        free_db_connection(&con->worker->pool, *socket);
+        return HTTP_ERROR;
+    }
         
     con->status = 2; // update status to handle the db response
     
