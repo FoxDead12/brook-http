@@ -14,6 +14,7 @@ int request_set_headers (http_connection_struct* con) {
     int reg = regexec(&con->worker->server->regex_header, con->b_header.start, 4, matches, 0);
     
     if (reg == REG_NOMATCH) {
+        send_json_api_response_error(con, 400, "HTTP_BROKER_ERROR_HEADER", "Header invalid format");
         return HTTP_ERROR;
     }
     

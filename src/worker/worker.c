@@ -114,9 +114,7 @@ int worker_accept_new_connection (http_worker_struct* worker, http_connection_st
     (*con)->port   = ntohs(client_addr.sin_port);                                           // store client port
     inet_ntop(AF_INET, &(client_addr.sin_addr), (*con)->ip, INET_ADDRSTRLEN);               // store client ip
     (*con)->b_header.size = json_get_int(worker->server->conf, "headers_buffer", 4) * 1024; // todo passe to worker config, to calculate size
-    
-    printf("Connection Socket: %d IP: %s Port: %d\n", client_socket, (*con)->ip, (*con)->port);
-    
+        
     return HTTP_OK;
     
 }
@@ -131,12 +129,14 @@ int worker_read_connection (http_connection_struct *con) {
         
         size_t b = socket_read(con->socket, con->b_header.start, size);
         if (b == HTTP_NOT_OK) {
+            send_json_api_response_error(con, 400, "HTTP_BROKER_ERROR_SOCKET", "Socket can't read data");
             return HTTP_ERROR;
         }
         
         con->b_header.end = strstr(con->b_header.start, "\r\n\r\n");
         
         if (con->b_header.end == NULL) {
+            send_json_api_response_error(con, 400, "HTTP_BROKER_ERROR_HEADER", "Header size is to big");
             return HTTP_ERROR;
         }
         

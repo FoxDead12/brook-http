@@ -42,6 +42,7 @@ int generate_query_from_request (http_connection_struct* con, PGconn* db) {
      
     // Get resource data from request
     if (parse_resource_data(con, &con->response.json_api.resource, &con->response.json_api.resource_id) == HTTP_ERROR) {
+        send_json_api_response_error(con, 400, "HTTP_BROKER_ERROR_HEADER", "Url invalid format or doesn't exist");
         return HTTP_ERROR;
     }
     
