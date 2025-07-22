@@ -54,15 +54,17 @@ struct http_buffer_s {
     char*       end;
     size_t      length;
     size_t      size;
+    int8_t      need_free;
+    http_buffer_s* next;
 };
 
 struct http_chain_s {
-    http_buffer_s buffer;
-    http_chain_s* next;
+    http_buffer_s* current;
+    http_buffer_s* last;
+    http_buffer_s* first;
+    int            size;
+    size_t         bytes;
 };
-
-
-
 
 struct http_db_pool_struct {
     PGconn**        conns;
@@ -98,10 +100,13 @@ struct http_request_headers_struct {
 };
 
 struct http_request_struct {
-    http_str_s                 method;
-    http_str_s                 url;
-    http_str_s                 params;
+    http_str_s                  method;
+    http_str_s                  url;
+    http_str_s                  params;
     http_request_headers_struct headers;
+    json_object*                b;
+    json_object*                attributes;
+    json_object*                id;
 };
 
 struct http_json_api_struct {
@@ -125,8 +130,6 @@ struct http_connection_struct {
     http_worker_struct*        worker;
     int                        status; // 0 - read data from socket, 1 - build query, 2 - Get response from database
 };
-
-
 
 http_str_s http_str        (char* data);
 int        str_to_int      (http_str_s s);

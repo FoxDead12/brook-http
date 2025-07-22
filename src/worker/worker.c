@@ -91,6 +91,11 @@ void worker_event_loop (http_main_struct* conf) {
 int worker_close_connection (http_connection_struct* con) {
     
     close(con->socket);
+    
+    if (con->request.b != NULL) {
+        json_object_put(con->request.b);
+    }
+    
     free(con->b_header.start);
     free(con);
     
@@ -146,11 +151,71 @@ int worker_read_connection (http_connection_struct *con) {
             return HTTP_ERROR;
         }
         
+        if (con->request.headers.content_length <= 0 || ( comp_str_to_str(con->request.method, http_str("POST")) == 1 && comp_str_to_str(con->request.method, http_str("PATCH")) == 1 )) {
+            con->status = 1; // update status to build query and send to db
+            return HTTP_OK;
+        }
+        
+        con->c_body.size += 1;
+        con->c_body.current = malloc(sizeof(http_buffer_s));
+        con->c_body.last    = con->c_body.current;
+        con->c_body.first   = con->c_body.current;
+
+        con->c_body.current->need_free = 1; // 1 - false || 0 - true
+        con->c_body.current->start  = con->b_header.end + 4;
+        con->c_body.current->end    = con->b_header.start + b;
+        con->c_body.current->length = con->c_body.current->end - con->c_body.current->start;
+        con->c_body.current->size   = con->c_body.current->length;
+        con->c_body.bytes           += con->c_body.current->length;
+        
+        if (con->c_body.current->length >= con->request.headers.content_length) {
+            con->status = 1; // update status to build query and send to db
+            return request_body_transform_to_json(con);
+        }
+        
+        con->c_body.current = malloc(sizeof(http_buffer_s));
+        con->c_body.last->next = con->c_body.current;
+        con->c_body.last = con->c_body.last->next;
+        
+    } else {
+        
+        http_buffer_s* data = con->c_body.current;
+        
+        if (data->start == NULL) {
+            data->start = calloc(1, 4096 + 1);
+            data->size  = 4096;
+            data->need_free = 0;
+            
+            size_t b = socket_read(con->socket, data->start, data->size);
+            data->length += b;
+            data->end    = data->start + b;
+            con->c_body.bytes += b;
+            
+        } else {
+            // current buffer can store more data
+            size_t size = data->size - data->length;
+            size_t b = socket_read(con->socket, data->start + data->length, size);
+            con->c_body.bytes += b;
+        }
+        
+        if (con->c_body.bytes >= con->request.headers.content_length) {
+            con->status = 1; // update status to build query and send to db
+            return request_body_transform_to_json(con);
+        }
+        
+        if (data->length == data->size) {
+            
+            // buffer cheio, mudar lista
+            con->c_body.current = malloc(sizeof(http_buffer_s));
+            con->c_body.last->next = con->c_body.current;
+            con->c_body.last = con->c_body.last->next;
+            
+        }
+        
+        
     }
-    
-    con->status = 1; // update status to build query and send to db
-    
-    return HTTP_OK;
+        
+    return HTTP_DONE;
     
 }
 

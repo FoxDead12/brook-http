@@ -37,7 +37,7 @@ int generate_query_from_request (http_connection_struct* con, PGconn* db) {
     const char* query = "DELETE FROM @resource WHERE id = @resource_id";
     
     */
-    
+        
     http_str_s query;
      
     // Get resource data from request
@@ -66,6 +66,11 @@ int generate_query_from_request (http_connection_struct* con, PGconn* db) {
         }
         
         query = delete_item_query(resource, resource_id);
+        
+    } else if (comp_str_to_str(con->request.method, http_str("POST")) == 0) {
+                
+        insert_item_query(resource, con->request.attributes);
+        
     }
     
     // Send query to database
@@ -139,3 +144,31 @@ http_str_s delete_item_query (http_str_s* resource, http_str_s* resource_id) {
     
 }
 
+http_str_s insert_item_query (http_str_s* resource, json_object* attributes) {
+    
+    http_str_s s;
+    s.length = 0;
+    s.data   = NULL;
+        
+    size_t count = json_object_object_length(attributes);
+    char** columns = malloc(sizeof(char*) * count);
+    char** parameters = malloc(sizeof(char*) * count);
+
+    int i = 0;
+    json_object_object_foreach(attributes, key, val) {
+    
+        columns[i] = key;
+        
+        char temp[4] = {0};
+        snprintf(temp, 4, "$%d", i++);
+        
+        parameters[i] = strdup(temp);
+        
+        i++;
+    }
+    
+    const char* template = "INSERT INTO %.*s (%s) VALUES (%s) RETURNING *";
+    s.length = asprintf(&s.data, template, resource->length, resource->data);
+
+    return s;
+}
