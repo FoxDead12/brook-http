@@ -212,7 +212,6 @@ int worker_read_connection (http_connection_struct *con) {
             
         }
         
-        
     }
         
     return HTTP_DONE;

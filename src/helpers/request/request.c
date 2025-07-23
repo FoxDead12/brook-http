@@ -85,11 +85,11 @@ int request_body_transform_to_json (http_connection_struct* con) {
     http_buffer_s* d = con->c_body.first;
     
     while (1) {
-        
+
         if (d == NULL) {
             break;
         }
-        
+
         memmove(b + n, d->start, d->length);
         n += d->length;
         

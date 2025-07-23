@@ -86,10 +86,9 @@ int generate_query_from_request (http_connection_struct* con, PGconn* db) {
 
         int i = 0;
         json_object_object_foreach(con->request.attributes, key, val) {
-            values[i] = json_object_get_string(val);
+            values[i] = (char*) json_object_get_string(val);
             i++;
         }
-        
         
         PQsendQueryParams(db, query.data, count, NULL, values, NULL, NULL, 0);
         
@@ -191,6 +190,9 @@ http_str_s insert_item_query (http_str_s* resource, json_object* attributes) {
     char* columns_s = join_array(columns, count, ", ", 1);
     char* parameters_s = join_array(parameters, count, ", ", 0);
 
+    free(columns);
+    free(parameters);
+    
     const char* template = "INSERT INTO %.*s (%s) VALUES (%s) RETURNING *";
     s.length = asprintf(&s.data, template, resource->length, resource->data, columns_s, parameters_s);
 
@@ -216,7 +218,7 @@ http_str_s update_item_query (http_str_s* resource, http_str_s* resource_id, jso
         i++;
     }
     
-    char* attrib_s = join_array(attrib, count, ", ", 1);
+    char* attrib_s = join_array(attrib, count, ", ", 0);
 
     const char* template = "UPDATE %.*s SET %s WHERE id = %.*s RETURNING *";
     s.length = asprintf(&s.data, template, resource->length, resource->data, attrib_s, resource_id->length, resource_id->data);
