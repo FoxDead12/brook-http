@@ -219,7 +219,8 @@ http_str_s update_item_query (http_str_s* resource, http_str_s* resource_id, jso
     }
     
     char* attrib_s = join_array(attrib, count, ", ", 0);
-
+    free(attrib);
+    
     const char* template = "UPDATE %.*s SET %s WHERE id = %.*s RETURNING *";
     s.length = asprintf(&s.data, template, resource->length, resource->data, attrib_s, resource_id->length, resource_id->data);
 
