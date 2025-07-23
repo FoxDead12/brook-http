@@ -63,8 +63,8 @@ int send_json_api_response (http_connection_struct* con) {
 json_object* build_json_api_error_obj_from_db_result (PGresult* res) {
     
     const char *s = PQresultErrorField(res, PG_DIAG_SQLSTATE);
-    const char* e = PQresultErrorMessage(res); //TODO: Will be used in custom codes of db
-    printf("%s - %s\n", s, e);
+    //const char* e = PQresultErrorMessage(res); //TODO: Will be used in custom codes of db
+    
     char* detail;
     char* code;
     int status;
