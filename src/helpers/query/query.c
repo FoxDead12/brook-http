@@ -58,6 +58,9 @@ int generate_query_from_request (http_connection_struct* con, PGconn* db) {
             query = select_query(resource);
         }
         
+        // Send query to database
+        PQsendQuery(db, query.data);
+        
     } else if (comp_str_to_str(con->request.method, http_str("DELETE")) == 0) {
         
         if (resource_id->length <= 0) {
@@ -67,14 +70,32 @@ int generate_query_from_request (http_connection_struct* con, PGconn* db) {
         
         query = delete_item_query(resource, resource_id);
         
-    } else if (comp_str_to_str(con->request.method, http_str("POST")) == 0) {
+        // Send query to database
+        PQsendQuery(db, query.data);
+        
+    } else if (comp_str_to_str(con->request.method, http_str("POST")) == 0 || comp_str_to_str(con->request.method, http_str("PATCH")) == 0) {
                 
-        insert_item_query(resource, con->request.attributes);
+        if (comp_str_to_str(con->request.method, http_str("POST")) == 0) {
+            query = insert_item_query(resource, con->request.attributes);
+        } else {
+            query = update_item_query(resource, resource_id, con->request.attributes);
+        }
+        
+        int count = json_object_object_length(con->request.attributes);
+        char** values = malloc(sizeof(char*) * count);
+
+        int i = 0;
+        json_object_object_foreach(con->request.attributes, key, val) {
+            values[i] = json_object_get_string(val);
+            i++;
+        }
+        
+        
+        PQsendQueryParams(db, query.data, count, NULL, values, NULL, NULL, 0);
+        
+        free(values);
         
     }
-    
-    // Send query to database
-    PQsendQuery(db, query.data);
     
     // Free query
     free(query.data);
@@ -160,15 +181,48 @@ http_str_s insert_item_query (http_str_s* resource, json_object* attributes) {
         columns[i] = key;
         
         char temp[4] = {0};
-        snprintf(temp, 4, "$%d", i++);
+        snprintf(temp, 4, "$%d", i + 1);
         
         parameters[i] = strdup(temp);
         
         i++;
     }
     
-    const char* template = "INSERT INTO %.*s (%s) VALUES (%s) RETURNING *";
-    s.length = asprintf(&s.data, template, resource->length, resource->data);
+    char* columns_s = join_array(columns, count, ", ", 1);
+    char* parameters_s = join_array(parameters, count, ", ", 0);
 
+    const char* template = "INSERT INTO %.*s (%s) VALUES (%s) RETURNING *";
+    s.length = asprintf(&s.data, template, resource->length, resource->data, columns_s, parameters_s);
+
+    free(columns_s);
+    free(parameters_s);
+    
     return s;
+}
+
+http_str_s update_item_query (http_str_s* resource, http_str_s* resource_id, json_object* attributes) {
+    
+    http_str_s s;
+    s.length = 0;
+    s.data   = NULL;
+        
+    size_t count = json_object_object_length(attributes);
+    char** attrib = malloc(sizeof(char*) * count);
+
+    int i = 0;
+    json_object_object_foreach(attributes, key, val) {
+    
+        asprintf(&attrib[i], "%s = $%d", key, i + 1);
+        i++;
+    }
+    
+    char* attrib_s = join_array(attrib, count, ", ", 1);
+
+    const char* template = "UPDATE %.*s SET %s WHERE id = %.*s RETURNING *";
+    s.length = asprintf(&s.data, template, resource->length, resource->data, attrib_s, resource_id->length, resource_id->data);
+
+    free(attrib_s);
+    
+    return s;
+    
 }

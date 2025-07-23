@@ -50,3 +50,35 @@ int comp_str_to_str (http_str_s a, http_str_s b) {
     
     return 0;
 }
+
+char* join_array (char** list, size_t size, const char* separator, int free_list) {
+    
+    char* joined = NULL;
+    int joined_size = 0;
+    size_t separator_size = strlen(separator);
+    
+    for (int i = 0; i < size; i++) {
+        
+        size_t len = strlen(list[i]);
+        void* tmp = realloc(joined, joined_size + len + separator_size + 1);
+        
+        joined = tmp;
+        
+        if (i != 0) {
+            strcpy(joined + joined_size, separator);
+            joined_size += separator_size;
+        }
+        
+        strcpy(joined + joined_size, list[i]);
+        joined_size += len;
+        
+        if (free_list == 0) {
+            free(list[i]);
+        }
+        
+    }
+    
+    joined[joined_size + 1] = '\0';
+    
+    return joined;
+}

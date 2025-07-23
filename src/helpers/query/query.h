@@ -18,5 +18,5 @@ http_str_s  select_query                (http_str_s* resource);
 http_str_s select_item_query            (http_str_s* resource, http_str_s* resource_id);
 http_str_s delete_item_query            (http_str_s* resource, http_str_s* resource_id);
 http_str_s insert_item_query            (http_str_s* resource, json_object* attributes);
-
+http_str_s update_item_query (http_str_s* resource, http_str_s* resource_id, json_object* attributes);
 #endif /* query_h */
