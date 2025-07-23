@@ -34,7 +34,7 @@ int request_set_headers (http_connection_struct* con) {
     con->request.headers.content_type = request_parse_header_str(con->b_header.start, "Content-Type");
     con->request.headers.content_length = str_to_int(request_parse_header_str(con->b_header.start, "Content-Length"));
     
-    if (comp_str_to_str(con->request.headers.content_type, http_str("application/json")) == 1) {
+    if (con->request.headers.content_length > 0 && comp_str_to_str(con->request.headers.content_type, http_str("application/json")) == 1) {
         send_json_api_response_error(con, 400, "HTTP_BROKER_ERROR_HEADER", "Header content-type invalid only allow application json");
         return HTTP_ERROR;
     }
