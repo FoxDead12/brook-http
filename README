@@ -1,1 +1,5 @@
-HTTP SERVER DEVELOP IN C
+# HTTP BROKER IN C
+Um servidor http implementado em C tanto para MacOs/FreeBSD e para Linux, utilizando um sistemas de eventos (kqueue, epoll). Permitindo um desempenho alto e eficiente por processo.
+
+## Funcionalidades
+
