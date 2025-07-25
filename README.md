@@ -22,9 +22,9 @@ No body necessita de indicar o seguintes atributos:
   - type
   - id
  - attributes
-  - attributes of entity
- - relationship
-  - resource
-   - data (can be oject if only one, or array more than one)
     - attributes of entity
+ - relationship
+    - resource
+       - data (can be oject if only one, or array more than one)
+        - attributes of entity
 
