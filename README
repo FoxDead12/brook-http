@@ -10,4 +10,21 @@ Possuindo uma das partes mais importantes a segurança nos pedidos http, validan
 
 ## JSON:API
 Na lógica de json api, sera disponibilizado os seguintes parâmetros:
-- 
+- resource
+- resource_id
+- includes
+- page
+- sort
+- filter (custom sql injection)
+
+No body necessita de indicar o seguintes atributos:
+- data
+ - type
+ - id
+ - attributes
+  - attributes of entity
+ - relationship
+  - resource
+   - data (can be oject if only one, or array more than one)
+    - attributes of entity
+
