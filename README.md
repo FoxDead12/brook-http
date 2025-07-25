@@ -19,8 +19,8 @@ Na lógica de json api, sera disponibilizado os seguintes parâmetros:
 
 No body necessita de indicar o seguintes atributos:
 - data
- - type
- - id
+  - type
+  - id
  - attributes
   - attributes of entity
  - relationship
