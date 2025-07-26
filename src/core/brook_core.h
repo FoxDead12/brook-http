@@ -16,6 +16,7 @@
 #define BROOK_CONFIG_FILE "../../conf/brook_config.json"
 
 #include "brook_files.h"
-#include "brook_string.h"
+#include "brook_json.h"
+#include "brook_socket.h"
 
 #endif /* brook_core_h */

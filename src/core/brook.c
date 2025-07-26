@@ -10,12 +10,14 @@
 int
 main(int argc, const char * argv[]) {
 
-
-    // load configuration //
-    load_envirmont();
-
-    // init regex //
-
+    brook_config_t conf;
+    
+    if (create_configuration(&conf) == BROOK_ERROR) {
+        return 1;
+    }
+    conf.socket = brook_init_socket(conf.port);
+    
+    
     // start master process OR single process //
 
     return 0;
@@ -23,27 +25,35 @@ main(int argc, const char * argv[]) {
 }
 
 int
-load_envirmont () {
+create_configuration (brook_config_t* conf) {
 
     // read configuration file
     FILE* file = brook_open_file(BROOK_CONFIG_FILE, "r");
-
     if (file == NULL) {
         perror(BROOK_CONFIG_FILE);
         return BROOK_ERROR;
     }
 
     char* data = brook_read_file(file);
-
     brook_close_file(file);
-
+    
     if (data == NULL) {
         perror(BROOK_CONFIG_FILE);
         return BROOK_ERROR;
     }
 
     // now load the file content to json object
-    printf("content: %s\n", data);
+    conf->json = json_parse(data);
+    conf->port = json_get_int("port", conf->json, 0);
+    conf->worker_processes = json_get_int("worker_processes", conf->json, 4); // 4 worker process in default
+    conf->http.timeout = json_get_int("http_request_timeout_ms", conf->json, 1000); // 1 SECOND default
+    conf->http.max_body_size = json_get_int("http_request_max_body_size", conf->json, 1048576); // 1MB default size
+    conf->http.allow_content_types = json_get_array("http_request_allow_content_type", conf->json);
     
+    if (conf->http.allow_content_types->size == 0) {
+        perror("configuration missing 'http_request_allow_content_type' in json file configuration -> array\n");
+        return BROOK_ERROR;
+    }
+        
     return BROOK_OK;
 }

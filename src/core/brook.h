@@ -10,6 +10,6 @@
 
 #include "brook_core.h"
 
-int load_envirmont();
+int create_configuration (brook_config_t* conf);
 
 #endif /* brook_h */
