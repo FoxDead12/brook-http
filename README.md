@@ -1,5 +1,5 @@
 # HTTP BROKER IN C
-Um servidor http implementado em C tanto para MacOs/FreeBSD e para Linux, utilizando um sistemas de eventos (kqueue, epoll), permitindo um desempenho alto e eficiente por processo.
+Um servidor http implementado em C tanto para MacOs/FreeBSD e para Linux, utilizando um sistemas de eventos (kqueue, epoll), permitindo alto desempenho e eficiência por processo.
 
 ## Funcionalidades
 O objectivo do servidor é realizar uma comunicação direta com a base de dados utilizando   o formato de JSON:API, permitindo assim execução das tarefas crud na base de dados. Implementado as regras de formatação da JSON:API.
