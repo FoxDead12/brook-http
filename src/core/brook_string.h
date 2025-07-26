@@ -8,6 +8,8 @@
 #ifndef brook_string_h
 #define brook_string_h
 
+#include "brook_core.h"
+
 typedef struct {
     size_t     len;
     u_char*    data;
@@ -21,6 +23,5 @@ typedef struct {
 #define brook_toupper(c)     (u_char) ((c >= 'a' && c <= 'z') ? (c & ~0x20) : c)
 
 #define brook_strncmp(s1, s2, n) strncmp((const char *) s1, (const char *) s2, n)
-
 
 #endif /* brook_string_h */

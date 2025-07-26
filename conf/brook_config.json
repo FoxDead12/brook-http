@@ -1,0 +1,11 @@
+{
+  "port": 3001,
+  "worker_processes": 4,
+  "http_request_timeout_ms": 10,        // 10 MB
+  "http_request_max_header": 2048,      // 2048 KB
+  "http_request_max_content_lenght": 1048576, // 1MB
+  "http_request_allow_content_type": [
+    "application/vnd.api+json",
+    "application/json"
+  ]
+}

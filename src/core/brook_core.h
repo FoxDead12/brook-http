@@ -8,12 +8,14 @@
 #ifndef brook_core_h
 #define brook_core_h
 
+#include "brook_config.h"
+
 #define BROOK_OK      0
 #define BROOK_ERROR   -1
 #define BROOK_DONE    -2
+#define BROOK_CONFIG_FILE "../../conf/brook_config.json"
 
-typedef unsigned char u_char;
-
+#include "brook_files.h"
 #include "brook_string.h"
 
 #endif /* brook_core_h */
