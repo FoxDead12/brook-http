@@ -13,11 +13,11 @@
 typedef struct brook_array_s brook_array_t;
 
 struct brook_array_s {
-    u_char** data;
+    void** data;
     size_t   size;
 };
 
-brook_array_t* brook_create_array(size_t size);
-void brook_array_set_value(brook_array_t* array, u_char* data, int index);
+brook_array_t* brook_create_array(size_t size, size_t type_size);
+void brook_array_set_value(brook_array_t* array, void* data, int index);
 
 #endif /* brook_array_h */

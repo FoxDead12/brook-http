@@ -16,7 +16,13 @@ main(int argc, const char * argv[]) {
         return 1;
     }
     conf.socket = brook_init_socket(conf.port);
-    
+    brook_start_main_process(&conf);
+
+#if DEBUG
+    //brook_start_single_process(&conf);
+#else
+    brook_start_main_process(&conf);
+#endif
     
     // start master process OR single process //
 
@@ -49,10 +55,20 @@ create_configuration (brook_config_t* conf) {
     conf->http.timeout = json_get_int("http_request_timeout_ms", conf->json, 1000); // 1 SECOND default
     conf->http.max_body_size = json_get_int("http_request_max_body_size", conf->json, 1048576); // 1MB default size
     conf->http.allow_content_types = json_get_array("http_request_allow_content_type", conf->json);
+    conf->brook_processes = brook_create_array(conf->worker_processes, sizeof(pid_t*));
     
+    if (conf->port == 0) {
+        perror("configuration missing 'port' in json file configuration -> integer\n");
+        return BROOK_ERROR;
+    }
     if (conf->http.allow_content_types->size == 0) {
         perror("configuration missing 'http_request_allow_content_type' in json file configuration -> array\n");
         return BROOK_ERROR;
+    }
+    
+    for (int i = 0; i < conf->worker_processes; i++) {
+        conf->brook_processes->data[i] = (void*) -1;
+        printf("ola: %d\n", conf->brook_processes->data[i]);
     }
         
     return BROOK_OK;

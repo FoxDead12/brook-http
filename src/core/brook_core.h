@@ -18,5 +18,6 @@
 #include "brook_files.h"
 #include "brook_json.h"
 #include "brook_socket.h"
+#include "brook_process.h"
 
 #endif /* brook_core_h */
