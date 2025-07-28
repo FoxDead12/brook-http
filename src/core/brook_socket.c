@@ -30,7 +30,7 @@ brook_init_socket (int port) {
         perror(strerror(errno));
         exit(EXIT_FAILURE);
     }
-
+    
     if (bind(s, (struct sockaddr*) &brook_addr, sizeof(brook_addr)) == -1) {
         perror(strerror(errno));
         exit(EXIT_FAILURE);

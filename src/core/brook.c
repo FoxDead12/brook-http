@@ -55,7 +55,8 @@ create_configuration (brook_config_t* conf) {
     conf->http.timeout = json_get_int("http_request_timeout_ms", conf->json, 1000); // 1 SECOND default
     conf->http.max_body_size = json_get_int("http_request_max_body_size", conf->json, 1048576); // 1MB default size
     conf->http.allow_content_types = json_get_array("http_request_allow_content_type", conf->json);
-    conf->brook_processes = brook_create_array(conf->worker_processes, sizeof(pid_t*));
+    conf->brook_processes = brook_create_array(conf->worker_processes, sizeof(int*));
+    conf->brook_parent_process = getpid();
     
     if (conf->port == 0) {
         perror("configuration missing 'port' in json file configuration -> integer\n");
@@ -68,7 +69,11 @@ create_configuration (brook_config_t* conf) {
     
     for (int i = 0; i < conf->worker_processes; i++) {
         conf->brook_processes->data[i] = (void*) -1;
-        printf("ola: %d\n", conf->brook_processes->data[i]);
+        printf("ola: %d\n", (int*) conf->brook_processes->data[i]);
+    }
+    
+    for (int i = 0; i < conf->http.allow_content_types->size; i++) {
+        printf("ola: %s\n", (u_char*) conf->http.allow_content_types->data[i]);
     }
         
     return BROOK_OK;

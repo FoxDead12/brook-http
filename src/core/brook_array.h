@@ -14,7 +14,7 @@ typedef struct brook_array_s brook_array_t;
 
 struct brook_array_s {
     void** data;
-    size_t   size;
+    size_t size;
 };
 
 brook_array_t* brook_create_array(size_t size, size_t type_size);

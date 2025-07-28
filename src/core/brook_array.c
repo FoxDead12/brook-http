@@ -10,7 +10,7 @@
 brook_array_t*
 brook_create_array (size_t size, size_t type_size) {
     brook_array_t* a = malloc(sizeof(brook_array_t));
-    a->data = malloc(type_size * size);
+    a->data = (void*) malloc(type_size * size);
     a->size = size;
     return a;
 }
