@@ -26,6 +26,10 @@ brook_start_kernel_event (brook_config_t* conf) {
 
 void brook_kevent_handle (int kq, struct kevent event, brook_config_t* conf) {
     
+    if (event.filter == EVFILT_READ) {
+        brook_evfilter_read(event, conf);
+    }
+    
 }
 
 int
@@ -36,3 +40,12 @@ brook_kqueue_set_descriptor (int kq, int fd, int filter, int flags, int fflags, 
     return BROOK_OK;
 }
 
+int
+brook_evfilter_read (struct kevent event, brook_config_t* conf) {
+    
+    if (event.ident == conf->socket) {
+        brook_create_connection(conf);
+    }
+    
+    return BROOK_OK;
+}
