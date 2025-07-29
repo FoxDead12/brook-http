@@ -16,10 +16,9 @@ main(int argc, const char * argv[]) {
         return 1;
     }
     conf.socket = brook_init_socket(conf.port);
-    brook_start_main_process(&conf);
 
 #if DEBUG
-    //brook_start_single_process(&conf);
+    brook_start_single_process(&conf);
 #else
     brook_start_main_process(&conf);
 #endif
@@ -69,12 +68,7 @@ create_configuration (brook_config_t* conf) {
     
     for (int i = 0; i < conf->worker_processes; i++) {
         conf->brook_processes->data[i] = (void*) -1;
-        printf("ola: %d\n", (int*) conf->brook_processes->data[i]);
     }
-    
-    for (int i = 0; i < conf->http.allow_content_types->size; i++) {
-        printf("ola: %s\n", (u_char*) conf->http.allow_content_types->data[i]);
-    }
-        
+            
     return BROOK_OK;
 }

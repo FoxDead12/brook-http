@@ -7,9 +7,21 @@
 
 #include "brook_connection.h"
 
-int
+brook_connection_t*
 brook_create_connection (brook_config_t* conf) {
+    struct sockaddr_in client_addr;
+    int client_socket = brook_socket_accept(conf->socket, &client_addr);
     
+    if (client_socket <= 0) {
+        return NULL;
+    }
     
-    return BROOK_OK;
+    brook_connection_t* connection = malloc(sizeof(brook_connection_t));
+    connection->conf = conf;
+    connection->socket = client_socket;
+    connection->port = ntohs(client_addr.sin_port);
+    inet_ntop(AF_INET, &(client_addr.sin_addr), connection->ip, INET_ADDRSTRLEN);
+    connection->state = READING_REQUEST_HEADER;
+
+    return connection;
 }

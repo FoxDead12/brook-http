@@ -19,6 +19,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <arpa/inet.h>
 
 typedef unsigned char u_char;
 

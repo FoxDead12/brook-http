@@ -45,3 +45,9 @@ brook_init_socket (int port) {
     
     return s;
 }
+
+int
+brook_socket_accept (int socket, struct sockaddr_in* client_addr) {
+    socklen_t size = sizeof(struct sockaddr_in);
+    return accept(socket, (struct sockaddr*) client_addr, &size);
+}
