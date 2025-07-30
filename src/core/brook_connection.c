@@ -22,14 +22,11 @@ brook_create_connection (brook_config_t* conf) {
     connection->port = ntohs(client_addr.sin_port);
     inet_ntop(AF_INET, &(client_addr.sin_addr), connection->ip, INET_ADDRSTRLEN);
     connection->state = READING_SOCKET_MESSAGE;
-
     return connection;
 }
 
 int
 brook_read_message_connection (brook_connection_t* connection) {
-    
-    
     
     size_t bytes = brook_socket_read(connection->socket, NULL, 0);
     
