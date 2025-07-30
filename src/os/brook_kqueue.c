@@ -52,9 +52,8 @@ brook_evfilter_read (int kq, struct kevent event, brook_config_t* conf) {
             return BROOK_DONE;
         }
         switch (connection->state) {
-            case READING_REQUEST_HEADER:
-            break;
-            case READING_REQUEST_BODY:
+            case READING_SOCKET_MESSAGE:
+                brook_read_message_connection(connection);
             break;
         }
     }

@@ -51,3 +51,12 @@ brook_socket_accept (int socket, struct sockaddr_in* client_addr) {
     socklen_t size = sizeof(struct sockaddr_in);
     return accept(socket, (struct sockaddr*) client_addr, &size);
 }
+
+size_t
+brook_socket_read (int socket, char* buffer, size_t size) {
+    size_t n = recv(socket, buffer, size, 0);
+    if (n <= 0) {
+        return BROOK_ERROR;
+    }
+    return n;
+}
