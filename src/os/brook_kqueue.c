@@ -14,7 +14,8 @@ brook_start_kernel_event (brook_config_t* conf) {
     struct kevent kq_list[MAX_EVENTS];
     
     brook_kqueue_set_descriptor(kq, conf->socket, EVFILT_READ, EV_ADD, 0, NULL);
-    brook_kqueue_set_descriptor(kq, conf->brook_parent_process, EVFILT_PROC, EV_ADD, NOTE_EXIT, NULL);\
+    brook_kqueue_set_descriptor(kq, conf->brook_parent_process, EVFILT_PROC, EV_ADD, NOTE_EXIT, NULL);
+    
     while (1) {
         int n = kevent(kq, NULL, 0, kq_list, MAX_EVENTS, NULL);
         for (int i = 0; i < n; i++) {

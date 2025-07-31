@@ -10,8 +10,8 @@
 
 #include "brook_core.h"
 
-typedef struct brook_connection_s brook_connection_t;
-typedef enum brook_connection_status_e brook_connection_status_t;
+typedef struct  brook_connection_s brook_connection_t;
+typedef enum    brook_connection_status_e brook_connection_status_t;
 
 enum brook_connection_status_e {
     READING_SOCKET_MESSAGE
@@ -23,6 +23,7 @@ struct brook_connection_s {
     pid_t                     socket;
     int                       port;
     char                      ip[INET_ADDRSTRLEN];
+    brook_chain_t*            buf;
 };
 
 brook_connection_t* brook_create_connection(brook_config_t* conf);
