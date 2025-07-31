@@ -25,10 +25,11 @@ typedef unsigned char u_char;
 
 #include "brook_array.h"
 #include "brook_string.h"
+#include "brook_buffer.h"
 
-typedef struct brook_config_s      brook_config_t;
-typedef struct brook_config_http_s brook_config_http_t;
-typedef struct brook_array_s       brook_array_t;
+typedef struct brook_config_s           brook_config_t;
+typedef struct brook_config_http_s      brook_config_http_t;
+typedef struct brook_array_s            brook_array_t;
 typedef struct brook_config_processes_s brook_config_processes_t;
 
 struct brook_config_processes_s {

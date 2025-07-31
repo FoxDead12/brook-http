@@ -18,11 +18,11 @@ enum brook_connection_status_e {
 };
 
 struct brook_connection_s {
-    brook_config_t* conf;
+    brook_config_t*           conf;
     brook_connection_status_t state;
-    pid_t socket;
-    int port;
-    char ip[INET_ADDRSTRLEN];
+    pid_t                     socket;
+    int                       port;
+    char                      ip[INET_ADDRSTRLEN];
 };
 
 brook_connection_t* brook_create_connection(brook_config_t* conf);
