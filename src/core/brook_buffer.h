@@ -30,4 +30,6 @@ struct brook_chain_s {
     brook_chain_t*  next;
 };
 
+brook_buffer_t* brook_create_buffer(size_t size);
+
 #endif /* brook_buffer_h */
