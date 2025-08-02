@@ -9,7 +9,6 @@
 
 int
 brook_start_kernel_event (brook_config_t* conf) {
-    
     int kq = kqueue();
     struct kevent kq_list[MAX_EVENTS];
     
@@ -25,7 +24,8 @@ brook_start_kernel_event (brook_config_t* conf) {
     return BROOK_OK;
 }
 
-void brook_kevent_handle (int kq, struct kevent event, brook_config_t* conf) {
+void
+brook_kevent_handle (int kq, struct kevent event, brook_config_t* conf) {
     if (event.filter == EVFILT_READ) {
         brook_evfilter_read(kq, event, conf);
     }
@@ -40,8 +40,7 @@ brook_kqueue_set_descriptor (int kq, int fd, int filter, int flags, int fflags, 
 }
 
 int
-brook_evfilter_read (int kq, struct kevent event, brook_config_t* conf) {
-    
+brook_evfilter_read (int kq, struct kevent event, brook_config_t* conf) {    
     if (event.ident == conf->socket) {
         brook_connection_t* connection = brook_create_connection(conf);
         if (connection != NULL) {

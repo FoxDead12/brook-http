@@ -10,10 +10,11 @@
 
 #include "brook_config.h"
 
-typedef struct {
+typedef struct brook_str_s brook_str_t;
+struct brook_str_s {
     size_t     len;
     u_char*    data;
-} brook_str_t;
+};
 
 #define brook_string(str)    { sizeof(str) - 1, (u_char *) str }
 #define brook_null_string    { 0, NULL }

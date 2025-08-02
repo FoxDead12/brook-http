@@ -46,9 +46,7 @@ create_configuration (brook_config_t* conf) {
     if (data == NULL) {
         perror(BROOK_CONFIG_FILE);
         return BROOK_ERROR;
-    }
-
-
+    } 
     {
         conf->json = json_parse(data);
         conf->port = json_get_int("port", conf->json, 0);
@@ -61,6 +59,12 @@ create_configuration (brook_config_t* conf) {
         conf->http.max_body_size = json_get_int("http_request_max_body_size", conf->json, 1048576); // 1MB default size
         conf->http.allow_content_types = json_get_array("http_request_allow_content_type", conf->json);
         conf->http.buffers_size = json_get_int("http_request_buffers_size", conf->json, 4096);
+    }
+    {
+        if(regcomp(&conf->regex.http_line, json_get_str("regex_http_line", conf->json, (brook_str_t)brook_string("")).data, REG_EXTENDED)) {
+            perror("regex of field 'regex_http_line' is invalid\n");
+            return BROOK_ERROR;
+        }
     }
 
     if (conf->port == 0) {

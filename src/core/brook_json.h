@@ -10,7 +10,9 @@
 
 #include "brook_config.h"
 
-json_object* json_parse (char* data);
-int json_get_int (const char* key, json_object* o, int def);
+json_object* json_parse(char* data);
+int json_get_int(const char* key, json_object* o, int def);
 brook_array_t* json_get_array(const char* key, json_object* o);
+brook_str_t json_get_str(const char* key, json_object* o, brook_str_t def);
+
 #endif /* brook_json_h */

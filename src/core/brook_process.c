@@ -18,9 +18,6 @@ brook_start_main_process (brook_config_t* conf) {
         if (child >= 0) {
             brook_died_process(conf, child);
             brook_spawn_process(conf);
-            for (int i = 0; i < conf->worker_processes; i++) {
-                printf("pid: %d\n", *(int*)conf->brook_processes->data[i]);
-            }
         }
     }
     return BROOK_OK;
@@ -81,7 +78,6 @@ void
 brook_start_event_loop_process (brook_config_t* conf) {
     // store config of process and init examples database connections
     conf->brook_process.pid = getpid();
-
     brook_start_kernel_event(conf);
     exit(1);
 }

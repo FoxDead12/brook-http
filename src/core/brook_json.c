@@ -15,6 +15,18 @@ json_parse (char* data) {
     return o;
 }
 
+brook_str_t
+json_get_str (const char* key, json_object* o, brook_str_t def) {
+    json_object* value = NULL;
+    if (json_object_object_get_ex(o, key, &value)) {
+        brook_str_t s;
+        s.data = (u_char*) json_object_get_string(value);
+        s.len = json_object_get_string_len(value);
+        return s;
+    }
+    return def;
+}
+
 int
 json_get_int (const char* key, json_object* o, int def) {
     json_object* value = NULL;
