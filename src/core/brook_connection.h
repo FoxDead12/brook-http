@@ -23,7 +23,6 @@ struct brook_connection_s {
     pid_t                     socket;
     int                       port;
     char                      ip[INET_ADDRSTRLEN];
-    brook_chain_t*            buff;
 };
 
 brook_connection_t* brook_create_connection(brook_config_t* conf);
