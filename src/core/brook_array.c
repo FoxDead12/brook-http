@@ -6,6 +6,7 @@
 //
 
 #include "brook_array.h"
+#include "brook_core.h"
 
 brook_array_t*
 brook_create_array (size_t size, size_t type_size) {

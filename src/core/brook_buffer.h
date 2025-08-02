@@ -8,7 +8,7 @@
 #ifndef brook_buffer_h
 #define brook_buffer_h
 
-#include "brook_core.h"
+#include "brook_config.h"
 
 typedef struct brook_buffer_s brook_buffer_t;
 typedef struct brook_chain_s  brook_chain_t;

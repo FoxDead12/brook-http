@@ -6,6 +6,7 @@
 //
 
 #include "brook_json.h"
+#include "brook_core.h"
 
 json_object*
 json_parse (char* data) {

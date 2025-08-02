@@ -6,6 +6,8 @@
 //
 
 #include "brook_connection.h"
+#include "brook_core.h"
+#include "../http/brook_http.h"
 
 brook_connection_t*
 brook_create_connection (brook_config_t* conf) {
@@ -31,6 +33,10 @@ brook_create_connection (brook_config_t* conf) {
         connection->buff->buf->start = calloc(1, conf->http.buffers_size + 1); // clean all memory in buffer
         connection->buff->buf->pos = connection->buff->buf->start;
         connection->buff->buf->size = conf->http.buffers_size;
+    }
+    {
+        connection->http = malloc(sizeof(brook_http_t));
+        connection->http->state = READING_HEADER;
     }
     return connection;
 }

@@ -7,6 +7,7 @@
 
 #include "brook_process.h"
 #include "../os/brook_os.h"
+#include "brook_core.h"
 
 int
 brook_start_main_process (brook_config_t* conf) {
@@ -80,7 +81,7 @@ void
 brook_start_event_loop_process (brook_config_t* conf) {
     // store config of process and init examples database connections
     conf->brook_process.pid = getpid();
-    
+
     brook_start_kernel_event(conf);
     exit(1);
 }

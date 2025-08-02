@@ -8,7 +8,7 @@
 #ifndef brook_string_h
 #define brook_string_h
 
-#include "brook_core.h"
+#include "brook_config.h"
 
 typedef struct {
     size_t     len;

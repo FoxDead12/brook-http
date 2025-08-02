@@ -8,7 +8,7 @@
 #ifndef brook_files_h
 #define brook_files_h
 
-#include "brook_core.h"
+#include "brook_config.h"
 
 FILE* brook_open_file(char* file_name, char* action);
 char* brook_read_file(FILE* file);

@@ -8,7 +8,7 @@
 #ifndef brook_json_h
 #define brook_json_h
 
-#include "brook_core.h"
+#include "brook_config.h"
 
 json_object* json_parse (char* data);
 int json_get_int (const char* key, json_object* o, int def);

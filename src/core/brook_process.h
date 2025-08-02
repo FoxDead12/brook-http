@@ -8,7 +8,7 @@
 #ifndef brook_process_h
 #define brook_process_h
 
-#include "brook_core.h"
+#include "brook_config.h"
 
 int brook_start_main_process(brook_config_t* conf);
 int brook_start_single_process(brook_config_t* conf);

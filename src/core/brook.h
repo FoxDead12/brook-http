@@ -8,7 +8,7 @@
 #ifndef brook_h
 #define brook_h
 
-#include "brook_core.h"
+#include "brook_config.h"
 
 int create_configuration (brook_config_t* conf);
 

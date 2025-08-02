@@ -8,9 +8,9 @@
 #ifndef brook_connection_h
 #define brook_connection_h
 
-#include "brook_core.h"
-#include "../http/brook_http.h"
+#include "brook_config.h"
 
+typedef struct brook_http_s brook_http_t;
 typedef struct brook_connection_s brook_connection_t;
 typedef enum   brook_connection_status_e brook_connection_status_t;
 
@@ -25,6 +25,7 @@ struct brook_connection_s {
     int                       port;
     char                      ip[INET_ADDRSTRLEN];
     brook_chain_t*            buff;
+    brook_http_t*             http;
 };
 
 brook_connection_t* brook_create_connection(brook_config_t* conf);

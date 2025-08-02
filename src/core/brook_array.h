@@ -8,7 +8,7 @@
 #ifndef brook_array_h
 #define brook_array_h
 
-#include "brook_core.h"
+#include "brook_config.h"
 
 typedef struct brook_array_s brook_array_t;
 

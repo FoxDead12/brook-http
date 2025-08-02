@@ -6,12 +6,13 @@
 //
 
 #include "brook.h"
+#include "brook_core.h"
 
 int
 main(int argc, const char * argv[]) {
 
     brook_config_t conf;
-    
+
     if (create_configuration(&conf) == BROOK_ERROR) {
         return 1;
     }
@@ -22,7 +23,7 @@ main(int argc, const char * argv[]) {
 #else
     brook_start_main_process(&conf);
 #endif
-    
+
     // start master process OR single process //
 
     return 0;
@@ -41,13 +42,13 @@ create_configuration (brook_config_t* conf) {
 
     char* data = brook_read_file(file);
     brook_close_file(file);
-    
+
     if (data == NULL) {
         perror(BROOK_CONFIG_FILE);
         return BROOK_ERROR;
     }
 
-    
+
     {
         conf->json = json_parse(data);
         conf->port = json_get_int("port", conf->json, 0);
@@ -61,7 +62,7 @@ create_configuration (brook_config_t* conf) {
         conf->http.allow_content_types = json_get_array("http_request_allow_content_type", conf->json);
         conf->http.buffers_size = json_get_int("http_request_buffers_size", conf->json, 4096);
     }
-    
+
     if (conf->port == 0) {
         perror("configuration missing 'port' in json file configuration -> integer\n");
         return BROOK_ERROR;
@@ -70,10 +71,10 @@ create_configuration (brook_config_t* conf) {
         perror("configuration missing 'http_request_allow_content_type' in json file configuration -> array\n");
         return BROOK_ERROR;
     }
-    
+
     for (int i = 0; i < conf->worker_processes; i++) {
         conf->brook_processes->data[i] = (void*) -1;
     }
-            
+
     return BROOK_OK;
 }

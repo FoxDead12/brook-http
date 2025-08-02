@@ -6,6 +6,7 @@
 //
 
 #include "brook_files.h"
+#include "brook_core.h"
 
 FILE*
 brook_open_file(char* file_name, char* action) {
