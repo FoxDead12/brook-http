@@ -20,6 +20,7 @@ typedef struct brook_chain_s  brook_chain_t;
  */
 struct brook_buffer_s {
     u_char* start;
+    u_char* pos;
     u_char* end;
     size_t  len;
     size_t  size;

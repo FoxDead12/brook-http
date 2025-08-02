@@ -39,6 +39,7 @@ struct brook_config_processes_s {
 struct brook_config_http_s {
     size_t timeout;
     size_t max_body_size;
+    size_t buffers_size;
     brook_array_t* allow_content_types;
 };
 
@@ -47,8 +48,8 @@ struct brook_config_s {
     int port;
     int worker_processes;
     int socket;
-    brook_config_http_t http;
     pid_t brook_parent_process;
+    brook_config_http_t http;
     brook_array_t* brook_processes;
     brook_config_processes_t brook_process;
 };

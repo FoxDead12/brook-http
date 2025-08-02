@@ -19,27 +19,52 @@ brook_create_connection (brook_config_t* conf) {
     brook_connection_t* connection = malloc(sizeof(brook_connection_t));
     connection->conf = conf;
     connection->socket = client_socket;
-    connection->port = ntohs(client_addr.sin_port);
-    inet_ntop(AF_INET, &(client_addr.sin_addr), connection->ip, INET_ADDRSTRLEN);
     connection->state = READING_SOCKET_MESSAGE;
-    
+    {
+        connection->port = ntohs(client_addr.sin_port);
+        inet_ntop(AF_INET, &(client_addr.sin_addr), connection->ip, INET_ADDRSTRLEN);
+    }
+    {
+        connection->buff = malloc(sizeof(brook_chain_t));
+        connection->buff->next = NULL;
+        connection->buff->buf = malloc(sizeof(brook_buffer_t));
+        connection->buff->buf->start = calloc(1, conf->http.buffers_size + 1); // clean all memory in buffer
+        connection->buff->buf->pos = connection->buff->buf->start;
+        connection->buff->buf->size = conf->http.buffers_size;
+    }
     return connection;
 }
 
 int
 brook_read_message_connection (brook_connection_t* connection) {
     
-    brook_buffer_t* buf;
-    buf->start = malloc(4096 + 1);
-    buf->end  = buf->start + 4096;
-    buf->size = 4096;
-    buf->len = 0;
+    brook_buffer_t* buf = connection->buff->buf;
+    size_t len_can_red =  buf->size - buf->len;
     
-    size_t bytes = brook_socket_read(connection->socket, buf->start, buf->len);
+    size_t bytes = brook_socket_read(connection->socket, buf->pos, len_can_red);
+
     if (bytes == BROOK_ERROR) {
         return BROOK_ERROR;
     }
     
+    buf->len += bytes;
+    buf->pos += bytes;
+    
+    brook_http_parse(connection);
+    
+    /*
+    if brook_http_parse(connection) == HTTP_ERROR
+        return HTTP_ERROR;
+    else brook_http_parse(connection) == HTTP_OK
+        return HTTP_OK // request finish
+    endif
+     */
+        
+    // aqui chegou HTTP_DONE
+    // quer dizer que vai continuar a ler
+    // verificar se buffer ficou cheio
+    // se sim, criar outro na cadeia
+
 
     return BROOK_OK;
 }
