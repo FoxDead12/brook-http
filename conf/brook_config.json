@@ -1,11 +1,12 @@
 {
   "port": 3001,
   "worker_processes": 4,
-  "http_request_timeout_ms": 1000,      // 1 SECOND
+  "http_request_timeout_ms": 1000,       // 1 SECOND
   "http_request_max_body_size": 1048576, // 1MB
   "http_request_allow_content_type": [
     "application/vnd.api+json",
     "application/json"
   ],
-  "regex_http_line": "^(GET|POST|DELETE|OPTIONS|PATCH)[ \t]+(/[^ \t\r\n?]*)(\\?[^ \t\r\n]*)?[ \t]+HTTP/1\\.1\\r?"
+  "http_request_buffers_size": 270,
+  "regex_http_line": "^(GET|POST|DELETE|OPTIONS|PATCH)[ \t]+(/([a-zA-Z0-9_-]+/?)*)(\\?[^ \t\r\n]*)?[ \t]+HTTP/1\\.1\\r?"
 }

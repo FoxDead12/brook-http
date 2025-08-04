@@ -16,6 +16,8 @@ struct brook_str_s {
     u_char*    data;
 };
 
+int brook_str_to_int(brook_str_t s);
+
 #define brook_string(str)    { sizeof(str) - 1, (u_char *) str }
 #define brook_null_string    { 0, NULL }
 #define brook_str_null(str)  { (str)->len = 0, (str)->data = NULL }

@@ -42,6 +42,26 @@ brook_create_connection (brook_config_t* conf) {
 }
 
 int
+brook_close_connection (brook_connection_t* connection) {
+    
+    {
+        free(connection->buff->buf->start);
+        free(connection->buff->buf);
+        free(connection->buff);
+    }
+    {
+        free(connection->http);
+    }
+    close(connection->socket);
+    {
+        free(connection);
+    }
+    
+    return BROOK_OK;
+}
+
+
+int
 brook_read_message_connection (brook_connection_t* connection) {
     
     brook_buffer_t* buf = connection->buff->buf;
@@ -56,21 +76,9 @@ brook_read_message_connection (brook_connection_t* connection) {
     buf->len += bytes;
     buf->pos += bytes;
     
-    brook_http_parse(connection);
+    if (brook_http_parse(connection) == BROOK_ERROR) {
+        return BROOK_ERROR;
+    }
     
-    /*
-    if brook_http_parse(connection) == HTTP_ERROR
-        return HTTP_ERROR;
-    else brook_http_parse(connection) == HTTP_OK
-        return HTTP_OK // request finish
-    endif
-     */
-        
-    // aqui chegou HTTP_DONE
-    // quer dizer que vai continuar a ler
-    // verificar se buffer ficou cheio
-    // se sim, criar outro na cadeia
-
-
     return BROOK_OK;
 }
