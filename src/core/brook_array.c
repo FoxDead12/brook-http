@@ -29,3 +29,14 @@ void
 brook_array_set_value (brook_array_t* array, void* data, int index) {
     array->data[index] = data;
 }
+
+int
+brook_array_find_value (brook_array_t* a, brook_str_t s) {
+    
+    for (int i = 0;  i < a->size; i++) {
+        int rs = brook_strncmp((char*) s.data, (char*) a->data[i], s.len);
+        if (rs == 0) return i;
+    }
+    
+    return -1;
+}
