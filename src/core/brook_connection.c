@@ -60,6 +60,9 @@ brook_close_connection (brook_connection_t* connection) {
         free(connection->buffs);
     }
     {
+        if (connection->http->json_api != NULL) {
+            free(connection->http->json_api);
+        }
         free(connection->http);
     }
     close(connection->socket);

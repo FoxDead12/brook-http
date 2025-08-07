@@ -22,21 +22,16 @@ brook_http_parse (brook_connection_t* connection) {
             break;
     }
     
-	if (rs == BROOK_OK) {
-		//printf("TODO O REQUEST GUARDADO\n");
-		//printf("header:%s\n", connection->http->buff_header->start);
-		if (connection->http->buff_body != NULL) {
-			//printf("body:%s\n", connection->http->buff_body->start);
-		}
-		
-		brook_close_connection(connection);
-		
-	} else if (rs == BROOK_ERROR) {
-		//printf("ERRO DA LER O PEDIDO\n");
-	} else {
-		//printf("PRECISA DE CONTINUAR A LER\n");
-	}
-	
+    /*
+        if (rs == BROOK_OK) {
+            // one piece already parse
+        } else if (rs == BROOK_ERROR) {
+            // error parsing one piece
+        } else if (rs == BROOK_DONE) {
+            // need keeping reading one piece
+        }
+     */
+        
     return rs;
 }
 
@@ -72,6 +67,7 @@ brook_http_header_handler (brook_connection_t* connection) {
     }
     end += 4; // jump '\r\n\r\n'
     
+    // ... Parse the necessary headers in http request
     connection->http->header.connection     = brook_http_request_header_value((char*) buf->start, "connection");
     connection->http->header.host           = brook_http_request_header_value((char*) buf->start, "host");
     connection->http->header.content_type   = brook_http_request_header_value((char*) buf->start, "content-type");
@@ -81,6 +77,8 @@ brook_http_header_handler (brook_connection_t* connection) {
         return BROOK_ERROR;
     }
         
+    // TODO: ... need create the json api struct if is json route
+    
     if ( brook_strncmp(connection->http->method.data, "POST", connection->http->method.len) != 0 && brook_strncmp(connection->http->method.data, "PATCH", connection->http->method.len) != 0 ) {
         return BROOK_OK;
     }
@@ -91,6 +89,7 @@ brook_http_header_handler (brook_connection_t* connection) {
     if (content_length > connection->conf->http.max_body_size) return BROOK_ERROR;
     
     // ... run logic to each apllication type
+    // TODO: for now we only will catch json api routes
     if ( brook_strncmp(connection->http->header.content_type.data, "application/vnd.api+json", connection->http->header.content_type.len) == 0 || brook_strncmp(connection->http->header.content_type.data, "application/json", connection->http->header.content_type.len) == 0 ) {
         
         // ... calculate current lenght loaded

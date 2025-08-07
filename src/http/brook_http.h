@@ -10,6 +10,7 @@
 
 #include "brook_config.h"
 #include "brook_http_parse.h"
+#include "brook_json_api.h"
 
 typedef struct brook_http_s brook_http_t;
 typedef struct brook_http_header_s brook_http_header_t;
@@ -34,8 +35,10 @@ struct brook_http_s {
     brook_str_t         url;
     brook_str_t         params;
 	
-	brook_buffer_t*		buff_body;
-	brook_buffer_t*		buff_header;
+    brook_json_api_t*   json_api;
+    
+	brook_buffer_t*		buff_body;      // only pointer to buff of connection
+	brook_buffer_t*		buff_header;    // only pointer to buff of connection
 };
 
 #endif /* brook_http_h */

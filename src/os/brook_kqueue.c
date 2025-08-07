@@ -80,9 +80,20 @@ brook_event_reading_socket_message (int kq, struct kevent event, brook_connectio
     
     int rs = brook_read_message_connection(connection);
     
+    if (rs == BROOK_DONE) return BROOK_DONE;
+    
+    // if error and ok need remove event reader
+    brook_kqueue_set_descriptor(kq, connection->socket, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+    
     if (rs == BROOK_ERROR) {
-        brook_kqueue_set_descriptor(kq, connection->socket, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+        // need create event to write, when event was fire will send the response
+        return BROOK_ERROR;
     }
+    
+    // catch all request
+    // add event to execute query build
+    
+    
     
     return BROOK_OK;
 }
