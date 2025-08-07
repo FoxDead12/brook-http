@@ -7,6 +7,6 @@
     "application/vnd.api+json",
     "application/json"
   ],
-  "http_request_buffers_size": 300,
+  "http_request_buffers_size": 10240,
   "regex_http_line": "^(GET|POST|DELETE|OPTIONS|PATCH)[ \t]+(/([a-zA-Z0-9_-]+/?)*)(\\?[^ \t\r\n]*)?[ \t]+HTTP/1\\.1\\r?"
 }

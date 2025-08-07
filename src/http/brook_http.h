@@ -33,6 +33,9 @@ struct brook_http_s {
     brook_str_t         method;
     brook_str_t         url;
     brook_str_t         params;
+	
+	brook_buffer_t*		buff_body;
+	brook_buffer_t*		buff_header;
 };
 
 #endif /* brook_http_h */

@@ -27,16 +27,16 @@ brook_create_connection (brook_config_t* conf) {
         inet_ntop(AF_INET, &(client_addr.sin_addr), connection->ip, INET_ADDRSTRLEN);
     }
     {
-        connection->buff = malloc(sizeof(brook_chain_t));
-        connection->buff->next = NULL;
-        connection->buff->buf = malloc(sizeof(brook_buffer_t));
-        connection->buff->buf->start = calloc(1, conf->http.buffers_size + 1); // clean all memory in buffer
-        connection->buff->buf->pos = connection->buff->buf->start;
-        connection->buff->buf->size = conf->http.buffers_size;
+        connection->buffs = malloc(sizeof(brook_chain_t));
+        connection->buffs->next = NULL;
+        connection->buffs->buf.start = calloc(1, conf->http.buffers_size + 1);
+        connection->buffs->buf.size  = conf->http.buffers_size;
+		connection->pos = connection->buffs;
     }
     {
         connection->http = malloc(sizeof(brook_http_t));
         connection->http->state = READING_HEADER;
+		connection->http->buff_header = &connection->buffs->buf;
     }
     return connection;
 }
@@ -45,9 +45,19 @@ int
 brook_close_connection (brook_connection_t* connection) {
     
     {
-        free(connection->buff->buf->start);
-        free(connection->buff->buf);
-        free(connection->buff);
+		if (connection->buffs->buf.start != NULL && connection->buffs->buf.free == 0) {
+			free(connection->buffs->buf.start);
+		}
+		
+		if (connection->buffs->next != NULL && connection->buffs->next->buf.free == 0) {
+			free(connection->buffs->next->buf.start);
+		}
+		
+		if (connection->buffs->next != NULL) {
+			free(connection->buffs->next);
+		}
+		
+        free(connection->buffs);
     }
     {
         free(connection->http);
@@ -64,21 +74,19 @@ brook_close_connection (brook_connection_t* connection) {
 int
 brook_read_message_connection (brook_connection_t* connection) {
     
-    brook_buffer_t* buf = connection->buff->buf;
-    size_t len_can_red =  buf->size - buf->len;
+	brook_buffer_t* buf = &connection->pos->buf;
+
+	
+    size_t len_can_red = buf->size - buf->len;
     
-    size_t bytes = brook_socket_read(connection->socket, buf->pos, len_can_red);
+	size_t bytes = brook_socket_read(connection->socket, buf->start + buf->len, len_can_red);
 
     if (bytes == BROOK_ERROR) {
         return BROOK_ERROR;
     }
     
-    buf->len += bytes;
-    buf->pos += bytes;
-    
-    if (brook_http_parse(connection) == BROOK_ERROR) {
-        return BROOK_ERROR;
-    }
-    
-    return BROOK_OK;
+    buf->len = bytes + buf->len;
+	buf->end = buf->start + buf->len;
+
+	return brook_http_parse(connection);
 }

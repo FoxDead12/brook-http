@@ -20,14 +20,14 @@ typedef struct brook_chain_s  brook_chain_t;
  */
 struct brook_buffer_s {
     u_char* start;
-    u_char* pos;
     u_char* end;
     size_t  len;
     size_t  size;
+	int 	free; // 0 - need free (default) || 1 - dont need free
 };
 
 struct brook_chain_s {
-    brook_buffer_t* buf;
+    brook_buffer_t  buf;
     brook_chain_t*  next;
 };
 

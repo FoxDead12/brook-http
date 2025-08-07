@@ -21,10 +21,14 @@ enum brook_connection_status_e {
 struct brook_connection_s {
     brook_config_t*           conf;
     brook_connection_status_t state;
+    
     pid_t                     socket;
     int                       port;
     char                      ip[INET_ADDRSTRLEN];
-    brook_chain_t*            buff;
+    
+    brook_chain_t*            buffs;
+    brook_chain_t*            pos;
+    
     brook_http_t*             http;
 };
 
