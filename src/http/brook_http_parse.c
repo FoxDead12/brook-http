@@ -22,16 +22,12 @@ brook_http_parse (brook_connection_t* connection) {
             break;
     }
     
-    /*
-        if (rs == BROOK_OK) {
-            // one piece already parse
-        } else if (rs == BROOK_ERROR) {
-            // error parsing one piece
-        } else if (rs == BROOK_DONE) {
-            // need keeping reading one piece
-        }
-     */
-        
+	if (rs == BROOK_OK) { // ALREADY HAS ENTIRE REQUEST STORED
+		if (connection->http->type == JSON_API && brook_json_api_setup_body(connection->http) == BROOK_ERROR) {
+			return BROOK_ERROR;
+		}
+	}
+	
     return rs;
 }
 
@@ -42,24 +38,31 @@ brook_http_header_handler (brook_connection_t* connection) {
 	brook_buffer_t* buf = &connection->pos->buf;
     
     // ... Validate and parse first line of socket message
-    regmatch_t matches[4];
-    if (regexec(&connection->conf->regex.http_line, (char*) buf->start, 4, matches, 0) == REG_NOMATCH) {
+    regmatch_t matches[5];
+    if (regexec(&connection->conf->regex.http_line, (char*) buf->start, 5, matches, 0) == REG_NOMATCH) {
         return BROOK_ERROR;
     }
     
     // ... Parse method of regex
-    connection->http->method.data = buf->start + matches[0].rm_so;
-    connection->http->method.len  = matches[1].rm_eo - matches[1].rm_so;
-    
+	brook_str_t method;
+	method.data = buf->start + matches[0].rm_so;
+	method.len  = matches[1].rm_eo - matches[1].rm_so;
+	if (brook_http_set_method(connection, method) == BROOK_ERROR) {
+		return BROOK_ERROR;
+	}
+	
     // ... Parse url withou params of regex
     connection->http->url.data = buf->start + matches[2].rm_so;
     connection->http->url.len  = matches[2].rm_eo - matches[2].rm_so;
     
     // Parse params of url
-    if (matches[3].rm_so >= 0) {
-        connection->http->params.data = buf->start + matches[3].rm_so + 1;
-        connection->http->params.len  = matches[3].rm_eo - (matches[3].rm_so + 1);
-    }
+    if (matches[4].rm_so >= 0) { // TODO: need fix regex
+        connection->http->params.data = buf->start + matches[4].rm_so + 1;
+        connection->http->params.len  = matches[4].rm_eo - (matches[4].rm_so + 1);
+	} else {
+		connection->http->params.data = NULL;
+		connection->http->params.len  = 0;
+	}
         
     u_char* end = (u_char*) strstr((char*) buf->start, "\r\n\r\n");
     if (end == NULL) {
@@ -76,22 +79,24 @@ brook_http_header_handler (brook_connection_t* connection) {
     if (brook_array_find_value(connection->conf->http.allow_content_types, connection->http->header.content_type) == -1) {
         return BROOK_ERROR;
     }
-        
-    // TODO: ... need create the json api struct if is json route
-    
-    if ( brook_strncmp(connection->http->method.data, "POST", connection->http->method.len) != 0 && brook_strncmp(connection->http->method.data, "PATCH", connection->http->method.len) != 0 ) {
+    	
+	if (brook_http_request_check_type(connection) == BROOK_ERROR) {
+		return BROOK_ERROR;
+	}
+	    
+	if (connection->http->method == POST && connection->http->method == PATCH) {
         return BROOK_OK;
     }
-        
+	
     // ... check content length necessary
     int content_length = connection->http->header.content_length;
     if (content_length <= 0) return BROOK_OK;
     if (content_length > connection->conf->http.max_body_size) return BROOK_ERROR;
     
     // ... run logic to each apllication type
-    // TODO: for now we only will catch json api routes
-    if ( brook_strncmp(connection->http->header.content_type.data, "application/vnd.api+json", connection->http->header.content_type.len) == 0 || brook_strncmp(connection->http->header.content_type.data, "application/json", connection->http->header.content_type.len) == 0 ) {
-        
+    // TODO: for now we only will catch json api routes and job
+	if (connection->http->type == JSON_API || connection->http->type == JOB) {
+		
         // ... calculate current lenght loaded
         size_t header_size = end - buf->start;
         size_t body_already_loaded = buf->len - header_size;
@@ -138,18 +143,62 @@ brook_http_body_handler(brook_connection_t* connection) {
 	
 	brook_buffer_t* buf = &connection->pos->buf;
 	
-	if ( brook_strncmp(connection->http->header.content_type.data, "application/vnd.api+json", connection->http->header.content_type.len) == 0 || brook_strncmp(connection->http->header.content_type.data, "application/json", connection->http->header.content_type.len) == 0 ) {
-		
+	if (connection->http->type == JSON_API || connection->http->type == JOB) {
 		// only ckeck if need keep reading or is all data stored
 		if (connection->http->header.content_length == buf->len) {
 			return BROOK_OK;
 		} else {
 			return BROOK_DONE;
 		}
-		
 	}
 	
 	return BROOK_ERROR;
+}
+
+int
+brook_http_request_check_type (brook_connection_t* connection) {
+	
+	// detetar se o pedido é valido, verificando se existe no gatekeeper, o url desejado e o metodo indiciado
+	// tendo validado é preciso verificar que tipo de pedido é JSON-API, JOB ou UPLOAD FILE
+	
+	brook_http_t* request = connection->http;
+	
+	// validate gatekeeper, IS THE SAME TO ALL REQUEST
+	
+	if (brook_strncmp(request->header.content_type.data, "application/vnd.api+json", request->header.content_type.len) == 0) {
+		brook_json_api_setup(request);
+		request->type = JSON_API;
+	}
+	else if (brook_strncmp(request->header.content_type.data, "application/json", request->header.content_type.len) == 0) {
+		request->type = JOB;
+	} else {
+		return BROOK_ERROR;
+	}
+	
+	return BROOK_OK;
+}
+
+int
+brook_http_set_method (brook_connection_t* connection, brook_str_t method) {
+	
+	brook_http_t* request = connection->http;
+	
+	if (brook_strncmp(method.data, "GET", method.len) == 0) {
+		request->method = GET;
+	}
+	else if (brook_strncmp(method.data, "POST", method.len) == 0) {
+		request->method = POST;
+	}
+	else if (brook_strncmp(method.data, "PATCH", method.len) == 0) {
+		request->method = PATCH;
+	}
+	else if (brook_strncmp(method.data, "DELETE", method.len) == 0) {
+		request->method = DELETE;
+	} else {
+		return BROOK_ERROR;
+	}
+	
+	return BROOK_OK;
 }
 
 brook_str_t

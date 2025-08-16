@@ -21,6 +21,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <regex.h>
+#include <dirent.h>
 
 typedef unsigned char u_char;
 

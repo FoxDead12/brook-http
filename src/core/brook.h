@@ -10,6 +10,7 @@
 
 #include "brook_config.h"
 
-int create_configuration (brook_config_t* conf);
+int brook_create_configuration(brook_config_t* conf);
+int brook_resources_generator(brook_config_t* conf);
 
 #endif /* brook_h */

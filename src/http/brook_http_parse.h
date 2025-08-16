@@ -14,9 +14,10 @@ typedef struct brook_connection_s brook_connection_t;
 
 int brook_http_parse(brook_connection_t* connection);
 int brook_http_header_handler(brook_connection_t* connection);
-brook_str_t brook_http_request_header_value (char* buf, const char* key);
 int brook_http_body_handler(brook_connection_t* connection);
-int brook_http_json_api_setup(brook_connection_t* connection);
+int brook_http_request_check_type(brook_connection_t* connection);
+int brook_http_set_method (brook_connection_t* connection, brook_str_t method);
+brook_str_t brook_http_request_header_value (char* buf, const char* key);
 
 
 #endif /* brook_http_parse_h */

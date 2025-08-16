@@ -35,6 +35,7 @@ brook_create_connection (brook_config_t* conf) {
     }
     {
         connection->http = malloc(sizeof(brook_http_t));
+		connection->http->connection = connection;
         connection->http->state = READING_HEADER;
 		connection->http->buff_header = &connection->buffs->buf;
     }
@@ -63,6 +64,7 @@ brook_close_connection (brook_connection_t* connection) {
         if (connection->http->json_api != NULL) {
             free(connection->http->json_api);
         }
+		
         free(connection->http);
     }
     close(connection->socket);
@@ -79,7 +81,6 @@ brook_read_message_connection (brook_connection_t* connection) {
     
 	brook_buffer_t* buf = &connection->pos->buf;
 
-	
     size_t len_can_red = buf->size - buf->len;
     
 	size_t bytes = brook_socket_read(connection->socket, buf->start + buf->len, len_can_red);

@@ -13,25 +13,26 @@ main(int argc, const char * argv[]) {
 
     brook_config_t conf;
 
-    if (create_configuration(&conf) == BROOK_ERROR) {
+    if (brook_create_configuration(&conf) == BROOK_ERROR) {
         return 1;
     }
     conf.socket = brook_init_socket(conf.port);
 
+	brook_resources_generator(&conf);
+	
+	// start master process OR single process //
 #if DEBUG
     brook_start_single_process(&conf);
 #else
     brook_start_main_process(&conf);
 #endif
 
-    // start master process OR single process //
-
     return 0;
 
 }
 
 int
-create_configuration (brook_config_t* conf) {
+brook_create_configuration (brook_config_t* conf) {
 
     // read configuration file
     FILE* file = brook_open_file(BROOK_CONFIG_FILE, "r");
@@ -46,7 +47,7 @@ create_configuration (brook_config_t* conf) {
     if (data == NULL) {
         perror(BROOK_CONFIG_FILE);
         return BROOK_ERROR;
-    } 
+    }
     {
         conf->json = json_parse(data);
         conf->port = json_get_int("port", conf->json, 0);
@@ -61,7 +62,7 @@ create_configuration (brook_config_t* conf) {
         conf->http.buffers_size = json_get_int("http_request_buffers_size", conf->json, 4096);
     }
     {
-        if(regcomp(&conf->regex.http_line, json_get_str("regex_http_line", conf->json, (brook_str_t)brook_string("")).data, REG_EXTENDED)) {
+        if(regcomp(&conf->regex.http_line, (char*) json_get_str("regex_http_line", conf->json, (brook_str_t) brook_string("")).data, REG_EXTENDED)) {
             perror("regex of field 'regex_http_line' is invalid\n");
             return BROOK_ERROR;
         }
@@ -80,5 +81,43 @@ create_configuration (brook_config_t* conf) {
         conf->brook_processes->data[i] = (void*) -1;
     }
 
+    return BROOK_OK;
+}
+
+int
+brook_resources_generator (brook_config_t* conf) {
+
+	const char* dir = BROOK_RESOURCES_DIRECTORY;
+	struct dirent* in_file;
+	DIR* FD;
+	FILE* file;
+
+	if (NULL == (FD = opendir(dir))) {
+		fprintf(stderr, "Error : Failed to open input directory (%s) - %s\n", dir, strerror(errno));
+	}
+	
+	while ((in_file = readdir(FD))) {
+		
+		// ... ignore hidden files in unix
+		if (!strcmp (in_file->d_name, "."))
+			continue;
+		if (!strcmp (in_file->d_name, ".."))
+			continue;
+		
+		// ... open and read file
+		brook_str_t file_name;
+		file_name.data = (u_char*) in_file->d_name;
+		file_name.len = in_file->d_namlen;
+		
+		file = brook_open_file_str(file_name, "r");
+		
+		char* file_content = brook_read_file(file);
+		
+		
+		
+		brook_close_file(file);
+
+	}
+	
     return BROOK_OK;
 }

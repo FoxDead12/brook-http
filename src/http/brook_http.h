@@ -15,10 +15,27 @@
 typedef struct brook_http_s brook_http_t;
 typedef struct brook_http_header_s brook_http_header_t;
 typedef enum   brook_http_status_s brook_http_status_t;
+typedef enum   brook_http_type_s   brook_http_type_t;
+typedef enum   brook_http_method_s brook_http_method_t;
+
+typedef struct brook_connection_s brook_connection_t;
+
+enum brook_http_method_s {
+	GET,
+	POST,
+	PATCH,
+	DELETE
+};
 
 enum brook_http_status_s {
     READING_HEADER,
     READING_BODY
+};
+
+enum brook_http_type_s {
+	JSON_API,
+	JOB,
+	UPLOAD
 };
 
 struct brook_http_header_s {
@@ -29,9 +46,11 @@ struct brook_http_header_s {
 };
 
 struct brook_http_s {
+	brook_connection_t* connection;
     brook_http_header_t header;
     brook_http_status_t state;
-    brook_str_t         method;
+	brook_http_type_t	type;
+	brook_http_method_t method;
     brook_str_t         url;
     brook_str_t         params;
 	

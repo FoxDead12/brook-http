@@ -14,6 +14,7 @@
 #define BROOK_ERROR   -1
 #define BROOK_DONE    -2
 #define BROOK_CONFIG_FILE "../../conf/brook_config.json"
+#define BROOK_RESOURCES_DIRECTORY "../../resources/"
 
 #include "brook_files.h"
 #include "brook_json.h"
