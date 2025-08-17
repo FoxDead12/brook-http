@@ -19,6 +19,7 @@ typedef enum   brook_http_type_s   brook_http_type_t;
 typedef enum   brook_http_method_s brook_http_method_t;
 
 typedef struct brook_connection_s brook_connection_t;
+typedef struct brook_gatekeeper_s brook_gatekeeper_t;
 
 enum brook_http_method_s {
 	GET,
@@ -47,6 +48,8 @@ struct brook_http_header_s {
 
 struct brook_http_s {
 	brook_connection_t* connection;
+    brook_gatekeeper_t* gatekeeper_route;
+    
     brook_http_header_t header;
     brook_http_status_t state;
 	brook_http_type_t	type;

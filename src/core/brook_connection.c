@@ -38,6 +38,7 @@ brook_create_connection (brook_config_t* conf) {
 		connection->http->connection = connection;
         connection->http->state = READING_HEADER;
 		connection->http->buff_header = &connection->buffs->buf;
+        connection->http->gatekeeper_route = NULL;
     }
     return connection;
 }

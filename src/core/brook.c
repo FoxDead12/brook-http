@@ -19,6 +19,7 @@ main(int argc, const char * argv[]) {
     conf.socket = brook_init_socket(conf.port);
 
 	brook_resources_generator(&conf);
+    brook_gatekeeper_generator(&conf);
 	
 	// start master process OR single process //
 #if DEBUG
@@ -49,7 +50,7 @@ brook_create_configuration (brook_config_t* conf) {
         return BROOK_ERROR;
     }
     {
-        conf->json = json_parse(data);
+        conf->json = json_tokener_parse(data);
         conf->port = json_get_int("port", conf->json, 0);
         conf->worker_processes = json_get_int("worker_processes", conf->json, 4); // 4 worker process in default
         conf->brook_processes = brook_create_array(conf->worker_processes, sizeof(int*));
@@ -68,8 +69,11 @@ brook_create_configuration (brook_config_t* conf) {
         }
     }
     {
-        conf->resources = json_object_new_object();
+        conf->resources  = json_object_new_object();
+        conf->gatekeeper = NULL;
     }
+    
+    free(data);
 
     if (conf->port == 0) {
         perror("configuration missing 'port' in json file configuration -> integer\n");
@@ -88,6 +92,35 @@ brook_create_configuration (brook_config_t* conf) {
 }
 
 int
+brook_gatekeeper_generator (brook_config_t* conf) {
+    
+    // read configuration file
+    FILE* file = brook_open_file(BROOK_GATEKEEPER_DIRECTORY, "r");
+    if (file == NULL) {
+        perror(BROOK_GATEKEEPER_DIRECTORY);
+        return BROOK_ERROR;
+    }
+
+    // ... convert data of file to json
+    char* gatekeeper_file = brook_read_file(file);
+    json_object* gatekeeper_json = json_tokener_parse(gatekeeper_file);
+    
+    // ... build object to manager gatekeeper
+    if (brook_gatekeeper_build(conf, gatekeeper_json) == BROOK_ERROR) {
+        return BROOK_ERROR;
+    }
+    
+    // ... free data
+    free(gatekeeper_file);
+    json_object_put(gatekeeper_json);
+    
+    brook_close_file(file);
+            
+    return BROOK_OK;
+}
+
+
+int
 brook_resources_generator (brook_config_t* conf) {
 
 	const char* dir = BROOK_RESOURCES_DIRECTORY;
@@ -98,6 +131,7 @@ brook_resources_generator (brook_config_t* conf) {
     // ... check if exist directory
 	if (NULL == (FD = opendir(dir))) {
 		fprintf(stderr, "Error : Failed to open input directory (%s) - %s\n", dir, strerror(errno));
+        return BROOK_ERROR;
 	}
 	    
     // ... iterate each file in directory

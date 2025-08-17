@@ -15,11 +15,13 @@
 #define BROOK_DONE    -2
 #define BROOK_CONFIG_FILE "../../conf/brook_config.json"
 #define BROOK_RESOURCES_DIRECTORY "../../resources"
+#define BROOK_GATEKEEPER_DIRECTORY "../../conf/gatekeeper.json"
 
 #include "brook_files.h"
 #include "brook_json.h"
 #include "brook_socket.h"
 #include "brook_process.h"
 #include "brook_connection.h"
+#include "brook_gatekeeper.h"
 
 #endif /* brook_core_h */

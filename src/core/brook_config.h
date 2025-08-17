@@ -61,6 +61,7 @@ struct brook_config_s {
     brook_config_processes_t brook_process;
     brook_config_regex_t     regex;
     json_object*             resources;
+    brook_array_t*           gatekeeper;
 };
 
 #endif /* brook_config_h */

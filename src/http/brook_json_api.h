@@ -18,11 +18,13 @@ struct brook_json_api_data_s {
 	brook_str_t type;
 	brook_str_t id;
 	brook_array_t* attributes;
-	brook_array_t* relationships;
 };
 
 struct brook_json_api_s {
-    json_object*   data;        // response object
+    json_object*   resource;
+    
+    
+    json_object*   result;        // response object
 	brook_array_t* included;
 	brook_array_t* filters;
 	brook_str_t    order_by;
@@ -31,5 +33,7 @@ struct brook_json_api_s {
 int brook_json_api_setup(brook_http_t* request);
 int brook_json_api_setup_body(brook_http_t* request);
 int brook_json_api_free(brook_http_t* request);
+int brook_json_api_find_resource(brook_http_t* request);
+
 
 #endif /* brook_json_api_h */

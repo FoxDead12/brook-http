@@ -11,6 +11,7 @@
 
 int
 brook_http_parse (brook_connection_t* connection) {
+    
     int rs;
 
 	switch (connection->http->state) {
@@ -79,11 +80,15 @@ brook_http_header_handler (brook_connection_t* connection) {
     if (brook_array_find_value(connection->conf->http.allow_content_types, connection->http->header.content_type) == -1) {
         return BROOK_ERROR;
     }
-    	
+    
+    if (brook_gatekeeper_validate(connection) == BROOK_ERROR) {
+        return BROOK_ERROR;
+    }
+    
 	if (brook_http_request_check_type(connection) == BROOK_ERROR) {
 		return BROOK_ERROR;
 	}
-	    
+    
 	if (connection->http->method == POST && connection->http->method == PATCH) {
         return BROOK_OK;
     }
@@ -162,9 +167,7 @@ brook_http_request_check_type (brook_connection_t* connection) {
 	// tendo validado é preciso verificar que tipo de pedido é JSON-API, JOB ou UPLOAD FILE
 	
 	brook_http_t* request = connection->http;
-	
-	// validate gatekeeper, IS THE SAME TO ALL REQUEST
-	
+		
 	if (brook_strncmp(request->header.content_type.data, "application/vnd.api+json", request->header.content_type.len) == 0) {
 		brook_json_api_setup(request);
 		request->type = JSON_API;
