@@ -22,12 +22,14 @@ struct brook_json_api_data_s {
 };
 
 struct brook_json_api_s {
+    json_object*   data;        // response object
 	brook_array_t* included;
 	brook_array_t* filters;
-	brook_str_t order_by;
+	brook_str_t    order_by;
 };
 
-int brook_json_api_setup (brook_http_t* request);
-int brook_json_api_setup_body (brook_http_t* request);
+int brook_json_api_setup(brook_http_t* request);
+int brook_json_api_setup_body(brook_http_t* request);
+int brook_json_api_free(brook_http_t* request);
 
 #endif /* brook_json_api_h */

@@ -67,6 +67,9 @@ brook_create_configuration (brook_config_t* conf) {
             return BROOK_ERROR;
         }
     }
+    {
+        conf->resources = json_object_new_object();
+    }
 
     if (conf->port == 0) {
         perror("configuration missing 'port' in json file configuration -> integer\n");
@@ -92,10 +95,12 @@ brook_resources_generator (brook_config_t* conf) {
 	DIR* FD;
 	FILE* file;
 
+    // ... check if exist directory
 	if (NULL == (FD = opendir(dir))) {
 		fprintf(stderr, "Error : Failed to open input directory (%s) - %s\n", dir, strerror(errno));
 	}
-	
+	    
+    // ... iterate each file in directory
 	while ((in_file = readdir(FD))) {
 		
 		// ... ignore hidden files in unix
@@ -103,21 +108,32 @@ brook_resources_generator (brook_config_t* conf) {
 			continue;
 		if (!strcmp (in_file->d_name, ".."))
 			continue;
-		
-		// ... open and read file
-		brook_str_t file_name;
-		file_name.data = (u_char*) in_file->d_name;
-		file_name.len = in_file->d_namlen;
-		
-		file = brook_open_file_str(file_name, "r");
-		
-		char* file_content = brook_read_file(file);
-		
-		
-		
+            
+        // ... create file path
+        char file_path[2048] = {0};
+        snprintf(file_path, 2048, "%s/%s", dir, (u_char*) in_file->d_name);
+        
+        // ... open file and read
+		file = brook_open_file(file_path, "r");
+        if (file == NULL) continue;
+        char* file_content = brook_read_file(file);
+        
+        // ... copy content of file to json object
+        json_object* json = json_tokener_parse(file_content);
+        free(file_content);
+
+        json_object_object_foreach(json, key, val) {
+            const char *tmp = json_object_to_json_string(val);
+            json_object *copy = json_tokener_parse(tmp);
+            json_object_object_add(conf->resources, key, copy);
+        }
+        json_object_put(json);
+
 		brook_close_file(file);
 
 	}
-	
+    
+    closedir(FD);
+	    
     return BROOK_OK;
 }

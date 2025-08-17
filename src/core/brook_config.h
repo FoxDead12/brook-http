@@ -55,11 +55,12 @@ struct brook_config_s {
     int port;
     int worker_processes;
     int socket;
-    pid_t brook_parent_process;
-    brook_config_http_t http;
-    brook_array_t* brook_processes;
+    pid_t                    brook_parent_process;
+    brook_config_http_t      http;
+    brook_array_t*           brook_processes;
     brook_config_processes_t brook_process;
-    brook_config_regex_t regex;
+    brook_config_regex_t     regex;
+    json_object*             resources;
 };
 
 #endif /* brook_config_h */

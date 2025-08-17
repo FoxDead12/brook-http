@@ -62,7 +62,7 @@ brook_close_connection (brook_connection_t* connection) {
     }
     {
         if (connection->http->json_api != NULL) {
-            free(connection->http->json_api);
+            brook_json_api_free(connection->http);
         }
 		
         free(connection->http);

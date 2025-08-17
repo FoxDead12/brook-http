@@ -16,8 +16,19 @@ brook_json_api_setup (brook_http_t* request) {
 	
 	printf("NEED VALIDATE IF RESOURCE EXIST AND PARSING THE DATA FROM OBJECT\n");
 	
-	// get resource in json object
+	/*
+    
+     relationship
+     included
+     
+     */
 	
+    return BROOK_OK;
+}
+
+int
+brook_json_api_free (brook_http_t* request) {
+    free(request->json_api);
     return BROOK_OK;
 }
 
