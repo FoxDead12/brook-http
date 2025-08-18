@@ -32,6 +32,7 @@ brook_kevent_handle (int kq, struct kevent event, brook_config_t* conf) {
     
     if (event.filter == EVFILT_TIMER) {
         printf("tive um timoute\n");
+        brook_close_connection(event.udata);
     }
 }
 
@@ -78,22 +79,19 @@ brook_evfilter_read (int kq, struct kevent event, brook_config_t* conf) {
 int
 brook_event_reading_socket_message (int kq, struct kevent event, brook_connection_t* connection) {
     
+    // ... read message of socket, is client socket ...
     int rs = brook_read_message_connection(connection);
     
+    // ... if result is done need keep reading from socket ...
     if (rs == BROOK_DONE) return BROOK_DONE;
     
-    // if error and ok need remove event reader
+    // ... at this point we dont need read more from socket, because erro append or already has full message stored ...
     brook_kqueue_set_descriptor(kq, connection->socket, EVFILT_READ, EV_DELETE, 0, 0, NULL);
     
     if (rs == BROOK_ERROR) {
-        // need create event to write, when event was fire will send the response
+        // ... in error only need create event to send response is, WRITE ...
         return BROOK_ERROR;
     }
-    
-    // catch all request
-    // add event to execute query build
-    
-    
-    
+            
     return BROOK_OK;
 }

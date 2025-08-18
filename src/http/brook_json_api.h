@@ -23,6 +23,16 @@ struct brook_json_api_data_s {
 struct brook_json_api_s {
     json_object*   resource;
     
+    // ... id of element in search ...
+    brook_str_t    id;
+    
+    // ... only pointers to body, to me more faster ...
+    json_object*   body;
+    json_object*   data;
+    brook_str_t    type;
+    json_object*   attributes;
+    
+    
     
     json_object*   result;        // response object
 	brook_array_t* included;
@@ -33,7 +43,6 @@ struct brook_json_api_s {
 int brook_json_api_setup(brook_http_t* request);
 int brook_json_api_setup_body(brook_http_t* request);
 int brook_json_api_free(brook_http_t* request);
-int brook_json_api_find_resource(brook_http_t* request);
 
 
 #endif /* brook_json_api_h */

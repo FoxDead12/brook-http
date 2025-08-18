@@ -23,11 +23,11 @@ brook_http_parse (brook_connection_t* connection) {
             break;
     }
     
-	if (rs == BROOK_OK) { // ALREADY HAS ENTIRE REQUEST STORED
-		if (connection->http->type == JSON_API && brook_json_api_setup_body(connection->http) == BROOK_ERROR) {
-			return BROOK_ERROR;
-		}
-	}
+    if ((connection->http->method == POST || connection->http->method == PATCH) && rs == BROOK_OK) {
+        if (connection->http->type == JSON_API && brook_json_api_setup_body(connection->http) == BROOK_ERROR) {
+            return BROOK_ERROR;
+        }
+    }
 	
     return rs;
 }
@@ -89,7 +89,7 @@ brook_http_header_handler (brook_connection_t* connection) {
 		return BROOK_ERROR;
 	}
     
-	if (connection->http->method == POST && connection->http->method == PATCH) {
+	if (connection->http->method != POST && connection->http->method != PATCH) {
         return BROOK_OK;
     }
 	

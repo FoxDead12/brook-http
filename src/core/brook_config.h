@@ -9,7 +9,6 @@
 #define brook_config_h
 
 #include <stdio.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <json-c/json.h>
