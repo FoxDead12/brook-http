@@ -32,9 +32,8 @@ brook_json_api_setup (brook_http_t* request) {
     request->json_api->id.data = NULL;
     request->json_api->id.len = 0;
     
-    if (request->method == GET || request->method == DELETE) {
-        
-        u_char* pointer = request->url.data + request->url.len - 1;
+	if (request->method == GET || request->method == DELETE || request->method == PATCH) {
+		u_char* pointer = request->url.data + request->url.len - 1;
         while (pointer >= request->url.data && *pointer != '/') {
             pointer--;
         }
@@ -43,10 +42,11 @@ brook_json_api_setup (brook_http_t* request) {
             // ... exist id ...
             request->json_api->id.data = pointer + 1;
             request->json_api->id.len = (request->url.data + request->url.len) - request->json_api->id.data;
-        } else {
-            if (request->method == DELETE) return BROOK_ERROR;
         }
-        
+		
+		if (request->method != GET && request->json_api->id.data == NULL) {
+			return BROOK_ERROR;
+		}
     }
     
     printf("id: %.*s\n", request->json_api->id.len, request->json_api->id.data);
@@ -57,7 +57,8 @@ brook_json_api_setup (brook_http_t* request) {
 
 int
 brook_json_api_free (brook_http_t* request) {
-    free(request->json_api);
+	json_object_put(request->json_api->body);
+	free(request->json_api);
     return BROOK_OK;
 }
 

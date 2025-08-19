@@ -13,13 +13,13 @@ int
 brook_gatekeeper_build (brook_config_t* conf, json_object* json) {
     
     size_t length = json_object_array_length(json);
-    conf->gatekeeper = brook_create_array(length, sizeof(brook_gatekeeper_t));
+	conf->gatekeeper = brook_create_array(length);
     
     for (int i = 0; i < length; i++) {
         
         // ... create struct of gatekeeper
-        conf->gatekeeper->data[i] = malloc(sizeof(brook_gatekeeper_t));
-        
+		conf->gatekeeper->data[i] = (brook_gatekeeper_t*) malloc(sizeof(brook_gatekeeper_t));
+		
         // ... get object of gatekeeper json
         json_object *j = json_object_array_get_idx(json, i);
         brook_gatekeeper_t* r = conf->gatekeeper->data[i];
@@ -33,7 +33,7 @@ brook_gatekeeper_build (brook_config_t* conf, json_object* json) {
         
         // ... create methods array
         brook_array_t* methods = json_get_array("method", j);
-        r->methods = brook_create_array(methods->size, sizeof(int));
+        r->methods = brook_create_array(methods->size);
         
         for (int c = 0; c < methods->size; c++) {
             if (brook_strncmp(methods->data[c], "GET", 3) == 0) {
@@ -54,8 +54,8 @@ brook_gatekeeper_build (brook_config_t* conf, json_object* json) {
         
         brook_str_t resource_name = json_get_str("resource", j, (brook_str_t) brook_string(""));
         if (resource_name.len > 0) {
-            r->resource = calloc(1, resource_name.len);
-            snprintf(r->resource, resource_name.len + 1, "%.*s", (int) resource_name.len, (char*) resource_name.data);
+            r->resource = calloc(1, resource_name.len + 1);
+            snprintf(r->resource, resource_name.len, "%.*s", (int) resource_name.len, (char*) resource_name.data);
         } else {
             r->resource = NULL;
         }

@@ -53,7 +53,7 @@ brook_create_configuration (brook_config_t* conf) {
         conf->json = json_tokener_parse(data);
         conf->port = json_get_int("port", conf->json, 0);
         conf->worker_processes = json_get_int("worker_processes", conf->json, 4); // 4 worker process in default
-        conf->brook_processes = brook_create_array(conf->worker_processes, sizeof(int*));
+        conf->brook_processes = brook_create_array(conf->worker_processes);
         conf->brook_parent_process = getpid();
     }
     {

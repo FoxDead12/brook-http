@@ -19,7 +19,7 @@ struct brook_array_s {
     size_t size;
 };
 
-brook_array_t* brook_create_array(size_t size, size_t type_size);
+brook_array_t* brook_create_array(size_t size);
 void brook_array_set_value(brook_array_t* array, void* data, int index);
 int brook_array_find_value(brook_array_t* a, brook_str_t s);
 

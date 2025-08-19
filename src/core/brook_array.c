@@ -9,12 +9,16 @@
 #include "brook_core.h"
 
 brook_array_t*
-brook_create_array (size_t size, size_t type_size) {
+brook_create_array (size_t size) {
     brook_array_t* a = malloc(sizeof(brook_array_t));
-    a->data = (void*) malloc(type_size * size);
+	a->data = malloc(sizeof(void*) * size);
     a->size = size;
     return a;
 }
+
+
+
+
 
 void
 brook_array_clear (brook_array_t* a, bool free_values) {
@@ -40,3 +44,4 @@ brook_array_find_value (brook_array_t* a, brook_str_t s) {
     
     return -1;
 }
+
