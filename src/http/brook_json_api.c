@@ -49,8 +49,7 @@ brook_json_api_setup (brook_http_t* request) {
 		}
     }
     
-    printf("id: %.*s\n", request->json_api->id.len, request->json_api->id.data);
-
+    // ... get params of url ...
     
     return BROOK_OK;
 }

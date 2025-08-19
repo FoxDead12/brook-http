@@ -16,14 +16,12 @@ brook_create_array (size_t size) {
     return a;
 }
 
-
-
-
-
 void
 brook_array_clear (brook_array_t* a, bool free_values) {
-    for (int i = 0; i < a->size; i++) {
-        free(a->data[i]);
+    if (free_values == true) {
+        for (int i = 0; i < a->size; i++) {
+            free(a->data[i]);
+        }
     }
     free(a->data);
     free(a);

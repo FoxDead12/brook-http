@@ -29,8 +29,12 @@ enum brook_http_method_s {
 };
 
 enum brook_http_status_s {
+    // ... socket actions ...
     READING_HEADER,
-    READING_BODY
+    READING_BODY,
+    
+    // ... http actions ...
+    BUILDING_QUERY,
 };
 
 enum brook_http_type_s {

@@ -15,18 +15,22 @@ brook_http_parse (brook_connection_t* connection) {
     int rs;
 
 	switch (connection->http->state) {
-        case READING_HEADER:
-            rs = brook_http_header_handler(connection);
-		break;
-        case READING_BODY:
-			rs = brook_http_body_handler(connection);
-            break;
+        case READING_HEADER: rs = brook_http_header_handler(connection); break;
+        case READING_BODY:   rs = brook_http_body_handler(connection);   break;
+        default: return BROOK_ERROR; break;
     }
     
-    if ((connection->http->method == POST || connection->http->method == PATCH) && rs == BROOK_OK) {
-        if (connection->http->type == JSON_API && brook_json_api_setup_body(connection->http) == BROOK_ERROR) {
-            return BROOK_ERROR;
+    if (rs == BROOK_OK) {
+        
+        // ... json api ...
+        if (connection->http->type == JSON_API) {
+            if (connection->http->method == POST || connection->http->method == PATCH) {
+                if (brook_json_api_setup_body(connection->http) == BROOK_ERROR) return BROOK_ERROR;
+            }
+            connection->http->state = BUILDING_QUERY;
         }
+        // ... json api ...
+        
     }
 	
     return rs;
@@ -100,7 +104,7 @@ brook_http_header_handler (brook_connection_t* connection) {
     
     // ... run logic to each apllication type
     // TODO: for now we only will catch json api routes and job
-	if (connection->http->type == JSON_API || connection->http->type == JOB) {
+	if (connection->http->type == JSON_API) {
 		
         // ... calculate current lenght loaded
         size_t header_size = end - buf->start;
@@ -118,7 +122,7 @@ brook_http_header_handler (brook_connection_t* connection) {
 			connection->pos = b;
 			connection->http->buff_body = &b->buf;
 			
-            return BROOK_OK; // request already readed, and transform data to json
+            return BROOK_OK;
         }
         
         // ... need continue reading socket, but is json object so create buffer with body lenght

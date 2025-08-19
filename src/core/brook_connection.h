@@ -15,7 +15,9 @@ typedef struct brook_connection_s brook_connection_t;
 typedef enum   brook_connection_status_e brook_connection_status_t;
 
 enum brook_connection_status_e {
-    READING_SOCKET_MESSAGE
+    READING_SOCKET_MESSAGE,
+    VALIDATE_USER,
+    
 };
 
 struct brook_connection_s {

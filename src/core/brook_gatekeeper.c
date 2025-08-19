@@ -49,13 +49,13 @@ brook_gatekeeper_build (brook_config_t* conf, json_object* json) {
                 r->methods->data[c] = (void*) DELETE;
             }
         }
-        free(methods);
+        brook_array_clear(methods, false);
 
         
         brook_str_t resource_name = json_get_str("resource", j, (brook_str_t) brook_string(""));
         if (resource_name.len > 0) {
             r->resource = calloc(1, resource_name.len + 1);
-            snprintf(r->resource, resource_name.len, "%.*s", (int) resource_name.len, (char*) resource_name.data);
+            snprintf(r->resource, resource_name.len + 1, "%.*s", (int) resource_name.len, (char*) resource_name.data);
         } else {
             r->resource = NULL;
         }
