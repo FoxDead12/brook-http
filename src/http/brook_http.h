@@ -29,18 +29,34 @@ enum brook_http_method_s {
 };
 
 enum brook_http_status_s {
-    // ... socket actions ...
-    READING_HEADER,
-    READING_BODY,
-    
-    // ... http actions ...
-    BUILDING_QUERY,
+	// ... action related to 'READING_SOCKET_MESSAGE' ...
+	READ_HEADER,
+	READ_BODY,
+
+	// ... action relates to 'READING_REDIS_MESSAGE' ...
+	VALIDATE_USER_RESPONSE,
+	JOB_RESPONSE,
+
+	// ... action relates to 'READING_PSQL_MESSAGE' ...
+	JSON_API_RESPONSE,
+
+	// ... action relates to 'WRITING_SOCKET_MESSAGE' ...
+	WRITING_RESPONSE,
+
+	// ... action relates to 'WRITING_REDIS_MESSAGE' ...
+	VALIDATE_USER,
+
+	// ... action relates to 'WRITING_BEANSTALK_MESSAGE' ...
+	JOB_SEND,
+
+	// ... action relates to 'WRITING_PSQL_MESSAGE' ...
+	JSON_API_QUERY
+
 };
 
 enum brook_http_type_s {
 	JSON_API,
-	JOB,
-	UPLOAD
+	JOB
 };
 
 struct brook_http_header_s {
@@ -53,16 +69,16 @@ struct brook_http_header_s {
 struct brook_http_s {
 	brook_connection_t* connection;
     brook_gatekeeper_t* gatekeeper_route;
-    
+
     brook_http_header_t header;
     brook_http_status_t state;
 	brook_http_type_t	type;
 	brook_http_method_t method;
     brook_str_t         url;
     brook_str_t         params;
-	
+
     brook_json_api_t*   json_api;
-    
+
 	brook_buffer_t*		buff_body;      // only pointer to buff of connection
 	brook_buffer_t*		buff_header;    // only pointer to buff of connection
 };

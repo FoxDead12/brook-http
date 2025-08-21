@@ -15,22 +15,27 @@ typedef struct brook_connection_s brook_connection_t;
 typedef enum   brook_connection_status_e brook_connection_status_t;
 
 enum brook_connection_status_e {
-    READING_SOCKET_MESSAGE,
-    VALIDATE_USER,
-    
+	READING_SOCKET_MESSAGE,
+	READING_REDIS_MESSAGE,
+	READING_PSQL_MESSAGE,
+
+	WRITING_SOCKET_MESSAGE,
+	WRITING_REDIS_MESSAGE,
+    WRITING_BEANSTALK_MESSAGE,
+	WRITING_PSQL_MESSAGE
 };
 
 struct brook_connection_s {
     brook_config_t*           conf;
     brook_connection_status_t state;
-    
+
     pid_t                     socket;
     int                       port;
     char                      ip[INET_ADDRSTRLEN];
-    
+
     brook_chain_t*            buffs;
     brook_chain_t*            pos;
-    
+
     brook_http_t*             http;
 };
 
