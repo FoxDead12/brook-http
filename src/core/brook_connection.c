@@ -11,17 +11,28 @@
 
 brook_connection_t*
 brook_create_connection (brook_config_t* conf) {
-    struct sockaddr_in client_addr;
-    int client_socket = brook_socket_accept(conf->socket, &client_addr);
     
-    if (client_socket <= 0) {
+	struct sockaddr_in client_addr;
+
+	int c_socket = brook_socket_accept(conf->socket, &client_addr);
+    if (c_socket <= 0) {
         return NULL;
     }
     
+	// ... init connection ...
     brook_connection_t* connection = malloc(sizeof(brook_connection_t));
     connection->conf = conf;
-    connection->socket = client_socket;
-    connection->state = READING_SOCKET_MESSAGE;
+    connection->socket = c_socket;
+	connection->state = READING_SOCKET_MESSAGE;
+	connection->port = ntohs(client_addr.sin_port);
+	inet_ntop(AF_INET, &(client_addr.sin_addr), connection->ip, INET_ADDRSTRLEN);
+	
+	connection->ch_buf = malloc(sizeof(brook_chain_t*));
+	connection->ch_buf->next = NULL;
+	
+	connection->pos = &connection->ch_buf->buf;
+	
+	/*
     {
         connection->port = ntohs(client_addr.sin_port);
         inet_ntop(AF_INET, &(client_addr.sin_addr), connection->ip, INET_ADDRSTRLEN);
@@ -40,12 +51,17 @@ brook_create_connection (brook_config_t* conf) {
 		connection->http->buff_header = &connection->buffs->buf;
         connection->http->gatekeeper_route = NULL;
     }
+	 */
     return connection;
 }
 
 int
 brook_close_connection (brook_connection_t* connection) {
     
+	close(connection->socket);
+	free(connection);
+	
+	/*
     {
 		if (connection->buffs->buf.start != NULL && connection->buffs->buf.free == 0) {
 			free(connection->buffs->buf.start);
@@ -72,6 +88,7 @@ brook_close_connection (brook_connection_t* connection) {
     {
         free(connection);
     }
+	 */
     
     return BROOK_OK;
 }
@@ -80,7 +97,18 @@ brook_close_connection (brook_connection_t* connection) {
 int
 brook_read_message_connection (brook_connection_t* connection) {
     
-	brook_buffer_t* buf = &connection->pos->buf;
+	brook_buffer_t* b = connection->pos;
+	
+	// ... alloc memory in buffer ...
+	if (b->start == NULL) {
+		b->start = calloc(1, connection->conf->http.buffers_size + 1); // i make this to force buffer end with '\n'
+		b->size = connection->conf->http.buffers_size;
+	}
+	
+	size_t len_diff = b->size - b->length;
+	
+	/*
+	 brook_buffer_t* buf = &connection->pos->buf;
 
     size_t len_can_red = buf->size - buf->len;
     
@@ -93,5 +121,8 @@ brook_read_message_connection (brook_connection_t* connection) {
     buf->len = bytes + buf->len;
 	buf->end = buf->start + buf->len;
 
-	return brook_http_parse(connection);
+	//return brook_http_parse(connection);
+	 */
+	
+	return BROOK_OK;
 }

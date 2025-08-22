@@ -19,6 +19,8 @@ enum brook_connection_status_e {
 	READING_REDIS_MESSAGE,
 	READING_PSQL_MESSAGE,
 
+	WAITING_POOL,
+	
 	WRITING_SOCKET_MESSAGE,
 	WRITING_REDIS_MESSAGE,
     WRITING_BEANSTALK_MESSAGE,
@@ -33,8 +35,8 @@ struct brook_connection_s {
     int                       port;
     char                      ip[INET_ADDRSTRLEN];
 
-    brook_chain_t*            buffs;
-    brook_chain_t*            pos;
+    brook_chain_t*            ch_buf;
+	brook_buffer_t*           pos;
 
     brook_http_t*             http;
 };

@@ -21,9 +21,8 @@ typedef struct brook_chain_s  brook_chain_t;
 struct brook_buffer_s {
     u_char* start;
     u_char* end;
-    size_t  len;
+    size_t  length;
     size_t  size;
-	int 	free; // 0 - need free (default) || 1 - dont need free
 };
 
 struct brook_chain_s {

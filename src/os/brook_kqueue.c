@@ -41,20 +41,27 @@ brook_kqueue_set_descriptor (int kq, int fd, int filter, int flags, int fflags, 
 void
 brook_kevent_handle (int kq, struct kevent event, brook_config_t* conf) {
 
+	brook_connection_t* c = NULL;
+	
     // ... check if is new connection to server ...
     if (event.ident == conf->socket) {
-        brook_connection_t* connection = brook_create_connection(conf);
-        if (connection != NULL) {
-            brook_kqueue_set_descriptor(kq, connection->socket, EVFILT_READ, EV_ADD, 0, 0, connection);
-            brook_kqueue_set_descriptor(kq, connection->socket, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 0, conf->http.timeout, connection);
+        c = brook_create_connection(conf);
+        if (c != NULL) {
+            brook_kqueue_set_descriptor(kq, c->socket, EVFILT_READ, EV_ADD, 0, 0, c);
+            brook_kqueue_set_descriptor(kq, c->socket, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 0, conf->http.timeout, c);
         }
-		return BROOK_OK;
+		return;
     }
-
+	
+	// ... handle rest of events ...
+	c = event.udata;
+	
     switch (event.filter) {
-        // ... events where need read content from socket ...
-        case EVFILT_READ:
-        break;
+        
+		// ... events where need read content from socket ...
+		case EVFILT_READ:
+			brook_kevent_read(c);
+		break;
 
         // ... events used to make a stack of events, to next enable write (its middle intermediate, before write, dont contain connection whet) will be used to redis and postgres ...
         case EVFILT_USER:
@@ -68,21 +75,45 @@ brook_kevent_handle (int kq, struct kevent event, brook_config_t* conf) {
         case EVFILT_TIMER:
         break;
     }
-
-
-    // switch (event.filter) {
-        // case EVFILT_READ:
-            // brook_evfilter_read(kq, event, conf);
-            // break;
-        // case EVFILT_TIMER:
-            // brook_close_connection(event.udata);
-            // break;
-        // case EVFILT_WRITE:
-            // break;
-    // }
-
-    // brook_kqueue_after
+	
 }
+
+void
+brook_kevent_read (brook_connection_t* connection) {
+	switch (connection->state) {
+		case READING_SOCKET_MESSAGE: brook_read_message_connection(connection); break;
+		case READING_REDIS_MESSAGE: break;
+		case READING_PSQL_MESSAGE: break;
+		default: break;
+	}
+}
+
+void
+brook_kevent_write (brook_connection_t* connection) {
+	switch (connection->state) {
+		case WRITING_SOCKET_MESSAGE: break;
+		case WRITING_REDIS_MESSAGE: break;
+		case WRITING_BEANSTALK_MESSAGE: break;
+		case WRITING_PSQL_MESSAGE: break;
+		default: break;
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // ------------------------------------------------- //
 //                  Read Events Logic                //
@@ -114,8 +145,6 @@ brook_evfilter_read (int kq, struct kevent event, brook_config_t* conf) {
 		case READING_PSQL_MESSAGE: 	break;
 			default: break;
 	}
-
-    brook_kevent_after(connection)
 
     return BROOK_OK;
 }
