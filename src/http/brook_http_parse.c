@@ -11,7 +11,7 @@
 
 int
 brook_http_parse (brook_connection_t* connection) {
-    
+    /*
     int rs;
 
 	switch (connection->http->state) {
@@ -33,12 +33,14 @@ brook_http_parse (brook_connection_t* connection) {
         
     }
 	
-    return rs;
+    return rs;*/
+	return BROOK_OK;
 }
 
 int
 brook_http_header_handler (brook_connection_t* connection) {
 		
+	/*
     // .. current buffer in chain
 	brook_buffer_t* buf = &connection->pos->buf;
     
@@ -144,12 +146,14 @@ brook_http_header_handler (brook_connection_t* connection) {
     }
         
     // ... dont exist handler to content type, defined
+	 */
     return BROOK_ERROR;
 }
 
 int
 brook_http_body_handler(brook_connection_t* connection) {
 	
+	/*
 	brook_buffer_t* buf = &connection->pos->buf;
 	
 	if (connection->http->type == JSON_API || connection->http->type == JOB) {
@@ -160,13 +164,13 @@ brook_http_body_handler(brook_connection_t* connection) {
 			return BROOK_DONE;
 		}
 	}
-	
+	*/
 	return BROOK_ERROR;
 }
 
 int
 brook_http_request_check_type (brook_connection_t* connection) {
-	
+	/*
 	// detetar se o pedido é valido, verificando se existe no gatekeeper, o url desejado e o metodo indiciado
 	// tendo validado é preciso verificar que tipo de pedido é JSON-API, JOB ou UPLOAD FILE
 	
@@ -181,13 +185,13 @@ brook_http_request_check_type (brook_connection_t* connection) {
 	} else {
 		return BROOK_ERROR;
 	}
-	
+	*/
 	return BROOK_OK;
 }
 
 int
 brook_http_set_method (brook_connection_t* connection, brook_str_t method) {
-	
+	/*
 	brook_http_t* request = connection->http;
 	
 	if (brook_strncmp(method.data, "GET", method.len) == 0) {
@@ -204,13 +208,13 @@ brook_http_set_method (brook_connection_t* connection, brook_str_t method) {
 	} else {
 		return BROOK_ERROR;
 	}
-	
+	*/
 	return BROOK_OK;
 }
 
 brook_str_t
 brook_http_request_header_value (char* buf, const char* key) {
-    
+    /*
     brook_str_t s = {0, NULL};
     
     size_t key_len = strlen(key);
@@ -239,6 +243,8 @@ brook_http_request_header_value (char* buf, const char* key) {
         }
         pos++;
     }
-
+	 
     return s;
+	 */
+	return (brook_str_t) {0, (u_char*) ""};
 }

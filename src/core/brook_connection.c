@@ -103,9 +103,16 @@ brook_read_message_connection (brook_connection_t* connection) {
 	if (b->start == NULL) {
 		b->start = calloc(1, connection->conf->http.buffers_size + 1); // i make this to force buffer end with '\n'
 		b->size = connection->conf->http.buffers_size;
+		b->length = 0;
 	}
 	
 	size_t len_diff = b->size - b->length;
+	size_t bytes = brook_socket_read(connection->socket, b->start + b->length, len_diff);
+	b->length += bytes;
+	
+	if (b->length >= b->size) {
+		
+	}
 	
 	/*
 	 brook_buffer_t* buf = &connection->pos->buf;
