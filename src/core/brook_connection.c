@@ -11,14 +11,14 @@
 
 brook_connection_t*
 brook_create_connection (brook_config_t* conf) {
-    
+
 	struct sockaddr_in client_addr;
 
 	int c_socket = brook_socket_accept(conf->socket, &client_addr);
     if (c_socket <= 0) {
         return NULL;
     }
-    
+
 	// ... init connection ...
     brook_connection_t* connection = malloc(sizeof(brook_connection_t));
     connection->conf = conf;
@@ -26,12 +26,14 @@ brook_create_connection (brook_config_t* conf) {
 	connection->state = READING_SOCKET_MESSAGE;
 	connection->port = ntohs(client_addr.sin_port);
 	inet_ntop(AF_INET, &(client_addr.sin_addr), connection->ip, INET_ADDRSTRLEN);
-	
-	connection->ch_buf = malloc(sizeof(brook_chain_t*));
-	connection->ch_buf->next = NULL;
-	
-	connection->pos = &connection->ch_buf->buf;
-	
+
+    {
+        connection->ch_buf = malloc(sizeof(brook_chain_t));
+        connection->ch_buf->next = NULL;
+        connection->pos = connection->ch_buf;
+    }
+
+
 	/*
     {
         connection->port = ntohs(client_addr.sin_port);
@@ -57,31 +59,42 @@ brook_create_connection (brook_config_t* conf) {
 
 int
 brook_close_connection (brook_connection_t* connection) {
+
+    // ... free chain buffer who contain socket data ...
+    brook_chain_t* header = connection->ch_buf;
+    while (header != NULL) {
+        brook_chain_t* tmp = header->next;
+        free(header->buf.start);
+        free(header);
+        header = NULL;
+        header = tmp;
+    }
+    connection->ch_buf = NULL;
     
 	close(connection->socket);
 	free(connection);
-	
+
 	/*
     {
 		if (connection->buffs->buf.start != NULL && connection->buffs->buf.free == 0) {
 			free(connection->buffs->buf.start);
 		}
-		
+
 		if (connection->buffs->next != NULL && connection->buffs->next->buf.free == 0) {
 			free(connection->buffs->next->buf.start);
 		}
-		
+
 		if (connection->buffs->next != NULL) {
 			free(connection->buffs->next);
 		}
-		
+
         free(connection->buffs);
     }
     {
         if (connection->http->json_api != NULL) {
             brook_json_api_free(connection->http);
         }
-		
+
         free(connection->http);
     }
     close(connection->socket);
@@ -89,47 +102,40 @@ brook_close_connection (brook_connection_t* connection) {
         free(connection);
     }
 	 */
-    
+
     return BROOK_OK;
 }
 
 
 int
 brook_read_message_connection (brook_connection_t* connection) {
-    
-	brook_buffer_t* b = connection->pos;
-	
+
+	brook_buffer_t* b = &connection->pos->buf;
+
 	// ... alloc memory in buffer ...
 	if (b->start == NULL) {
 		b->start = calloc(1, connection->conf->http.buffers_size + 1); // i make this to force buffer end with '\n'
 		b->size = connection->conf->http.buffers_size;
 		b->length = 0;
 	}
-	
+
+    // ... read content from socket ...
 	size_t len_diff = b->size - b->length;
 	size_t bytes = brook_socket_read(connection->socket, b->start + b->length, len_diff);
-	b->length += bytes;
-	
-	if (b->length >= b->size) {
-		
-	}
-	
-	/*
-	 brook_buffer_t* buf = &connection->pos->buf;
-
-    size_t len_can_red = buf->size - buf->len;
     
-	size_t bytes = brook_socket_read(connection->socket, buf->start + buf->len, len_can_red);
-
+    // ... is possible dont read nothing in socket ...
     if (bytes == BROOK_ERROR) {
         return BROOK_ERROR;
     }
+	b->length += bytes;
     
-    buf->len = bytes + buf->len;
-	buf->end = buf->start + buf->len;
+    // ... if my buffer is full, create new chain buffer ...
+	if (b->length >= b->size) {
+        connection->pos->next = malloc(sizeof(brook_chain_t));
+        connection->pos = connection->pos->next;
+        connection->pos->next = NULL;
+        return BROOK_DONE;
+	}
 
-	//return brook_http_parse(connection);
-	 */
-	
 	return BROOK_OK;
 }

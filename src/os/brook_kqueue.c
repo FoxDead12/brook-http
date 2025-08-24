@@ -42,7 +42,7 @@ void
 brook_kevent_handle (int kq, struct kevent event, brook_config_t* conf) {
 
 	brook_connection_t* c = NULL;
-	
+
     // ... check if is new connection to server ...
     if (event.ident == conf->socket) {
         c = brook_create_connection(conf);
@@ -52,15 +52,15 @@ brook_kevent_handle (int kq, struct kevent event, brook_config_t* conf) {
         }
 		return;
     }
-	
+
 	// ... handle rest of events ...
 	c = event.udata;
-	
+    int r;
     switch (event.filter) {
-        
+
 		// ... events where need read content from socket ...
 		case EVFILT_READ:
-			brook_kevent_read(c);
+			r = brook_kevent_read(c);
 		break;
 
         // ... events used to make a stack of events, to next enable write (its middle intermediate, before write, dont contain connection whet) will be used to redis and postgres ...
@@ -73,19 +73,32 @@ brook_kevent_handle (int kq, struct kevent event, brook_config_t* conf) {
 
         // ... will execute timout of request ...
         case EVFILT_TIMER:
+            brook_close_connection(c);
+            brook_kqueue_set_descriptor(kq, (int) event.ident, event.filter, EV_DELETE, 0, 0, NULL);
+            return;
         break;
     }
-	
+    
+    // ... if event after run retur error or ok is to remove old event ...
+    if ( r == BROOK_ERROR || r == BROOK_OK ) {
+        brook_kqueue_set_descriptor(kq, (int) event.ident, event.filter, EV_DELETE, 0, 0, NULL);
+    }
+    
+    // ... if event return is BROOK_DONE need repeat the event ...
+    
 }
 
-void
+int
 brook_kevent_read (brook_connection_t* connection) {
 	switch (connection->state) {
-		case READING_SOCKET_MESSAGE: brook_read_message_connection(connection); break;
+        case READING_SOCKET_MESSAGE:
+            return brook_read_message_connection(connection);
+        break;
 		case READING_REDIS_MESSAGE: break;
 		case READING_PSQL_MESSAGE: break;
 		default: break;
 	}
+    return BROOK_ERROR;
 }
 
 void
