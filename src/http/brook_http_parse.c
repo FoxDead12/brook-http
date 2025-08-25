@@ -14,14 +14,14 @@ brook_http_parse (brook_connection_t* connection) {
 		
 	int r = BROOK_OK;
 	
-	if (connection->state == READ_HEADER) {
+	if (connection->http->state == READ_HEADER) {
 		r = brook_http_header_parse(connection);
 		
 		if (r == BROOK_DONE) {
 			connection->http->state = READ_BODY;
 		}
 		
-	} else if (connection->state == READ_BODY) {
+	} else if (connection->http->state == READ_BODY) {
 		r = brook_http_body_parse(connection);
 	}
 	
@@ -82,6 +82,14 @@ brook_http_header_parse (brook_connection_t* connection) {
 		return BROOK_ERROR;
 	}
 	
+	// ... create buffer to only point to header of request ...
+	size_t header_lenght = header_end - b->start;
+	request->_h = malloc(sizeof(brook_buffer_t));
+	request->_h->start = b->start;
+	request->_h->end = header_end;
+	request->_h->length = header_lenght;
+	request->_h->size = header_lenght;
+	
 	// ... if is request dont contain body ...
 	if (request->method != POST && request->method != PATCH) {
 		return BROOK_OK;
@@ -90,76 +98,62 @@ brook_http_header_parse (brook_connection_t* connection) {
 	// ... validate content lenght ...
 	if (request->header.content_length <= 0) return BROOK_ERROR;
 	if (request->header.content_length > connection->conf->http.max_body_size) return BROOK_ERROR;
-	
-	/*
-	
-    // ... check content length necessary
-    int content_length = connection->http->header.content_length;
-    if (content_length <= 0) return BROOK_OK;
-    if (content_length > connection->conf->http.max_body_size) return BROOK_ERROR;
-    
-    // ... run logic to each apllication type
-    // TODO: for now we only will catch json api routes and job
-	if (connection->http->type == JSON_API) {
 		
-        // ... calculate current lenght loaded
-        size_t header_size = end - buf->start;
-        size_t body_already_loaded = buf->len - header_size;
-        
-        // ... check if already load all body is done
-        if (body_already_loaded >= content_length) {
-			brook_chain_t* b = malloc(sizeof(brook_chain_t));
-			b->buf.start = end;
-			b->buf.size  = body_already_loaded;
-			b->buf.len   = body_already_loaded;
-			b->buf.free  = 1;
-			
-			connection->pos->next = b;
-			connection->pos = b;
-			connection->http->buff_body = &b->buf;
-			
-            return BROOK_OK;
-        }
-        
-        // ... need continue reading socket, but is json object so create buffer with body lenght
-        brook_chain_t* b = malloc(sizeof(brook_chain_t));
-        b->buf.start = calloc(1, content_length + 1);
-        b->buf.size  = content_length;
-        b->buf.len   = body_already_loaded;
-
-        memmove(b->buf.start, end, body_already_loaded);
-        
-		connection->pos->next = b;
-		connection->pos = b;
-        
-        connection->http->state = READING_BODY;
-		connection->http->buff_body = &b->buf;
-		
+	// ... now will parse the reast of message, is possible contain body ...
+	size_t body_length_readed = b->length - header_lenght;
+	
+	request->_b = malloc(sizeof(brook_chain_t));
+	request->_b->buf.start = header_end;
+	request->_b->buf.end = b->start + b->length;
+	request->_b->buf.length = body_length_readed;
+	request->_b->buf.size = body_length_readed;
+	request->_bp = request->_b;
+	
+	if (body_length_readed >= request->header.content_length) {
+		return BROOK_OK;
+	} else {
 		return BROOK_DONE;
-        
-    }
-        
-    // ... dont exist handler to content type, defined
-	 */
+	}
+	
     return BROOK_ERROR;
 }
 
 int
 brook_http_body_parse (brook_connection_t* connection) {
 	
-	/*
-	brook_buffer_t* buf = &connection->pos->buf;
+	brook_buffer_t* b = &connection->pos->buf;
+	brook_http_t* request = connection->http;
 	
-	if (connection->http->type == JSON_API || connection->http->type == JOB) {
-		// only ckeck if need keep reading or is all data stored
-		if (connection->http->header.content_length == buf->len) {
-			return BROOK_OK;
-		} else {
-			return BROOK_DONE;
-		}
+	if (request->_bp->buf.length >= request->_bp->buf.size) {
+		request->_bp->next = malloc(sizeof(brook_chain_t));
+		request->_bp = request->_bp->next;
+		request->_bp->buf.start = b->start;
+		request->_bp->buf.end = b->start + b->length;
+		request->_bp->buf.length = b->length;
+		request->_bp->buf.size = b->size;
+	} else {
+		request->_bp->buf.end = b->start + b->length;
+		request->_bp->buf.length = b->length;
 	}
-	*/
-	return BROOK_ERROR;
+	
+	// ... calculate current content lenght ...
+	int current_content_lenght = 0;
+	brook_chain_t* header = request->_b;
+	while (header != NULL) {
+		current_content_lenght += header->buf.length;
+		header = header->next;
+	}
+	
+	printf("current content lenght: %d\n", current_content_lenght);
+	
+	if (current_content_lenght >= request->header.content_length) {
+		printf("terminei de ler o body\n");
+		return BROOK_OK;
+	} else {
+		printf("preciso de continuar\n");
+		return BROOK_DONE;
+	}
+	
 }
 
 int

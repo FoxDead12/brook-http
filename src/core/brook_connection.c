@@ -65,17 +65,34 @@ brook_create_connection (brook_config_t* conf) {
 int
 brook_close_connection (brook_connection_t* connection) {
 
-    // ... free chain buffer who contain socket data ...
-    brook_chain_t* header = connection->ch_buf;
-    while (header != NULL) {
-        brook_chain_t* tmp = header->next;
-        free(header->buf.start);
-        free(header);
-        header = NULL;
-        header = tmp;
-    }
-    connection->ch_buf = NULL;
-    
+	// ... free http request ...
+	{
+		brook_http_t* request = connection->http;
+		free(request->_h);
+		
+		brook_chain_t* header = request->_b;
+		while (header != NULL) {
+			brook_chain_t* tmp = header->next;
+			free(header);
+			header = NULL;
+			header = tmp;
+		}
+		request->_b = NULL;
+	}
+	
+	{
+		// ... free chain buffer who contain socket data ...
+		brook_chain_t* header = connection->ch_buf;
+		while (header != NULL) {
+			brook_chain_t* tmp = header->next;
+			free(header->buf.start);
+			free(header);
+			header = NULL;
+			header = tmp;
+		}
+		connection->ch_buf = NULL;
+	}
+	
 	close(connection->socket);
 	free(connection);
 
@@ -135,15 +152,14 @@ brook_read_message_connection (brook_connection_t* connection) {
 	b->length += bytes;
 	
 	int r = brook_http_parse(connection);
-	if (r != BROOK_DONE) return r;
     
     // ... if my buffer is full, create new chain buffer ...
-	if (b->length >= b->size) {
+	if (b->length >= b->size && r == BROOK_DONE) {
         connection->pos->next = malloc(sizeof(brook_chain_t));
         connection->pos = connection->pos->next;
         connection->pos->next = NULL;
         return BROOK_DONE;
 	}
 
-	return BROOK_OK;
+	return r;
 }

@@ -3,7 +3,7 @@
   "worker_processes": 4,
   
   
-  "http_request_timeout_ms": 1000,       // 1 SECOND
+  "http_request_timeout_ms": 1,       // 1 SECOND
   "http_request_max_body_size": 1048576, // 1MB
 
   

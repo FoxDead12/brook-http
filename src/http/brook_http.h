@@ -78,6 +78,10 @@ struct brook_http_s {
 
     brook_gatekeeper_t* gatekeeper_route;
 
+	brook_buffer_t* _h;
+	brook_chain_t* _b;
+	brook_chain_t* _bp;
+	
     //brook_json_api_t*   json_api;
 
 	//brook_buffer_t*		buff_body;      // only pointer to buff of connection
