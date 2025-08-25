@@ -24,7 +24,11 @@ brook_http_parse (brook_connection_t* connection) {
 	} else if (connection->http->state == READ_BODY) {
 		r = brook_http_body_parse(connection);
 	}
-	
+
+    if (r == BROOK_OK) {
+        // ... request is ok, now will work ...
+    }
+    
 	return r;
 }
 
@@ -45,6 +49,7 @@ brook_http_header_parse (brook_connection_t* connection) {
 		return BROOK_ERROR;
 	}
 	
+    // ... get url of request ...
 	request->url = (brook_str_t) { matches[2].rm_eo - matches[2].rm_so, b->start + matches[2].rm_so };
 	
 	// ... parse params of url ...
@@ -81,7 +86,7 @@ brook_http_header_parse (brook_connection_t* connection) {
 	if (brook_gatekeeper_validate(connection) == BROOK_ERROR) {
 		return BROOK_ERROR;
 	}
-	
+    
 	// ... create buffer to only point to header of request ...
 	size_t header_lenght = header_end - b->start;
 	request->_h = malloc(sizeof(brook_buffer_t));
@@ -89,7 +94,9 @@ brook_http_header_parse (brook_connection_t* connection) {
 	request->_h->end = header_end;
 	request->_h->length = header_lenght;
 	request->_h->size = header_lenght;
-	
+
+    connection->state = WAITING_POOL;
+    
 	// ... if is request dont contain body ...
 	if (request->method != POST && request->method != PATCH) {
 		return BROOK_OK;
@@ -144,13 +151,10 @@ brook_http_body_parse (brook_connection_t* connection) {
 		header = header->next;
 	}
 	
-	printf("current content lenght: %d\n", current_content_lenght);
-	
+    // ... check if i need indicate socket to keep reading or no ...
 	if (current_content_lenght >= request->header.content_length) {
-		printf("terminei de ler o body\n");
 		return BROOK_OK;
 	} else {
-		printf("preciso de continuar\n");
 		return BROOK_DONE;
 	}
 	

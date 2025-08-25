@@ -39,34 +39,14 @@ brook_create_connection (brook_config_t* conf) {
 		http->state = READ_HEADER;
 	}
 
-	/*
-    {
-        connection->port = ntohs(client_addr.sin_port);
-        inet_ntop(AF_INET, &(client_addr.sin_addr), connection->ip, INET_ADDRSTRLEN);
-    }
-    {
-        connection->buffs = malloc(sizeof(brook_chain_t));
-        connection->buffs->next = NULL;
-        connection->buffs->buf.start = calloc(1, conf->http.buffers_size + 1);
-        connection->buffs->buf.size  = conf->http.buffers_size;
-		connection->pos = connection->buffs;
-    }
-    {
-        connection->http = malloc(sizeof(brook_http_t));
-		connection->http->connection = connection;
-        connection->http->state = READING_HEADER;
-		connection->http->buff_header = &connection->buffs->buf;
-        connection->http->gatekeeper_route = NULL;
-    }
-	 */
     return connection;
 }
 
 int
 brook_close_connection (brook_connection_t* connection) {
 
-	// ... free http request ...
 	{
+        // ... free http request ...
 		brook_http_t* request = connection->http;
 		free(request->_h);
 		
@@ -95,35 +75,6 @@ brook_close_connection (brook_connection_t* connection) {
 	
 	close(connection->socket);
 	free(connection);
-
-	/*
-    {
-		if (connection->buffs->buf.start != NULL && connection->buffs->buf.free == 0) {
-			free(connection->buffs->buf.start);
-		}
-
-		if (connection->buffs->next != NULL && connection->buffs->next->buf.free == 0) {
-			free(connection->buffs->next->buf.start);
-		}
-
-		if (connection->buffs->next != NULL) {
-			free(connection->buffs->next);
-		}
-
-        free(connection->buffs);
-    }
-    {
-        if (connection->http->json_api != NULL) {
-            brook_json_api_free(connection->http);
-        }
-
-        free(connection->http);
-    }
-    close(connection->socket);
-    {
-        free(connection);
-    }
-	 */
 
     return BROOK_OK;
 }

@@ -61,10 +61,16 @@ brook_kevent_handle (int kq, struct kevent event, brook_config_t* conf) {
 		// ... events where need read content from socket ...
 		case EVFILT_READ:
 			r = brook_kevent_read(c);
+            
+            if (r == BROOK_ERROR) {
+                // TODO: IF RETURN SOME ERROR, NEED CREATE EVENT OF WRITE
+            }
+            
 		break;
 
         // ... events used to make a stack of events, to next enable write (its middle intermediate, before write, dont contain connection whet) will be used to redis and postgres ...
         case EVFILT_USER:
+            printf("evento de utilizador\n");
         break;
 
         // ... moment where we contain socket connection and will write ...
@@ -80,8 +86,15 @@ brook_kevent_handle (int kq, struct kevent event, brook_config_t* conf) {
     }
     
     // ... if event after run retur error or ok is to remove old event ...
-    if ( r == BROOK_ERROR || r == BROOK_OK ) {
+    if (r != BROOK_DONE) {
         brook_kqueue_set_descriptor(kq, (int) event.ident, event.filter, EV_DELETE, 0, 0, NULL);
+    }
+    
+    if (r == BROOK_OK) {
+        if (c->state == WAITING_POOL) {
+            brook_kqueue_set_descriptor(kq, c->socket, EVFILT_USER, EV_ADD, 0, 0, NULL);
+            brook_kqueue_set_descriptor(kq, c->socket, EVFILT_USER, 0, NOTE_TRIGGER, 0, c);
+        }
     }
     
     // ... if event return is BROOK_DONE need repeat the event ...
