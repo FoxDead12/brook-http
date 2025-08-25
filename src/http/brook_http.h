@@ -68,19 +68,20 @@ struct brook_http_header_s {
 
 struct brook_http_s {
 	brook_connection_t* connection;
+	brook_http_status_t state;
+	brook_http_type_t	type;
+
+	brook_http_method_t method;
+	brook_str_t         url;
+	brook_str_t         params;
+	brook_http_header_t header;
+
     brook_gatekeeper_t* gatekeeper_route;
 
-    brook_http_header_t header;
-    brook_http_status_t state;
-	brook_http_type_t	type;
-	brook_http_method_t method;
-    brook_str_t         url;
-    brook_str_t         params;
+    //brook_json_api_t*   json_api;
 
-    brook_json_api_t*   json_api;
-
-	brook_buffer_t*		buff_body;      // only pointer to buff of connection
-	brook_buffer_t*		buff_header;    // only pointer to buff of connection
+	//brook_buffer_t*		buff_body;      // only pointer to buff of connection
+	//brook_buffer_t*		buff_header;    // only pointer to buff of connection
 };
 
 #endif /* brook_http_h */

@@ -32,7 +32,12 @@ brook_create_connection (brook_config_t* conf) {
         connection->ch_buf->next = NULL;
         connection->pos = connection->ch_buf;
     }
-
+	{
+		connection->http = malloc(sizeof(brook_http_t));
+		brook_http_t* http = connection->http;
+		http->connection = connection;
+		http->state = READ_HEADER;
+	}
 
 	/*
     {
@@ -128,6 +133,9 @@ brook_read_message_connection (brook_connection_t* connection) {
         return BROOK_ERROR;
     }
 	b->length += bytes;
+	
+	int r = brook_http_parse(connection);
+	if (r != BROOK_DONE) return r;
     
     // ... if my buffer is full, create new chain buffer ...
 	if (b->length >= b->size) {

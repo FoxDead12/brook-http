@@ -46,7 +46,6 @@ struct brook_config_http_s {
     size_t timeout;
     size_t max_body_size;
     size_t buffers_size;
-    brook_array_t* allow_content_types;
 };
 
 struct brook_config_s {

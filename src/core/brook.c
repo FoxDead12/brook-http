@@ -59,7 +59,6 @@ brook_create_configuration (brook_config_t* conf) {
     {
         conf->http.timeout = json_get_int("http_request_timeout_ms", conf->json, 1000); // 1 SECOND default
         conf->http.max_body_size = json_get_int("http_request_max_body_size", conf->json, 1048576); // 1MB default size
-        conf->http.allow_content_types = json_get_array("http_request_allow_content_type", conf->json);
         conf->http.buffers_size = json_get_int("http_request_buffers_size", conf->json, 4096);
     }
     {
@@ -77,10 +76,6 @@ brook_create_configuration (brook_config_t* conf) {
 
     if (conf->port == 0) {
         perror("configuration missing 'port' in json file configuration -> integer\n");
-        return BROOK_ERROR;
-    }
-    if (conf->http.allow_content_types->size == 0) {
-        perror("configuration missing 'http_request_allow_content_type' in json file configuration -> array\n");
         return BROOK_ERROR;
     }
 

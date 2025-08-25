@@ -11,7 +11,7 @@
 
 int
 brook_json_api_setup (brook_http_t* request) {
-    
+    /*
     // ... check if gatekeeper resource contain resource ...
     if (request->gatekeeper_route->resource == NULL) {
         return BROOK_ERROR;
@@ -50,20 +50,22 @@ brook_json_api_setup (brook_http_t* request) {
     }
     
     // ... get params of url ...
-    
+    */
     return BROOK_OK;
 }
 
 int
 brook_json_api_free (brook_http_t* request) {
+	/*
 	json_object_put(request->json_api->body);
 	free(request->json_api);
+	 */
     return BROOK_OK;
 }
 
 int
 brook_json_api_setup_body (brook_http_t* request) {
-    
+    /*
     // ... transform body in json ...
     request->json_api->body = json_tokener_parse((char*) request->buff_body->start);
     
@@ -101,6 +103,6 @@ brook_json_api_setup_body (brook_http_t* request) {
     }
     
     request->json_api->attributes = attributes;
-    
+    */
 	return BROOK_OK;
 }

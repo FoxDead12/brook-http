@@ -68,8 +68,8 @@ brook_gatekeeper_build (brook_config_t* conf, json_object* json) {
 int
 brook_gatekeeper_validate (brook_connection_t* connection) {
 
+	brook_http_t* request = connection->http;
     size_t len = connection->conf->gatekeeper->size;
-    brook_http_t* request = connection->http;
     
     for (int i = 0; i < len; i++) {
         

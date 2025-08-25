@@ -11,93 +11,87 @@
 
 int
 brook_http_parse (brook_connection_t* connection) {
-    /*
-    int rs;
-
-	switch (connection->http->state) {
-        case READING_HEADER: rs = brook_http_header_handler(connection); break;
-        case READING_BODY:   rs = brook_http_body_handler(connection);   break;
-        default: return BROOK_ERROR; break;
-    }
-    
-    if (rs == BROOK_OK) {
-        
-        // ... json api ...
-        if (connection->http->type == JSON_API) {
-            if (connection->http->method == POST || connection->http->method == PATCH) {
-                if (brook_json_api_setup_body(connection->http) == BROOK_ERROR) return BROOK_ERROR;
-            }
-            connection->http->state = BUILDING_QUERY;
-        }
-        // ... json api ...
-        
-    }
+		
+	int r = BROOK_OK;
 	
-    return rs;*/
-	return BROOK_OK;
+	if (connection->state == READ_HEADER) {
+		r = brook_http_header_parse(connection);
+		
+		if (r == BROOK_DONE) {
+			connection->http->state = READ_BODY;
+		}
+		
+	} else if (connection->state == READ_BODY) {
+		r = brook_http_body_parse(connection);
+	}
+	
+	return r;
 }
 
 int
-brook_http_header_handler (brook_connection_t* connection) {
-		
-	/*
-    // .. current buffer in chain
-	brook_buffer_t* buf = &connection->pos->buf;
-    
-    // ... Validate and parse first line of socket message
-    regmatch_t matches[5];
-    if (regexec(&connection->conf->regex.http_line, (char*) buf->start, 5, matches, 0) == REG_NOMATCH) {
-        return BROOK_ERROR;
-    }
-    
-    // ... Parse method of regex
-	brook_str_t method;
-	method.data = buf->start + matches[0].rm_so;
-	method.len  = matches[1].rm_eo - matches[1].rm_so;
-	if (brook_http_set_method(connection, method) == BROOK_ERROR) {
+brook_http_header_parse (brook_connection_t* connection) {
+	
+	brook_buffer_t* b = &connection->pos->buf;
+	brook_http_t* request = connection->http;
+	
+	// ... validate message with regex ...
+	regmatch_t matches[5];
+	if (regexec(&connection->conf->regex.http_line, (char*) b->start, 5, matches, 0) == REG_NOMATCH) {
 		return BROOK_ERROR;
 	}
 	
-    // ... Parse url withou params of regex
-    connection->http->url.data = buf->start + matches[2].rm_so;
-    connection->http->url.len  = matches[2].rm_eo - matches[2].rm_so;
-    
-    // Parse params of url
-    if (matches[4].rm_so >= 0) { // TODO: need fix regex
-        connection->http->params.data = buf->start + matches[4].rm_so + 1;
-        connection->http->params.len  = matches[4].rm_eo - (matches[4].rm_so + 1);
-	} else {
-		connection->http->params.data = NULL;
-		connection->http->params.len  = 0;
-	}
-        
-    u_char* end = (u_char*) strstr((char*) buf->start, "\r\n\r\n");
-    if (end == NULL) {
-        return BROOK_ERROR;
-    }
-    end += 4; // jump '\r\n\r\n'
-    
-    // ... Parse the necessary headers in http request
-    connection->http->header.connection     = brook_http_request_header_value((char*) buf->start, "connection");
-    connection->http->header.host           = brook_http_request_header_value((char*) buf->start, "host");
-    connection->http->header.content_type   = brook_http_request_header_value((char*) buf->start, "content-type");
-    connection->http->header.content_length = brook_str_to_int(brook_http_request_header_value((char*) buf->start, "content-length"));
-    
-    if (brook_array_find_value(connection->conf->http.allow_content_types, connection->http->header.content_type) == -1) {
-        return BROOK_ERROR;
-    }
-    
-    if (brook_gatekeeper_validate(connection) == BROOK_ERROR) {
-        return BROOK_ERROR;
-    }
-    
-	if (brook_http_request_check_type(connection) == BROOK_ERROR) {
+	// ... get method of request ...
+	if (brook_http_set_method(connection, (brook_str_t) { matches[1].rm_eo - matches[1].rm_so, (u_char*)b->start + matches[0].rm_so}) == BROOK_ERROR) {
 		return BROOK_ERROR;
 	}
-    
-	if (connection->http->method != POST && connection->http->method != PATCH) {
-        return BROOK_OK;
-    }
+	
+	request->url = (brook_str_t) { matches[2].rm_eo - matches[2].rm_so, b->start + matches[2].rm_so };
+	
+	// ... parse params of url ...
+	if (matches[4].rm_so >= 0) { // TODO: need fix regex
+		request->params = (brook_str_t) { matches[4].rm_eo - (matches[4].rm_so + 1), (u_char*) b->start + matches[4].rm_so + 1};
+	} else {
+		request->params = (brook_str_t) {0, NULL};
+	}
+	
+	// ... check end of request exist ...
+	u_char* header_end = (u_char*) strstr((char*) b->start, "\r\n\r\n");
+	if (header_end == NULL) {
+		return BROOK_ERROR;
+	} else {
+		header_end += 4;
+	}
+	
+	// ... parse headers of request ...
+	request->header.connection 	   = brook_http_request_header_value((char*)b->start, "connection");
+	request->header.host           = brook_http_request_header_value((char*) b->start, "host");
+	request->header.content_type   = brook_http_request_header_value((char*) b->start, "content-type");
+	request->header.content_length = brook_str_to_int(brook_http_request_header_value((char*) b->start, "content-length"));
+	
+	// ... validate content type of request ...
+	if (brook_strncmp(request->header.content_type.data,  "application/vnd.api+json", request->header.content_type.len) == 0) {
+		request->type = JSON_API;
+	} else if (brook_strncmp(request->header.content_type.data,  "application/json", request->header.content_type.len) == 0) {
+		request->type = JOB;
+	} else {
+		return BROOK_ERROR;
+	}
+	
+	// ... validate route in gatekeeper
+	if (brook_gatekeeper_validate(connection) == BROOK_ERROR) {
+		return BROOK_ERROR;
+	}
+	
+	// ... if is request dont contain body ...
+	if (request->method != POST && request->method != PATCH) {
+		return BROOK_OK;
+	}
+	
+	// ... validate content lenght ...
+	if (request->header.content_length <= 0) return BROOK_ERROR;
+	if (request->header.content_length > connection->conf->http.max_body_size) return BROOK_ERROR;
+	
+	/*
 	
     // ... check content length necessary
     int content_length = connection->http->header.content_length;
@@ -151,7 +145,7 @@ brook_http_header_handler (brook_connection_t* connection) {
 }
 
 int
-brook_http_body_handler(brook_connection_t* connection) {
+brook_http_body_parse (brook_connection_t* connection) {
 	
 	/*
 	brook_buffer_t* buf = &connection->pos->buf;
@@ -169,29 +163,8 @@ brook_http_body_handler(brook_connection_t* connection) {
 }
 
 int
-brook_http_request_check_type (brook_connection_t* connection) {
-	/*
-	// detetar se o pedido é valido, verificando se existe no gatekeeper, o url desejado e o metodo indiciado
-	// tendo validado é preciso verificar que tipo de pedido é JSON-API, JOB ou UPLOAD FILE
-	
-	brook_http_t* request = connection->http;
-		
-	if (brook_strncmp(request->header.content_type.data, "application/vnd.api+json", request->header.content_type.len) == 0) {
-		brook_json_api_setup(request);
-		request->type = JSON_API;
-	}
-	else if (brook_strncmp(request->header.content_type.data, "application/json", request->header.content_type.len) == 0) {
-		request->type = JOB;
-	} else {
-		return BROOK_ERROR;
-	}
-	*/
-	return BROOK_OK;
-}
-
-int
 brook_http_set_method (brook_connection_t* connection, brook_str_t method) {
-	/*
+	
 	brook_http_t* request = connection->http;
 	
 	if (brook_strncmp(method.data, "GET", method.len) == 0) {
@@ -208,13 +181,13 @@ brook_http_set_method (brook_connection_t* connection, brook_str_t method) {
 	} else {
 		return BROOK_ERROR;
 	}
-	*/
+
 	return BROOK_OK;
 }
 
 brook_str_t
 brook_http_request_header_value (char* buf, const char* key) {
-    /*
+    
     brook_str_t s = {0, NULL};
     
     size_t key_len = strlen(key);
@@ -245,6 +218,5 @@ brook_http_request_header_value (char* buf, const char* key) {
     }
 	 
     return s;
-	 */
-	return (brook_str_t) {0, (u_char*) ""};
+	 
 }
