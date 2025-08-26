@@ -70,7 +70,7 @@ brook_kevent_handle (int kq, struct kevent event, brook_config_t* conf) {
 
         // ... events used to make a stack of events, to next enable write (its middle intermediate, before write, dont contain connection whet) will be used to redis and postgres ...
         case EVFILT_USER:
-            printf("evento de utilizador\n");
+            r = brook_kevent_user(c);
         break;
 
         // ... moment where we contain socket connection and will write ...
@@ -114,7 +114,7 @@ brook_kevent_read (brook_connection_t* connection) {
     return BROOK_ERROR;
 }
 
-void
+int
 brook_kevent_write (brook_connection_t* connection) {
 	switch (connection->state) {
 		case WRITING_SOCKET_MESSAGE: break;
@@ -123,8 +123,19 @@ brook_kevent_write (brook_connection_t* connection) {
 		case WRITING_PSQL_MESSAGE: break;
 		default: break;
 	}
+    return BROOK_ERROR;
 }
 
+int
+brook_kevent_user (brook_connection_t* connection) {
+    
+    // ... get connection of (REDIS / POSTGRES / BEANSTALK) ...
+    
+    
+    
+    
+    return BROOK_ERROR;
+}
 
 
 
