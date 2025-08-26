@@ -29,10 +29,12 @@ enum brook_http_method_s {
 };
 
 enum brook_http_status_s {
+    
 	// ... action related to 'READING_SOCKET_MESSAGE' ...
 	READ_HEADER,
 	READ_BODY,
 
+    /*
 	// ... action relates to 'READING_REDIS_MESSAGE' ...
 	VALIDATE_USER_RESPONSE,
 	JOB_RESPONSE,
@@ -51,7 +53,7 @@ enum brook_http_status_s {
 
 	// ... action relates to 'WRITING_PSQL_MESSAGE' ...
 	JSON_API_QUERY
-
+     */
 };
 
 enum brook_http_type_s {

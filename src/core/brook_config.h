@@ -21,6 +21,7 @@
 #include <arpa/inet.h>
 #include <regex.h>
 #include <dirent.h>
+#include <libpq-fe.h>
 
 typedef unsigned char u_char;
 

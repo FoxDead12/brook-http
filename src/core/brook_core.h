@@ -23,5 +23,6 @@
 #include "brook_process.h"
 #include "brook_connection.h"
 #include "brook_gatekeeper.h"
+#include "brook_postgres.h"
 
 #endif /* brook_core_h */

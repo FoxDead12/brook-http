@@ -17,10 +17,4 @@ int brook_kevent_read(brook_connection_t* connection);
 int brook_kevent_write(brook_connection_t* connection);
 int brook_kevent_user(brook_connection_t* connection);
 
-
-
-
-int brook_evfilter_read(int kq, struct kevent event, brook_config_t* conf);
-int brook_event_reading_socket_message(int kq, struct kevent event, brook_connection_t* connection);
-
 #endif /* brook_kqueue_h */

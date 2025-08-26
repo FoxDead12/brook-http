@@ -76,8 +76,10 @@ brook_http_header_parse (brook_connection_t* connection) {
 	// ... validate content type of request ...
 	if (brook_strncmp(request->header.content_type.data,  "application/vnd.api+json", request->header.content_type.len) == 0) {
 		request->type = JSON_API;
+        connection->state = WAITING_POOL_DB;
 	} else if (brook_strncmp(request->header.content_type.data,  "application/json", request->header.content_type.len) == 0) {
 		request->type = JOB;
+        connection->state = WAITING_POOL_REDIS;
 	} else {
 		return BROOK_ERROR;
 	}
@@ -94,8 +96,6 @@ brook_http_header_parse (brook_connection_t* connection) {
 	request->_h->end = header_end;
 	request->_h->length = header_lenght;
 	request->_h->size = header_lenght;
-
-    connection->state = WAITING_POOL;
     
 	// ... if is request dont contain body ...
 	if (request->method != POST && request->method != PATCH) {

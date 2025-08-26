@@ -26,7 +26,6 @@ brook_create_connection (brook_config_t* conf) {
 	connection->state = READING_SOCKET_MESSAGE;
 	connection->port = ntohs(client_addr.sin_port);
 	inet_ntop(AF_INET, &(client_addr.sin_addr), connection->ip, INET_ADDRSTRLEN);
-
     {
         connection->ch_buf = malloc(sizeof(brook_chain_t));
         connection->ch_buf->next = NULL;
