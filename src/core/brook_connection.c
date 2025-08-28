@@ -35,6 +35,7 @@ brook_create_connection (brook_config_t* conf) {
 		connection->http = malloc(sizeof(brook_http_t));
 		brook_http_t* http = connection->http;
 		http->connection = connection;
+		http->json_api = NULL;
 		http->state = READ_HEADER;
 	}
 
@@ -112,4 +113,24 @@ brook_read_message_connection (brook_connection_t* connection) {
 	}
 
 	return r;
+}
+
+int
+brook_connection_write_psql (brook_connection_t* connection, int pg_socket) {
+	
+	// ... TODO: FOR NOW ONLY JSON-API WILL COMUNICATE WITH DB ...
+	
+	PGconn* db = brook_postgres_get_connection_from_socket(connection->conf, pg_socket);
+	
+	if (connection->http->type == JSON_API) {
+		return brook_json_api_write_query(connection->http, db);
+	}
+		
+	return BROOK_ERROR;
+}
+
+int
+brook_connection_write_redis (brook_connection_t* connection) {
+	
+	return BROOK_OK;
 }

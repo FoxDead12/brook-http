@@ -71,7 +71,11 @@ brook_create_configuration (brook_config_t* conf) {
         conf->resources  = json_object_new_object();
         conf->gatekeeper = NULL;
     }
-    
+	{
+		conf->postgres_conns = malloc(sizeof(brook_postgres_t));
+		conf->postgres_con_worker = json_get_int("postgres_connection_per_worker", conf->json, 4);
+	}
+	
     free(data);
 
     if (conf->port == 0) {

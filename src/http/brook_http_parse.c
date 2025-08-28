@@ -24,10 +24,6 @@ brook_http_parse (brook_connection_t* connection) {
 	} else if (connection->http->state == READ_BODY) {
 		r = brook_http_body_parse(connection);
 	}
-
-    if (r == BROOK_OK) {
-        // ... request is ok, now will work ...
-    }
     
 	return r;
 }
@@ -96,7 +92,8 @@ brook_http_header_parse (brook_connection_t* connection) {
 	request->_h->end = header_end;
 	request->_h->length = header_lenght;
 	request->_h->size = header_lenght;
-    
+	request->_b = NULL;
+	
 	// ... if is request dont contain body ...
 	if (request->method != POST && request->method != PATCH) {
 		return BROOK_OK;

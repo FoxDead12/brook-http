@@ -56,25 +56,24 @@ brook_kevent_handle (int kq, struct kevent event, brook_config_t* conf) {
 	// ... handle rest of events ...
 	c = event.udata;
     int r;
+	// ... TODO: CHECK IF CONNECTION WAS ALREADY CLOSE BEFORE FIRE EVENT ...
+	
     switch (event.filter) {
 
 		// ... events where need read content from socket ...
 		case EVFILT_READ:
 			r = brook_kevent_read(c);
-            
-            if (r == BROOK_ERROR) {
-                // TODO: IF RETURN SOME ERROR, NEED CREATE EVENT OF WRITE
-            }
-            
+                        
 		break;
 
         // ... events used to make a stack of events, to next enable write (its middle intermediate, before write, dont contain connection whet) will be used to redis and postgres ...
         case EVFILT_USER:
-            r = brook_kevent_user(c);
+            r = brook_kevent_user(kq, c);
         break;
 
         // ... moment where we contain socket connection and will write ...
         case EVFILT_WRITE:
+			r = brook_kevent_write(c, event);
         break;
 
         // ... will execute timout of request ...
@@ -89,6 +88,10 @@ brook_kevent_handle (int kq, struct kevent event, brook_config_t* conf) {
     if (r != BROOK_DONE) {
         brook_kqueue_set_descriptor(kq, (int) event.ident, event.filter, EV_DELETE, 0, 0, NULL);
     }
+	
+	if (r == BROOK_ERROR) {
+		// TODO: IF RETURN SOME ERROR, NEED CREATE EVENT OF WRITE
+	}
     
     if (r == BROOK_OK) {
         if (c->state == WAITING_POOL_DB || c->state == WAITING_POOL_REDIS) {
@@ -108,34 +111,39 @@ brook_kevent_read (brook_connection_t* connection) {
             return brook_read_message_connection(connection);
         break;
 		case READING_REDIS_MESSAGE: break;
-		case READING_PSQL_MESSAGE: break;
+		case READING_PSQL_MESSAGE:
 		default: break;
 	}
     return BROOK_ERROR;
 }
 
 int
-brook_kevent_write (brook_connection_t* connection) {
+brook_kevent_write (brook_connection_t* connection, struct kevent event) {
+	printf("%d - %d\n",WRITING_PSQL_MESSAGE, connection->state);
 	switch (connection->state) {
 		case WRITING_SOCKET_MESSAGE: break;
 		case WRITING_REDIS_MESSAGE: break;
 		case WRITING_BEANSTALK_MESSAGE: break;
-		case WRITING_PSQL_MESSAGE: break;
+		case WRITING_PSQL_MESSAGE:
+			return brook_connection_write_psql(connection, (int) event.ident);
 		default: break;
 	}
     return BROOK_ERROR;
 }
 
 int
-brook_kevent_user (brook_connection_t* connection) {
-    
-    brook_http_t* request = connection->http;
-        
+brook_kevent_user (int kq, brook_connection_t* connection) {
+            
     if (connection->state == WAITING_POOL_DB) {
         
+		PGconn* db = brook_postgres_get_connection(connection->conf);
+		if (db == NULL) return BROOK_DONE;
+		connection->state = WRITING_PSQL_MESSAGE;
+		brook_kqueue_set_descriptor(kq, PQsocket(db), EVFILT_WRITE, EV_ADD, 0, 0, connection);
+		
     } else if (connection->state == WAITING_POOL_REDIS) {
-        
+		return BROOK_ERROR;// TODO: REMOVE THIS LINE, IS GUST TEMPORARY
     }
     
-    return BROOK_ERROR;
+	return BROOK_OK;
 }

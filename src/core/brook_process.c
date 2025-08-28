@@ -78,6 +78,12 @@ void
 brook_start_event_loop_process (brook_config_t* conf) {
     // store config of process and init examples database connections
     conf->brook_process.pid = getpid();
-    brook_start_kernel_event(conf);
+    
+	if (brook_postgres_connections_init(conf) == BROOK_ERROR) {
+		exit(1);
+		// ... TODO: kill father process, to dont create more childrends ...
+	}
+	
+	brook_start_kernel_event(conf);
     exit(1);
 }

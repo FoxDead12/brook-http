@@ -12,7 +12,7 @@
 #include "brook_http_parse.h"
 #include "brook_json_api.h"
 
-typedef struct brook_http_s brook_http_t;
+typedef struct brook_http_s 	   brook_http_t;
 typedef struct brook_http_header_s brook_http_header_t;
 typedef enum   brook_http_status_s brook_http_status_t;
 typedef enum   brook_http_type_s   brook_http_type_t;
@@ -34,6 +34,8 @@ enum brook_http_status_s {
 	READ_HEADER,
 	READ_BODY,
 
+	
+	
     /*
 	// ... action relates to 'READING_REDIS_MESSAGE' ...
 	VALIDATE_USER_RESPONSE,
@@ -83,6 +85,8 @@ struct brook_http_s {
 	brook_buffer_t* _h;
 	brook_chain_t* _b;
 	brook_chain_t* _bp;
+	
+	brook_json_api_t* json_api;
 	
     //brook_json_api_t*   json_api;
 

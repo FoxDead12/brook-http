@@ -10,10 +10,31 @@
 
 #include "../core/brook_string.h"
 
-typedef struct brook_json_api_s brook_json_api_t;
-typedef struct brook_http_s brook_http_t;
-typedef struct brook_json_api_data_s brook_json_api_data_t;
+typedef struct brook_http_s 		 brook_http_t;
+typedef struct brook_json_api_s		 brook_json_api_t;
 
+
+typedef struct brook_json_api_data_s brook_json_api_data_t;
+struct brook_json_api_data_s {
+	json_object* type;
+	json_object* id;
+	json_object* attributes;
+	json_object* relationships;
+};
+
+
+
+
+
+struct brook_json_api_s {
+	brook_http_t* request;
+	json_object* s_resource;
+	
+	json_object* result; // ... result of json api, will be response of request ...
+
+};
+
+/*
 struct brook_json_api_data_s {
 	brook_str_t type;
 	brook_str_t id;
@@ -21,28 +42,15 @@ struct brook_json_api_data_s {
 };
 
 struct brook_json_api_s {
-    json_object*   resource;
-    
-    // ... id of element in search ...
-    brook_str_t    id;
-    
-    // ... only pointers to body, to me more faster ...
-    json_object*   body;
-    json_object*   data;
-    brook_str_t    type;
-    json_object*   attributes;
-    
-    
-    
-    json_object*   result;        // response object
-	brook_array_t* included;
-	brook_array_t* filters;
-	brook_str_t    order_by;
+    json_object*   resource; // ... pointer of resource in server config ...
 };
+*/
 
+int brook_json_api_write_query(brook_http_t* request, PGconn* db);
+int brook_json_api_read_query(brook_http_t* request, PGconn* db);
 int brook_json_api_setup(brook_http_t* request);
-int brook_json_api_setup_body(brook_http_t* request);
-int brook_json_api_free(brook_http_t* request);
+
+int brook_json_api_resource_get(brook_http_t* request);
 
 
 #endif /* brook_json_api_h */

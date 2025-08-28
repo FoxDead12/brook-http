@@ -34,6 +34,7 @@ typedef struct brook_config_http_s      brook_config_http_t;
 typedef struct brook_array_s            brook_array_t;
 typedef struct brook_config_processes_s brook_config_processes_t;
 typedef struct brook_config_regex_s     brook_config_regex_t;
+typedef struct brook_postgres_s brook_postgres_t;
 
 struct brook_config_regex_s {
     regex_t http_line;
@@ -61,6 +62,10 @@ struct brook_config_s {
     brook_config_regex_t     regex;
     json_object*             resources;
     brook_array_t*           gatekeeper;
+	
+	// ... database configurations ...
+	brook_postgres_t*		 postgres_conns;
+	int postgres_con_worker;
 };
 
 #endif /* brook_config_h */

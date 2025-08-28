@@ -10,24 +10,84 @@
 #include "../core/brook_core.h"
 
 int
+brook_json_api_write_query (brook_http_t* request, PGconn* db) {
+	
+	if (request->json_api == NULL) {
+		// ... need setup json api ...
+		if (brook_json_api_setup(request) == BROOK_ERROR) {
+			return BROOK_ERROR;
+		}
+	}
+	
+	// ... this code will always enter in each WRITE EVENT IN SOCKET OF PSQL ...
+	// ... so JSON-API need know the state is in ...
+	
+	
+	// TODO: for now will assume only execute one query for request ...
+	/*
+	 resource data struct in json:
+	 {
+		type:
+		id:
+		attributes: {},
+		relationships: {}
+	 }
+	 
+	 */
+	
+	
+	if (request->method == GET) {
+		brook_json_api_resource_get(request);
+	} else if (request->method == DELETE) {
+		
+		
+		
+	}
+	
+	
+	return BROOK_OK ;
+}
+
+int
+brook_json_api_read_query (brook_http_t* request, PGconn* db) {
+	return BROOK_OK;
+}
+
+int
 brook_json_api_setup (brook_http_t* request) {
+	
+	brook_config_t* s_conf = request->connection->conf;
+	
+	// ... check gatekeeper contain resource data ...
+	if (request->gatekeeper_route->resource == NULL) {
+		return BROOK_ERROR;
+	}
+	
+	// ... get resource config from gatekeeper settings ...
+	json_object* server_resource = json_object_object_get(s_conf->resources, request->gatekeeper_route->resource);
+	if (server_resource == NULL) {
+		return BROOK_ERROR;
+	}
+	
+	// ... create struct in request ...
+	request->json_api 			  = malloc(sizeof(brook_json_api_t));
+	request->json_api->request    = request;
+	request->json_api->s_resource = server_resource;
+	request->json_api->result 	  = json_object_new_object();
+	
+	// ... if method dont contain body out here ...
+	if (request->method != POST && request->method != PATCH) {
+		return BROOK_OK;
+	}
+	
+	// ... check if exist body in request ...
+	if (request->_b == NULL) {
+		return BROOK_ERROR;
+	}
+	
+	// ... validate body struct ...
+	
     /*
-    // ... check if gatekeeper resource contain resource ...
-    if (request->gatekeeper_route->resource == NULL) {
-        return BROOK_ERROR;
-    }
-    
-    // ... get resource ...
-    json_object* resource = json_object_object_get(request->connection->conf->resources, request->gatekeeper_route->resource);
-    if (resource == NULL) {
-        return BROOK_ERROR;
-    }
-    
-    // ... create object of json api ...
-    request->json_api = malloc(sizeof(brook_json_api_t));
-    request->json_api->resource = resource;
-    request->json_api->body = NULL;
-    
     // ... get id ...
     request->json_api->id.data = NULL;
     request->json_api->id.len = 0;
@@ -53,6 +113,38 @@ brook_json_api_setup (brook_http_t* request) {
     */
     return BROOK_OK;
 }
+
+int
+brook_json_api_resource_get (brook_http_t* request) {
+	return BROOK_OK;
+}
+
+int
+brook_json_api_resource_delete (brook_http_t* request) {
+	return BROOK_OK;
+}
+
+int
+brook_json_api_resource_post (brook_http_t* request) {
+	return BROOK_OK;
+}
+
+int
+brook_json_api_resource_patch (brook_http_t* request) {
+	return BROOK_OK;
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 int
 brook_json_api_free (brook_http_t* request) {

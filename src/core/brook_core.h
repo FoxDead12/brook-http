@@ -13,6 +13,11 @@
 #define BROOK_OK      0
 #define BROOK_ERROR   -1
 #define BROOK_DONE    -2
+
+// ... EVENTS HELPERS ...
+#define BROOK_SET_WRITE -3
+#define BROOK_SET_READ  -4
+
 #define BROOK_CONFIG_FILE "../../conf/brook_config.json"
 #define BROOK_RESOURCES_DIRECTORY "../../resources"
 #define BROOK_GATEKEEPER_DIRECTORY "../../conf/gatekeeper.json"
