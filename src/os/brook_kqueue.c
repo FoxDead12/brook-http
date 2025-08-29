@@ -119,7 +119,6 @@ brook_kevent_read (brook_connection_t* connection) {
 
 int
 brook_kevent_write (brook_connection_t* connection, struct kevent event) {
-	printf("%d - %d\n",WRITING_PSQL_MESSAGE, connection->state);
 	switch (connection->state) {
 		case WRITING_SOCKET_MESSAGE: break;
 		case WRITING_REDIS_MESSAGE: break;

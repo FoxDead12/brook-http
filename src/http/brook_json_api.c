@@ -19,28 +19,9 @@ brook_json_api_write_query (brook_http_t* request, PGconn* db) {
 		}
 	}
 	
-	// ... this code will always enter in each WRITE EVENT IN SOCKET OF PSQL ...
-	// ... so JSON-API need know the state is in ...
-	
-	
-	// TODO: for now will assume only execute one query for request ...
-	/*
-	 resource data struct in json:
-	 {
-		type:
-		id:
-		attributes: {},
-		relationships: {}
-	 }
-	 
-	 */
-	
-	
 	if (request->method == GET) {
 		brook_json_api_resource_get(request);
 	} else if (request->method == DELETE) {
-		
-		
 		
 	}
 	
