@@ -9,23 +9,25 @@
 #include "brook_http.h"
 #include "../core/brook_core.h"
 
+const char* QUERY_GET    = "SELECT %s FROM %s WHERE %s ORDER BY %s LIMIT %s OFFSET %s";
+const char* QUERY_DELETE = "DELETE FROM %s WHERE id = %s";
+const char* QUERY_INSERT = "INSERT INTO %s VALUES %s";
+const char* QUERY_UPDATE = "UPDATE %s SET %s WHERE %s";
+
 int
 brook_json_api_write_query (brook_http_t* request, PGconn* db) {
 	
 	if (request->json_api == NULL) {
-		// ... need setup json api ...
+		
+        // ... need setup json api ...
 		if (brook_json_api_setup(request) == BROOK_ERROR) {
 			return BROOK_ERROR;
 		}
+            
 	}
 	
-	if (request->method == GET) {
-		brook_json_api_resource_get(request);
-	} else if (request->method == DELETE) {
-		
-	}
-	
-	
+	// ... write to psql ...
+    
 	return BROOK_OK ;
 }
 
@@ -66,6 +68,31 @@ brook_json_api_setup (brook_http_t* request) {
 		return BROOK_ERROR;
 	}
 	
+    brook_json_api_query_t* query_s = malloc(sizeof(brook_json_api_query_t));
+    query_s->table = json_get_str("table", server_resource, (brook_str_t) brook_string(""));
+    
+    // ... now the ideia is create all query templates ...
+    if (request->method == GET) {
+        
+        
+        
+    } else if (request->method == DELETE) {
+        
+        
+    } else if (request->method == POST) {
+        
+        
+    } else if (request->method == PATCH) {
+        
+        
+    } else return BROOK_ERROR;
+    
+    
+    
+    
+    
+    
+    
 	// ... validate body struct ...
 	
     /*
@@ -102,6 +129,8 @@ brook_json_api_resource_get (brook_http_t* request) {
 
 int
 brook_json_api_resource_delete (brook_http_t* request) {
+    
+    char* query = NULL;
 	return BROOK_OK;
 }
 
