@@ -14,6 +14,14 @@ typedef struct brook_http_s 		  brook_http_t;
 typedef struct brook_json_api_s		  brook_json_api_t;
 typedef struct brook_json_api_data_s  brook_json_api_data_t;
 typedef struct brook_json_api_query_s brook_json_api_query_t;
+typedef enum   brook_json_api_type_s  brook_json_api_type_t;
+
+enum brook_json_api_type_s {
+	Q_SELECT,
+	Q_DELETE,
+	Q_INSERT,
+	Q_UPDATE
+};
 
 struct brook_json_api_data_s {
 	json_object* type;
@@ -30,6 +38,7 @@ struct brook_json_api_s {
 };
 
 struct brook_json_api_query_s {
+	brook_json_api_type_t type;
     char*          query_template;
     char*          query;
     brook_str_t    table;

@@ -9,25 +9,19 @@
 #include "brook_http.h"
 #include "../core/brook_core.h"
 
-const char* QUERY_GET    = "SELECT %s FROM %s WHERE %s ORDER BY %s LIMIT %s OFFSET %s";
+const char* QUERY_SELECT = "SELECT %s FROM %s WHERE %s ORDER BY %s LIMIT %s OFFSET %s";
 const char* QUERY_DELETE = "DELETE FROM %s WHERE id = %s";
 const char* QUERY_INSERT = "INSERT INTO %s VALUES %s";
 const char* QUERY_UPDATE = "UPDATE %s SET %s WHERE %s";
 
 int
 brook_json_api_write_query (brook_http_t* request, PGconn* db) {
-	
 	if (request->json_api == NULL) {
-		
         // ... need setup json api ...
 		if (brook_json_api_setup(request) == BROOK_ERROR) {
 			return BROOK_ERROR;
 		}
-            
 	}
-	
-	// ... write to psql ...
-    
 	return BROOK_OK ;
 }
 
@@ -59,12 +53,7 @@ brook_json_api_setup (brook_http_t* request) {
 	request->json_api->result 	  = json_object_new_object();
 	
 	// ... if method dont contain body out here ...
-	if (request->method != POST && request->method != PATCH) {
-		return BROOK_OK;
-	}
-	
-	// ... check if exist body in request ...
-	if (request->_b == NULL) {
+	if ((request->method == POST || request->method == PATCH) && request->_b == NULL) {
 		return BROOK_ERROR;
 	}
 	
@@ -74,24 +63,32 @@ brook_json_api_setup (brook_http_t* request) {
     // ... now the ideia is create all query templates ...
     if (request->method == GET) {
         
-        
+		// ... SELECT -> need attributes, table, filter, order by, and page (limit, offset) ...
+		query_s->type = Q_SELECT;
+		query_s->query_template = (char*) QUERY_SELECT;
         
     } else if (request->method == DELETE) {
         
-        
+		// ... DELETE -> only need table and id to delete ...
+		query_s->type = Q_DELETE;
+		query_s->query_template = (char*) QUERY_DELETE;
+		
     } else if (request->method == POST) {
         
+		// ... INSERT -> need table, attributes key ...
+		query_s->type = Q_INSERT;
+		query_s->query_template = (char*) QUERY_INSERT;
         
     } else if (request->method == PATCH) {
         
+		// ... UPDATE -> need table, attributes key and id to update ...
+		query_s->type = Q_UPDATE;
+		query_s->query_template = (char*) QUERY_UPDATE;
         
-    } else return BROOK_ERROR;
-    
-    
-    
-    
-    
-    
+	} else {
+		free(query_s);
+		return BROOK_ERROR;
+	}
     
 	// ... validate body struct ...
 	
@@ -130,7 +127,6 @@ brook_json_api_resource_get (brook_http_t* request) {
 int
 brook_json_api_resource_delete (brook_http_t* request) {
     
-    char* query = NULL;
 	return BROOK_OK;
 }
 
