@@ -67,12 +67,13 @@ brook_json_api_setup (brook_http_t* request) {
 		query_s->type = Q_SELECT;
 		query_s->query_template = (char*) QUERY_SELECT;
         
+        
     } else if (request->method == DELETE) {
         
 		// ... DELETE -> only need table and id to delete ...
 		query_s->type = Q_DELETE;
 		query_s->query_template = (char*) QUERY_DELETE;
-		
+        
     } else if (request->method == POST) {
         
 		// ... INSERT -> need table, attributes key ...
@@ -90,58 +91,28 @@ brook_json_api_setup (brook_http_t* request) {
 		return BROOK_ERROR;
 	}
     
-	// ... validate body struct ...
-	
-    /*
-    // ... get id ...
-    request->json_api->id.data = NULL;
-    request->json_api->id.len = 0;
-    
-	if (request->method == GET || request->method == DELETE || request->method == PATCH) {
-		u_char* pointer = request->url.data + request->url.len - 1;
-        while (pointer >= request->url.data && *pointer != '/') {
-            pointer--;
-        }
-        
-        if (pointer != request->url.data) {
-            // ... exist id ...
-            request->json_api->id.data = pointer + 1;
-            request->json_api->id.len = (request->url.data + request->url.len) - request->json_api->id.data;
-        }
-		
-		if (request->method != GET && request->json_api->id.data == NULL) {
-			return BROOK_ERROR;
-		}
-    }
-    
-    // ... get params of url ...
-    */
     return BROOK_OK;
 }
 
 int
-brook_json_api_resource_get (brook_http_t* request) {
-	return BROOK_OK;
-}
-
-int
-brook_json_api_resource_delete (brook_http_t* request) {
+brook_json_api_parse_id (brook_http_t* request, brook_json_api_query_t* query_s) {
     
-	return BROOK_OK;
+    u_char* pointer = request->url.data + request->url.len - 1;
+    
+    while (pointer >= request->url.data && *pointer != '/') {
+        pointer--;
+    }
+    
+    if (pointer != request->url.data) {
+        // ... exist id ...
+        query_s->resource_id.data = pointer + 1;
+        query_s->resource_id.len  = (request->url.data + request->url.len) - query_s->resource_id.data;
+        return BROOK_OK;
+    }
+    
+    return BROOK_ERROR;
+    
 }
-
-int
-brook_json_api_resource_post (brook_http_t* request) {
-	return BROOK_OK;
-}
-
-int
-brook_json_api_resource_patch (brook_http_t* request) {
-	return BROOK_OK;
-}
-
-
-
 
 
 
