@@ -15,6 +15,7 @@ typedef struct brook_json_api_s		  brook_json_api_t;
 typedef struct brook_json_api_data_s  brook_json_api_data_t;
 typedef struct brook_json_api_query_s brook_json_api_query_t;
 typedef enum   brook_json_api_type_s  brook_json_api_type_t;
+typedef struct brook_json_api_query_chain_s brook_json_api_query_chain_t;
 
 enum brook_json_api_type_s {
 	Q_SELECT,
@@ -34,7 +35,7 @@ struct brook_json_api_s {
 	brook_http_t* request;
 	json_object* s_resource; // ... resource object of server config ...
 	json_object* result; // ... result of json api, will be response of request ...
-
+    brook_json_api_query_chain_t* querys_list;
 };
 
 struct brook_json_api_query_s {
@@ -44,7 +45,7 @@ struct brook_json_api_query_s {
     char*          query;
     
     brook_str_t    table;
-    brook_str_t    resource_id;
+    brook_str_t    id;
     
     brook_array_t* filter;
     brook_str_t    order;
@@ -53,6 +54,12 @@ struct brook_json_api_query_s {
     
     json_object*   attributes;
 };
+
+
+struct brook_json_api_query_chain_s {
+    brook_json_api_query_t query_s;
+    brook_json_api_query_chain_t* next;
+};  
 
 int brook_json_api_write_query(brook_http_t* request, PGconn* db);
 int brook_json_api_read_query(brook_http_t* request, PGconn* db);

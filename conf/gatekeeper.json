@@ -1,6 +1,6 @@
 [
   {
-    "method": ["GET", "POST", "PATCH"],
+    "method": ["GET", "POST", "PATCH", "DELETE"],
     "route": "^/products(.+)?",
     "resource": "products"
   }

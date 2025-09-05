@@ -63,7 +63,6 @@ brook_kevent_handle (int kq, struct kevent event, brook_config_t* conf) {
 		// ... events where need read content from socket ...
 		case EVFILT_READ:
 			r = brook_kevent_read(c);
-                        
 		break;
 
         // ... events used to make a stack of events, to next enable write (its middle intermediate, before write, dont contain connection whet) will be used to redis and postgres ...

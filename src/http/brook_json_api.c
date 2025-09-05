@@ -10,7 +10,7 @@
 #include "../core/brook_core.h"
 
 const char* QUERY_SELECT = "SELECT %s FROM %s WHERE %s ORDER BY %s LIMIT %s OFFSET %s";
-const char* QUERY_DELETE = "DELETE FROM %s WHERE id = %s";
+const char* QUERY_DELETE = "DELETE FROM %s WHERE id = '%.*s'";
 const char* QUERY_INSERT = "INSERT INTO %s VALUES %s";
 const char* QUERY_UPDATE = "UPDATE %s SET %s WHERE %s";
 
@@ -51,13 +51,14 @@ brook_json_api_setup (brook_http_t* request) {
 	request->json_api->request    = request;
 	request->json_api->s_resource = server_resource;
 	request->json_api->result 	  = json_object_new_object();
-	
-	// ... if method dont contain body out here ...
+    request->json_api->querys_list = malloc(sizeof(brook_json_api_query_chain_t));
+    
+	// ... if method don't contain body out here ...
 	if ((request->method == POST || request->method == PATCH) && request->_b == NULL) {
 		return BROOK_ERROR;
 	}
 	
-    brook_json_api_query_t* query_s = malloc(sizeof(brook_json_api_query_t));
+    brook_json_api_query_t* query_s = &request->json_api->querys_list->query_s;
     query_s->table = json_get_str("table", server_resource, (brook_str_t) brook_string(""));
     
     // ... now the ideia is create all query templates ...
@@ -68,11 +69,17 @@ brook_json_api_setup (brook_http_t* request) {
 		query_s->query_template = (char*) QUERY_SELECT;
         
         
+        
     } else if (request->method == DELETE) {
         
-		// ... DELETE -> only need table and id to delete ...
 		query_s->type = Q_DELETE;
 		query_s->query_template = (char*) QUERY_DELETE;
+        
+        if (brook_json_api_parse_id(request, query_s) == BROOK_ERROR) {
+            return BROOK_ERROR;
+        }
+        
+        asprintf(&query_s->query, query_s->query_template, query_s->table.data, query_s->id.len, query_s->id.data);
         
     } else if (request->method == POST) {
         
@@ -86,10 +93,11 @@ brook_json_api_setup (brook_http_t* request) {
 		query_s->type = Q_UPDATE;
 		query_s->query_template = (char*) QUERY_UPDATE;
         
-	} else {
-		free(query_s);
-		return BROOK_ERROR;
-	}
+        if (brook_json_api_parse_id(request, query_s) == BROOK_ERROR) {
+            return BROOK_ERROR;
+        }
+        
+	} else return BROOK_ERROR;
     
     return BROOK_OK;
 }
@@ -105,8 +113,8 @@ brook_json_api_parse_id (brook_http_t* request, brook_json_api_query_t* query_s)
     
     if (pointer != request->url.data) {
         // ... exist id ...
-        query_s->resource_id.data = pointer + 1;
-        query_s->resource_id.len  = (request->url.data + request->url.len) - query_s->resource_id.data;
+        query_s->id.data = pointer + 1;
+        query_s->id.len  = (request->url.data + request->url.len) - query_s->id.data;
         return BROOK_OK;
     }
     
