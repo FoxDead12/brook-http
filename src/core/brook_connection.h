@@ -43,5 +43,7 @@ brook_connection_t* brook_create_connection(brook_config_t* conf);
 int brook_read_message_connection(brook_connection_t* connection);
 int brook_close_connection(brook_connection_t* connection);
 int brook_connection_write_psql(brook_connection_t* connection, int pg_socket);
+int brook_connection_read_psql(brook_connection_t* connection, int pg_socket);
+
 
 #endif /* brook_connection_h */

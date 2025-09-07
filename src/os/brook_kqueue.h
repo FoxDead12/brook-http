@@ -13,7 +13,7 @@
 int brook_start_kernel_event(brook_config_t* conf);
 int brook_kqueue_set_descriptor(int kq, int fd, int filter, int flags, int fflags, size_t data, void* udata);
 void brook_kevent_handle(int kq, struct kevent event, brook_config_t* conf);
-int brook_kevent_read(brook_connection_t* connection);
+int brook_kevent_read(brook_connection_t* connection, struct kevent event);
 int brook_kevent_write(brook_connection_t* connection, struct kevent event);
 int brook_kevent_user(int kq, brook_connection_t* connection);
 

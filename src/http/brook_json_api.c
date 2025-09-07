@@ -22,7 +22,14 @@ brook_json_api_write_query (brook_http_t* request, PGconn* db) {
 			return BROOK_ERROR;
 		}
 	}
-	return BROOK_OK ;
+	
+	
+	brook_json_api_query_chain_t* q_chain = request->json_api->querys_list;
+	PQsendQuery(db, q_chain->query_s.query);
+		
+	request->connection->state = READING_PSQL_MESSAGE;
+	
+	return BROOK_OK;
 }
 
 int

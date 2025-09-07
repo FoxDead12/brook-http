@@ -130,6 +130,14 @@ brook_connection_write_psql (brook_connection_t* connection, int pg_socket) {
 }
 
 int
+brook_connection_read_psql (brook_connection_t* connection, int pg_socket) {
+	
+	
+	
+	return BROOK_ERROR;
+}
+
+int
 brook_connection_write_redis (brook_connection_t* connection) {
 	
 	return BROOK_OK;
