@@ -65,5 +65,6 @@ int brook_json_api_write_query(brook_http_t* request, PGconn* db);
 int brook_json_api_read_query(brook_http_t* request, PGconn* db);
 int brook_json_api_setup(brook_http_t* request);
 int brook_json_api_parse_id(brook_http_t* request, brook_json_api_query_t* query_s);
+int brook_json_api_parse_postgres_result (brook_http_t* request, PGresult *res);
 
 #endif /* brook_json_api_h */
