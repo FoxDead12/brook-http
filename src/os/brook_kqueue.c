@@ -57,7 +57,7 @@ brook_kevent_handle (int kq, struct kevent event, brook_config_t* conf) {
 	c = event.udata;
 	int r = BROOK_ERROR;
 	// ... TODO: CHECK IF CONNECTION WAS ALREADY CLOSE BEFORE FIRE EVENT ...
-	
+
     switch (event.filter) {
 
 		// ... events where need read content from socket ...
@@ -82,16 +82,16 @@ brook_kevent_handle (int kq, struct kevent event, brook_config_t* conf) {
             return;
         break;
     }
-    
+
     // ... if event after run retur error or ok is to remove old event ...
     if (r != BROOK_DONE) {
         brook_kqueue_set_descriptor(kq, (int) event.ident, event.filter, EV_DELETE, 0, 0, NULL);
     }
-	
+
 	if (r == BROOK_ERROR) {
 		// TODO: IF RETURN SOME ERROR, NEED CREATE EVENT OF WRITE
 	}
-    
+
     if (r == BROOK_OK) {
         if (c->state == WAITING_POOL_DB || c->state == WAITING_POOL_REDIS) {
             brook_kqueue_set_descriptor(kq, c->socket, EVFILT_USER, EV_ADD, 0, 0, NULL);
@@ -100,9 +100,9 @@ brook_kevent_handle (int kq, struct kevent event, brook_config_t* conf) {
 			brook_kqueue_set_descriptor(kq, (int) event.ident, EVFILT_READ, EV_ADD, 0, 0, c);
 		}
     }
-    
+
     // ... if event return is BROOK_DONE need repeat the event ...
-    
+
 }
 
 int
@@ -134,17 +134,17 @@ brook_kevent_write (brook_connection_t* connection, struct kevent event) {
 
 int
 brook_kevent_user (int kq, brook_connection_t* connection) {
-            
+
     if (connection->state == WAITING_POOL_DB) {
-        
+
 		PGconn* db = brook_postgres_get_connection(connection->conf);
 		if (db == NULL) return BROOK_DONE;
 		connection->state = WRITING_PSQL_MESSAGE;
 		brook_kqueue_set_descriptor(kq, PQsocket(db), EVFILT_WRITE, EV_ADD, 0, 0, connection);
-		
+
     } else if (connection->state == WAITING_POOL_REDIS) {
 		return BROOK_ERROR;// TODO: REMOVE THIS LINE, IS GUST TEMPORARY
     }
-    
+
 	return BROOK_OK;
 }

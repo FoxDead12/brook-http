@@ -132,7 +132,11 @@ brook_connection_write_psql (brook_connection_t* connection, int pg_socket) {
 int
 brook_connection_read_psql (brook_connection_t* connection, int pg_socket) {
 	
-	
+    PGconn* db = brook_postgres_get_connection_from_socket(connection->conf, pg_socket);
+
+    if (connection->http->type == JSON_API) {
+        return brook_json_api_read_query(connection->http, db);
+    }
 	
 	return BROOK_ERROR;
 }
