@@ -34,9 +34,15 @@ brook_create_connection (brook_config_t* conf) {
 	{
 		connection->http = malloc(sizeof(brook_http_t));
 		brook_http_t* http = connection->http;
-		http->connection = connection;
-		http->json_api = NULL;
+		
+        http->connection = connection;
+        http->json_api = NULL;
 		http->state = READ_HEADER;
+        
+        {
+            connection->http->response = malloc(sizeof(brook_http_response_t));
+        }
+        
 	}
 
     return connection;
@@ -61,7 +67,7 @@ brook_close_connection (brook_connection_t* connection) {
 	}
 	
 	{
-		// ... free chain buffer who contain socket data ...
+		// ... free chain buffer who contain socket data ... //
 		brook_chain_t* header = connection->ch_buf;
 		while (header != NULL) {
 			brook_chain_t* tmp = header->next;
@@ -72,10 +78,25 @@ brook_close_connection (brook_connection_t* connection) {
 		}
 		connection->ch_buf = NULL;
 	}
+    {
+        if (connection->http->json_api != NULL) {
+            brook_json_api_free(connection->http);
+            free(connection->http->json_api);
+        }
+        
+        if (connection->http->response != NULL) {
+            free(connection->http->response->response_header);
+            free(connection->http->response);
+        }
+        
+        free(connection->http);
+    }
 	
 	close(connection->socket);
 	free(connection);
-
+    
+    connection = NULL;
+    
     return BROOK_OK;
 }
 
@@ -113,6 +134,34 @@ brook_read_message_connection (brook_connection_t* connection) {
 	}
 
 	return r;
+}
+
+int
+brook_write_message_connection (brook_connection_t* connection) {
+        
+    brook_http_response_t* response = connection->http->response;
+    
+    if (response->header_send == false) {
+        
+        brook_socket_write(connection->socket, response->response_header, response->response_header_len);
+        
+        response->header_send = true;
+        
+    } else {
+        response->response_body_len_sended += brook_socket_write(
+          connection->socket,
+          response->response_body + response->response_body_len_sended,
+          response->response_body_len - response->response_body_len_sended
+        );
+    }
+
+    if (response->response_body_len_sended < response->response_body_len) {
+        return BROOK_DONE;
+    } else {
+        connection->state = CLOSED;
+        return BROOK_OK;
+    }
+    
 }
 
 int

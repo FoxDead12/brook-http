@@ -61,3 +61,8 @@ brook_socket_read (int socket, u_char* buffer, size_t size) {
     }
     return n;
 }
+
+size_t
+brook_socket_write (int socket, u_char* buffer, size_t size) {
+    return write(socket, buffer, size);
+}

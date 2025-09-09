@@ -73,9 +73,9 @@ brook_http_header_parse (brook_connection_t* connection) {
 	if (brook_strncmp(request->header.content_type.data,  "application/vnd.api+json", request->header.content_type.len) == 0) {
 		request->type = JSON_API;
         connection->state = WAITING_POOL_DB;
-	} else if (brook_strncmp(request->header.content_type.data,  "application/json", request->header.content_type.len) == 0) {
+	/*} else if (brook_strncmp(request->header.content_type.data,  "application/json", request->header.content_type.len) == 0) {
 		request->type = JOB;
-        connection->state = WAITING_POOL_REDIS;
+        connection->state = WAITING_POOL_REDIS;*/
 	} else {
 		return BROOK_ERROR;
 	}

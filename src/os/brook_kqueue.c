@@ -78,18 +78,18 @@ brook_kevent_handle (int kq, struct kevent event, brook_config_t* conf) {
         // ... will execute timout of request ...
         case EVFILT_TIMER:
             brook_close_connection(c);
-            brook_kqueue_set_descriptor(kq, (int) event.ident, event.filter, EV_DELETE, 0, 0, NULL);
             return;
         break;
     }
 
-    // ... if event after run retur error or ok is to remove old event ...
+    // ... if event after run return error or ok is to remove old event ...
     if (r != BROOK_DONE) {
         brook_kqueue_set_descriptor(kq, (int) event.ident, event.filter, EV_DELETE, 0, 0, NULL);
     }
 
 	if (r == BROOK_ERROR) {
 		// TODO: IF RETURN SOME ERROR, NEED CREATE EVENT OF WRITE
+        // brook_kqueue_set_descriptor(kq, c->socket, EVFILT_WRITE, EV_ADD, 0, 0, c);
 	}
 
     if (r == BROOK_OK) {
@@ -98,7 +98,12 @@ brook_kevent_handle (int kq, struct kevent event, brook_config_t* conf) {
             brook_kqueue_set_descriptor(kq, c->socket, EVFILT_USER, 0, NOTE_TRIGGER, 0, c);
         } else if (c->state == READING_PSQL_MESSAGE) {
 			brook_kqueue_set_descriptor(kq, (int) event.ident, EVFILT_READ, EV_ADD, 0, 0, c);
-		}
+        } else if (c->state == WRITING_SOCKET_MESSAGE) {
+            brook_kqueue_set_descriptor(kq, c->socket, EVFILT_WRITE, EV_ADD, 0, 0, c);
+        } else if (c->state == CLOSED) {
+            brook_kqueue_set_descriptor(kq, c->socket, EVFILT_TIMER, EV_DELETE, 0, 0, NULL);
+            brook_close_connection(c);
+        }
     }
 
     // ... if event return is BROOK_DONE need repeat the event ...
@@ -122,7 +127,8 @@ brook_kevent_read (brook_connection_t* connection, struct kevent event) {
 int
 brook_kevent_write (brook_connection_t* connection, struct kevent event) {
 	switch (connection->state) {
-		case WRITING_SOCKET_MESSAGE: break;
+		case WRITING_SOCKET_MESSAGE:
+            return brook_write_message_connection(connection);
 		case WRITING_REDIS_MESSAGE: break;
 		case WRITING_BEANSTALK_MESSAGE: break;
 		case WRITING_PSQL_MESSAGE:

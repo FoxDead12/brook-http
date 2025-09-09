@@ -10,8 +10,6 @@
 
 #include "brook_http.h"
 
-typedef struct brook_connection_s brook_connection_t;
-
 int brook_http_parse(brook_connection_t* connection);
 int brook_http_header_parse(brook_connection_t* connection);
 int brook_http_body_parse(brook_connection_t* connection);

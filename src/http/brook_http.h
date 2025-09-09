@@ -8,10 +8,6 @@
 #ifndef brook_http_h
 #define brook_http_h
 
-#include "brook_config.h"
-#include "brook_http_parse.h"
-#include "brook_json_api.h"
-
 typedef struct brook_http_s 	   brook_http_t;
 typedef struct brook_http_header_s brook_http_header_t;
 typedef enum   brook_http_status_s brook_http_status_t;
@@ -20,6 +16,12 @@ typedef enum   brook_http_method_s brook_http_method_t;
 
 typedef struct brook_connection_s brook_connection_t;
 typedef struct brook_gatekeeper_s brook_gatekeeper_t;
+typedef struct brook_http_response_s brook_http_response_t;
+
+#include "brook_config.h"
+#include "brook_http_parse.h"
+#include "brook_json_api.h"
+#include "brook_http_response.h"
 
 enum brook_http_method_s {
 	GET,
@@ -88,10 +90,9 @@ struct brook_http_s {
 	
 	brook_json_api_t* json_api;
 	
-    //brook_json_api_t*   json_api;
+    // ... response ... //
+    brook_http_response_t* response;
 
-	//brook_buffer_t*		buff_body;      // only pointer to buff of connection
-	//brook_buffer_t*		buff_header;    // only pointer to buff of connection
 };
 
 #endif /* brook_http_h */

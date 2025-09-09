@@ -25,7 +25,9 @@ enum brook_connection_status_e {
 	WRITING_SOCKET_MESSAGE,
 	WRITING_REDIS_MESSAGE,
     WRITING_BEANSTALK_MESSAGE,
-	WRITING_PSQL_MESSAGE
+	WRITING_PSQL_MESSAGE,
+    
+    CLOSED
 };
 
 struct brook_connection_s {
@@ -44,6 +46,6 @@ int brook_read_message_connection(brook_connection_t* connection);
 int brook_close_connection(brook_connection_t* connection);
 int brook_connection_write_psql(brook_connection_t* connection, int pg_socket);
 int brook_connection_read_psql(brook_connection_t* connection, int pg_socket);
-
+int brook_write_message_connection(brook_connection_t* connection);
 
 #endif /* brook_connection_h */

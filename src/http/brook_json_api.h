@@ -24,12 +24,13 @@ enum brook_json_api_type_s {
 	Q_UPDATE
 };
 
+/*
 struct brook_json_api_data_s {
 	json_object* type;
 	json_object* id;
 	json_object* attributes;
 	json_object* relationships;
-};
+};*/
 
 struct brook_json_api_s {
 	brook_http_t* request;
@@ -61,6 +62,7 @@ struct brook_json_api_query_chain_s {
     brook_json_api_query_chain_t* next;
 };  
 
+int brook_json_api_free(brook_http_t* request);
 int brook_json_api_write_query(brook_http_t* request, PGconn* db);
 int brook_json_api_read_query(brook_http_t* request, PGconn* db);
 int brook_json_api_setup(brook_http_t* request);

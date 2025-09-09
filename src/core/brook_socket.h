@@ -13,5 +13,5 @@
 int brook_init_socket(int port);
 int brook_socket_accept(int socket, struct sockaddr_in* client_addr);
 size_t brook_socket_read(int socket, u_char* buffer, size_t size);
-
+size_t brook_socket_write(int socket, u_char* buffer, size_t size);
 #endif /* brook_socket_h */

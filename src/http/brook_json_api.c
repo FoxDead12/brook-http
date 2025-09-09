@@ -15,6 +15,25 @@ const char* QUERY_INSERT = "INSERT INTO %s VALUES %s";
 const char* QUERY_UPDATE = "UPDATE %s SET %s WHERE %s";
 
 int
+brook_json_api_free (brook_http_t* request) {
+    
+    brook_json_api_query_chain_t* header = request->json_api->querys_list;
+    
+    while (header != NULL) {
+        brook_json_api_query_chain_t* tmp = header->next;
+        free(header->query_s.query);
+        free(header);
+        header = NULL;
+        header = tmp;
+    }
+    request->json_api->querys_list = NULL;
+    
+    json_object_put(request->json_api->result);
+    
+    return BROOK_OK;
+}
+
+int
 brook_json_api_setup (brook_http_t* request) {
 
     brook_config_t* s_conf = request->connection->conf;
@@ -112,7 +131,7 @@ brook_json_api_write_query (brook_http_t* request, PGconn* db) {
 	PQsendQuery(db, q_chain->query_s.query);
 
 	request->connection->state = READING_PSQL_MESSAGE;
-
+    
 	return BROOK_OK;
 }
 
@@ -142,6 +161,11 @@ brook_json_api_read_query (brook_http_t* request, PGconn* db) {
         PQclear(res);
     }
 
+    size_t body_len = 0;
+    const char* body = json_object_to_json_string_length(request->json_api->result, 0, &body_len);
+    
+    brook_http_response_send(request->connection, 200, (u_char*) body, body_len);
+    
 	return BROOK_OK;
 }
 
@@ -170,30 +194,21 @@ brook_json_api_parse_postgres_result (brook_http_t* request, PGresult *res) {
 
     int nfields = PQnfields(res);
     int nrows = PQntuples(res);
-    
-    printf("{\n  \"rows\": [\n");
 
+    json_object* data = json_object_new_array();
+    
+    
     for (int i = 0; i < nrows; i++) {
-        printf("    {");
+        json_object *item = json_object_new_object();
         for (int j = 0; j < nfields; j++) {
             char *colname = PQfname(res, j);
             char *value = PQgetvalue(res, i, j);
-
-            // Imprimir chave/valor
-            printf("\"%s\": \"%s\"", colname, value ? value : "NULL");
-
-            if (j < nfields - 1) {
-                printf(", ");
-            }
+            json_object_object_add(item, colname, json_object_new_string(value));
         }
-        printf("}");
-        if (i < nrows - 1) {
-            printf(",");
-        }
-        printf("\n");
+        json_object_array_add(data, item);
     }
-
-    printf("  ]\n}\n");
+    
+    json_object_object_add(request->json_api->result, "data", data);
     
     return BROOK_OK;
 }
@@ -203,17 +218,6 @@ brook_json_api_parse_postgres_result (brook_http_t* request, PGresult *res) {
 
 
 
-
-
-
-int
-brook_json_api_free (brook_http_t* request) {
-	/*
-	json_object_put(request->json_api->body);
-	free(request->json_api);
-	 */
-    return BROOK_OK;
-}
 
 int
 brook_json_api_setup_body (brook_http_t* request) {
