@@ -77,14 +77,24 @@ brook_kevent_handle (int kq, struct kevent event, brook_config_t* conf) {
 
         // ... will execute timout of request ...
         case EVFILT_TIMER:
-            brook_close_connection(c);
-            return;
+            c->state = CLOSED;
         break;
     }
 
     // ... if event after run return error or ok is to remove old event ...
     if (r != BROOK_DONE) {
         brook_kqueue_set_descriptor(kq, (int) event.ident, event.filter, EV_DELETE, 0, 0, NULL);
+        
+        if (c->state == CLOSED) {
+            brook_kqueue_set_descriptor(kq, c->socket, EVFILT_TIMER, EV_DELETE, 0, 0, NULL);
+            
+            brook_kqueue_set_descriptor(kq, c->socket_ext, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+            brook_kqueue_set_descriptor(kq, c->socket_ext, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
+            
+            // ... remove event of connection external service ..//
+            brook_close_connection(c);
+        }
+        
     }
 
 	if (r == BROOK_ERROR) {
@@ -100,9 +110,6 @@ brook_kevent_handle (int kq, struct kevent event, brook_config_t* conf) {
 			brook_kqueue_set_descriptor(kq, (int) event.ident, EVFILT_READ, EV_ADD, 0, 0, c);
         } else if (c->state == WRITING_SOCKET_MESSAGE) {
             brook_kqueue_set_descriptor(kq, c->socket, EVFILT_WRITE, EV_ADD, 0, 0, c);
-        } else if (c->state == CLOSED) {
-            brook_kqueue_set_descriptor(kq, c->socket, EVFILT_TIMER, EV_DELETE, 0, 0, NULL);
-            brook_close_connection(c);
         }
     }
 
@@ -140,16 +147,19 @@ brook_kevent_write (brook_connection_t* connection, struct kevent event) {
 
 int
 brook_kevent_user (int kq, brook_connection_t* connection) {
-
     if (connection->state == WAITING_POOL_DB) {
 
 		PGconn* db = brook_postgres_get_connection(connection->conf);
 		if (db == NULL) return BROOK_DONE;
-		connection->state = WRITING_PSQL_MESSAGE;
+		
+        connection->state = WRITING_PSQL_MESSAGE;
+        connection->socket_ext_type = PSQL;
+        connection->socket_ext = PQsocket(db);
+        
 		brook_kqueue_set_descriptor(kq, PQsocket(db), EVFILT_WRITE, EV_ADD, 0, 0, connection);
 
     } else if (connection->state == WAITING_POOL_REDIS) {
-		return BROOK_ERROR;// TODO: REMOVE THIS LINE, IS GUST TEMPORARY
+		return BROOK_ERROR;// TODO: REMOVE THIS LINE, IS JUST TEMPORARY
     }
 
 	return BROOK_OK;

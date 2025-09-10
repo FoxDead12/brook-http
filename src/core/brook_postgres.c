@@ -54,3 +54,15 @@ brook_postgres_get_connection_from_socket (brook_config_t* config, int pg_socket
 	
 	return NULL;
 }
+
+int
+brook_postgres_free_connection (brook_config_t* config, int socket) {
+    
+    for (int i = 0; i < config->postgres_con_worker; i++) {
+        if (PQsocket(config->postgres_conns->conns[i]) == socket) {
+            config->postgres_conns->state[i] = READY;
+        }
+    }
+    
+    return BROOK_OK;
+}

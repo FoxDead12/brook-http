@@ -26,6 +26,7 @@ brook_create_connection (brook_config_t* conf) {
 	connection->state = READING_SOCKET_MESSAGE;
 	connection->port = ntohs(client_addr.sin_port);
 	inet_ntop(AF_INET, &(client_addr.sin_addr), connection->ip, INET_ADDRSTRLEN);
+    connection->socket_ext_type = NONE;
     {
         connection->ch_buf = malloc(sizeof(brook_chain_t));
         connection->ch_buf->next = NULL;
@@ -168,26 +169,32 @@ int
 brook_connection_write_psql (brook_connection_t* connection, int pg_socket) {
 	
 	// ... TODO: FOR NOW ONLY JSON-API WILL COMUNICATE WITH DB ...
-	
+    int result = BROOK_ERROR;
 	PGconn* db = brook_postgres_get_connection_from_socket(connection->conf, pg_socket);
 	
 	if (connection->http->type == JSON_API) {
-		return brook_json_api_write_query(connection->http, db);
+		result = brook_json_api_write_query(connection->http, db);
 	}
-		
-	return BROOK_ERROR;
+    		
+	return result;
 }
 
 int
 brook_connection_read_psql (brook_connection_t* connection, int pg_socket) {
-	
+    
+    int result = BROOK_ERROR;
     PGconn* db = brook_postgres_get_connection_from_socket(connection->conf, pg_socket);
 
     if (connection->http->type == JSON_API) {
-        return brook_json_api_read_query(connection->http, db);
+        result = brook_json_api_read_query(connection->http, db);
+    }
+    
+    // ... after read if not more necessary ... //
+    if (result != BROOK_DONE) {
+        brook_postgres_free_connection(connection->conf, pg_socket);
     }
 	
-	return BROOK_ERROR;
+	return result;
 }
 
 int

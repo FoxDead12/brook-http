@@ -27,5 +27,7 @@ struct brook_postgres_s {
 int brook_postgres_connections_init(brook_config_t* config);
 PGconn* brook_postgres_get_connection(brook_config_t* config);
 PGconn* brook_postgres_get_connection_from_socket(brook_config_t* config, int pg_socket);
+int brook_postgres_free_connection(brook_config_t* config, int socket);
+
 
 #endif /* brook_postgres_h */

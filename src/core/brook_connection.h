@@ -13,6 +13,13 @@
 typedef struct brook_http_s brook_http_t;
 typedef struct brook_connection_s brook_connection_t;
 typedef enum   brook_connection_status_e brook_connection_status_t;
+typedef enum   brook_services_ex_s brook_services_ex_t;
+
+enum brook_services_ex_s {
+    NONE,
+    PSQL,
+    REDIS
+};
 
 enum brook_connection_status_e {
 	READING_SOCKET_MESSAGE,
@@ -39,6 +46,9 @@ struct brook_connection_s {
     brook_chain_t*            ch_buf;
 	brook_chain_t*            pos;
     brook_http_t*             http;
+    
+    int                       socket_ext;
+    brook_services_ex_t       socket_ext_type;
 };
 
 brook_connection_t* brook_create_connection(brook_config_t* conf);

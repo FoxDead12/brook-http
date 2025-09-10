@@ -65,7 +65,7 @@ struct brook_config_s {
 	
 	// ... database configurations ...
 	brook_postgres_t*		 postgres_conns;
-	int postgres_con_worker;
+	int                      postgres_con_worker;
 };
 
 #endif /* brook_config_h */

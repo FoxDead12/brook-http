@@ -26,6 +26,7 @@ brook_json_api_free (brook_http_t* request) {
         header = NULL;
         header = tmp;
     }
+    
     request->json_api->querys_list = NULL;
     
     json_object_put(request->json_api->result);
