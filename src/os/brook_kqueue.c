@@ -55,6 +55,12 @@ brook_kevent_handle (int kq, struct kevent event, brook_config_t* conf) {
 
 	// ... handle rest of events ...
 	c = event.udata;
+    
+    if (c == NULL || c->http == NULL) {
+        brook_kqueue_set_descriptor(kq, (int) event.ident, event.filter, EV_DELETE, 0, 0, NULL);
+        return;
+    }
+    
 	int r = BROOK_ERROR;
 	// ... TODO: CHECK IF CONNECTION WAS ALREADY CLOSE BEFORE FIRE EVENT ...
 
@@ -78,6 +84,11 @@ brook_kevent_handle (int kq, struct kevent event, brook_config_t* conf) {
         // ... will execute timout of request ...
         case EVFILT_TIMER:
             c->state = CLOSED;
+            
+            if (c->socket_ext_type == PSQL) {
+                brook_postgres_free_connection(c->conf, c->socket_ext);
+            }
+            
         break;
     }
 
@@ -88,8 +99,11 @@ brook_kevent_handle (int kq, struct kevent event, brook_config_t* conf) {
         if (c->state == CLOSED) {
             brook_kqueue_set_descriptor(kq, c->socket, EVFILT_TIMER, EV_DELETE, 0, 0, NULL);
             
-            brook_kqueue_set_descriptor(kq, c->socket_ext, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-            brook_kqueue_set_descriptor(kq, c->socket_ext, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
+            /*
+             This is dangerous (remove current event of socket)
+                brook_kqueue_set_descriptor(kq, c->socket_ext, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+                brook_kqueue_set_descriptor(kq, c->socket_ext, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
+            */
             
             // ... remove event of connection external service ..//
             brook_close_connection(c);

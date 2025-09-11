@@ -31,6 +31,8 @@ brook_json_api_free (brook_http_t* request) {
     
     json_object_put(request->json_api->result);
     
+    free(request->json_api);
+    
     return BROOK_OK;
 }
 

@@ -52,6 +52,8 @@ brook_create_connection (brook_config_t* conf) {
 int
 brook_close_connection (brook_connection_t* connection) {
 
+    close(connection->socket);
+
 	{
         // ... free http request ...
 		brook_http_t* request = connection->http;
@@ -79,24 +81,22 @@ brook_close_connection (brook_connection_t* connection) {
 		}
 		connection->ch_buf = NULL;
 	}
+    
     {
+        
         if (connection->http->json_api != NULL) {
             brook_json_api_free(connection->http);
-            free(connection->http->json_api);
         }
         
-        if (connection->http->response != NULL) {
+        {
             free(connection->http->response->response_header);
             free(connection->http->response);
         }
-        
+    
         free(connection->http);
     }
 	
-	close(connection->socket);
 	free(connection);
-    
-    connection = NULL;
     
     return BROOK_OK;
 }
@@ -139,7 +139,7 @@ brook_read_message_connection (brook_connection_t* connection) {
 
 int
 brook_write_message_connection (brook_connection_t* connection) {
-        
+
     brook_http_response_t* response = connection->http->response;
     
     if (response->header_send == false) {
