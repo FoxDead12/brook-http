@@ -56,14 +56,16 @@ brook_kevent_handle (int kq, struct kevent event, brook_config_t* conf) {
 	// ... handle rest of events ...
 	c = event.udata;
     
-    if (c == NULL || c->http == NULL) {
+	
+	// TODO: NEED UNDERSTAND WHY THIS APPEND
+	if (c == NULL || c->http == NULL || event.ident == 0) {
         brook_kqueue_set_descriptor(kq, (int) event.ident, event.filter, EV_DELETE, 0, 0, NULL);
         return;
     }
     
 	int r = BROOK_ERROR;
 	// ... TODO: CHECK IF CONNECTION WAS ALREADY CLOSE BEFORE FIRE EVENT ...
-
+	
     switch (event.filter) {
 
 		// ... events where need read content from socket ...
@@ -83,43 +85,38 @@ brook_kevent_handle (int kq, struct kevent event, brook_config_t* conf) {
 
         // ... will execute timout of request ...
         case EVFILT_TIMER:
-            c->state = CLOSED;
-            
+			printf("tive um timeout\n");
+			c->state = CLOSED;
             if (c->socket_ext_type == PSQL) {
                 brook_postgres_free_connection(c->conf, c->socket_ext);
             }
             
         break;
     }
-
+	
+	if (c == NULL || c->http == NULL || event.ident == 0) {
+		brook_kqueue_set_descriptor(kq, (int) event.ident, event.filter, EV_DELETE, 0, 0, NULL);
+		return;
+	}
+	
     // ... if event after run return error or ok is to remove old event ...
     if (r != BROOK_DONE) {
         brook_kqueue_set_descriptor(kq, (int) event.ident, event.filter, EV_DELETE, 0, 0, NULL);
-        
         if (c->state == CLOSED) {
-            brook_kqueue_set_descriptor(kq, c->socket, EVFILT_TIMER, EV_DELETE, 0, 0, NULL);
-            
-            /*
-             This is dangerous (remove current event of socket)
-                brook_kqueue_set_descriptor(kq, c->socket_ext, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-                brook_kqueue_set_descriptor(kq, c->socket_ext, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
-            */
-            
-            // ... remove event of connection external service ..//
+			brook_kqueue_set_descriptor(kq, (int) c->socket, EVFILT_TIMER, EV_DELETE, 0, 0, NULL);
             brook_close_connection(c);
+			return;
         }
-        
     }
-
+	
 	if (r == BROOK_ERROR) {
 		// TODO: IF RETURN SOME ERROR, NEED CREATE EVENT OF WRITE
         // brook_kqueue_set_descriptor(kq, c->socket, EVFILT_WRITE, EV_ADD, 0, 0, c);
 	}
 
     if (r == BROOK_OK) {
-        if (c->state == WAITING_POOL_DB || c->state == WAITING_POOL_REDIS) {
-            brook_kqueue_set_descriptor(kq, c->socket, EVFILT_USER, EV_ADD, 0, 0, NULL);
-            brook_kqueue_set_descriptor(kq, c->socket, EVFILT_USER, 0, NOTE_TRIGGER, 0, c);
+        if (c->state == WAITING_POOL_DB) {
+            brook_kqueue_set_descriptor(kq, c->socket, EVFILT_USER, EV_ADD, NOTE_TRIGGER, 0, c);
         } else if (c->state == READING_PSQL_MESSAGE) {
 			brook_kqueue_set_descriptor(kq, (int) event.ident, EVFILT_READ, EV_ADD, 0, 0, c);
         } else if (c->state == WRITING_SOCKET_MESSAGE) {
@@ -171,10 +168,11 @@ brook_kevent_user (int kq, brook_connection_t* connection) {
         connection->socket_ext = PQsocket(db);
         
 		brook_kqueue_set_descriptor(kq, PQsocket(db), EVFILT_WRITE, EV_ADD, 0, 0, connection);
+		return BROOK_OK;
 
     } else if (connection->state == WAITING_POOL_REDIS) {
 		return BROOK_ERROR;// TODO: REMOVE THIS LINE, IS JUST TEMPORARY
     }
-
-	return BROOK_OK;
+	
+	return BROOK_ERROR;
 }
