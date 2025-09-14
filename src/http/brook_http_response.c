@@ -27,23 +27,19 @@ brook_http_response_send (brook_connection_t* connection, int status, u_char* bo
         response->response_content_type.len = connection->http->header.content_type.len;
     }
     
-    response->response_body = body;
-    response->response_body_len = body_len;
-    response->response_body_len_sended = 0;
-
     const char *template =
         "HTTP/1.1 %d %s\r\n"
         "Content-Type: %.*s\r\n"
         "Content-Length: %zu\r\n"
         "Server: brook\r\n"
         "connection: keep-alive\r\n"
-        "\r\n";
+        "\r\n"
+		"%.*s";
     
-    response->response_header_len = asprintf((char**) &response->response_header, template, status, response->response_status_description.data, response->response_content_type.len, response->response_content_type.data, body_len) - 1;
+	response->response_len = asprintf((char**) &response->response, template, status, response->response_status_description.data, response->response_content_type.len, response->response_content_type.data, body_len, body_len, body);
     
-    response->response_len = response->response_header_len + response->response_body_len;
-    response->header_send = false;
-    
+	response->response_len_sended = 0;
+	
     return BROOK_OK;
 }
 

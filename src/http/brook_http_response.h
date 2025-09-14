@@ -18,22 +18,11 @@ struct brook_http_response_s {
     
     int         response_status;
     brook_str_t response_status_description;
-    
     brook_str_t response_content_type;
     
-    bool        header_send;
+	u_char* 	response;
     size_t      response_len;
-    
-    // ... response pointer to header message ... //
-    u_char*     response_header;
-    size_t      response_header_len;
-    
-    // ... pointer to body content and length ... //
-    u_char*     response_body;
-    size_t      response_body_len;
-    size_t      response_body_len_sended;
-
-    
+	size_t      response_len_sended;
 };
 
 

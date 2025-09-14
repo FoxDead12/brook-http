@@ -37,7 +37,7 @@ brook_init_socket (int port) {
         exit(EXIT_FAILURE);
     }
 
-    if (listen(s, 4096) == -1) {
+    if (listen(s, 128) == -1) {
         perror(strerror(errno));
         exit(EXIT_FAILURE);
     }
