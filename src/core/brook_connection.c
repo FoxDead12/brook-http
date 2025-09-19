@@ -15,52 +15,49 @@ brook_create_connection (brook_config_t* conf) {
 	struct sockaddr_in client_addr;
 
 	int c_socket = brook_socket_accept(conf->socket, &client_addr);
-    if (c_socket <= 0) {
-        return NULL;
-    }
+	if (c_socket <= 0) {
+		return NULL;
+	}
 
 	// ... init connection ...
-    brook_connection_t* connection = malloc(sizeof(brook_connection_t));
-    connection->conf = conf;
-    connection->socket = c_socket;
+	brook_connection_t* connection = malloc(sizeof(brook_connection_t));
+	connection->conf = conf;
+	connection->socket = c_socket;
 	connection->state = READING_SOCKET_MESSAGE;
 	connection->port = ntohs(client_addr.sin_port);
 	inet_ntop(AF_INET, &(client_addr.sin_addr), connection->ip, INET_ADDRSTRLEN);
-    connection->socket_ext_type = NONE;
-    {
-        connection->ch_buf = malloc(sizeof(brook_chain_t));
-        connection->ch_buf->next = NULL;
-        connection->pos = connection->ch_buf;
-    }
+	connection->socket_ext_type = NONE;
+	{
+		connection->ch_buf = malloc(sizeof(brook_chain_t));
+		connection->ch_buf->next = NULL;
+		connection->pos = connection->ch_buf;
+	}
 	{
 		connection->http = malloc(sizeof(brook_http_t));
 		brook_http_t* http = connection->http;
-		
-        http->connection = connection;
-        http->json_api = NULL;
+		http->connection = connection;
+		http->json_api = NULL;
 		http->state = READ_HEADER;
-        
-        {
-            connection->http->response = malloc(sizeof(brook_http_response_t));
-        }
-        
+		{
+			connection->http->response = malloc(sizeof(brook_http_response_t));
+		}
 	}
-	
+
 	fcntl(c_socket, F_SETFL, fcntl(c_socket, F_GETFL, 0) | O_NONBLOCK);
 
-    return connection;
+	return connection;
 }
 
 int
 brook_close_connection (brook_connection_t* connection) {
 
-    close(connection->socket);
+	close(connection->socket);
 
 	{
-        // ... free http request ...
+		// ... free http request ...
 		brook_http_t* request = connection->http;
 		free(request->_h);
-		
+
 		brook_chain_t* header = request->_b;
 		while (header != NULL) {
 			brook_chain_t* tmp = header->next;
@@ -70,7 +67,6 @@ brook_close_connection (brook_connection_t* connection) {
 		}
 		request->_b = NULL;
 	}
-	
 	{
 		// ... free chain buffer who contain socket data ... //
 		brook_chain_t* header = connection->ch_buf;
@@ -83,26 +79,21 @@ brook_close_connection (brook_connection_t* connection) {
 		}
 		connection->ch_buf = NULL;
 	}
-    
-    {
-        
-        if (connection->http->json_api != NULL) {
-            brook_json_api_free(connection->http);
-        }
-        
-        {
+	{
+		if (connection->http->json_api != NULL) {
+			brook_json_api_free(connection->http);
+		}
+		{
 			free(connection->http->response->response);
-            free(connection->http->response);
-        }
-    
-        free(connection->http);
-    }
-	
-	free(connection);
-    
-    return BROOK_OK;
-}
+			free(connection->http->response);
+		}
+		free(connection->http);
+	}
 
+	free(connection);
+
+	return BROOK_OK;
+}
 
 int
 brook_read_message_connection (brook_connection_t* connection) {
@@ -116,24 +107,24 @@ brook_read_message_connection (brook_connection_t* connection) {
 		b->length = 0;
 	}
 
-    // ... read content from socket ...
+	// ... read content from socket ...
 	size_t len_diff = b->size - b->length;
 	size_t bytes = brook_socket_read(connection->socket, b->start + b->length, len_diff);
-    
-    // ... is possible dont read nothing in socket ...
-    if (bytes == BROOK_ERROR) {
-        return BROOK_ERROR;
-    }
+
+	// ... is possible dont read nothing in socket ...
+	if (bytes == BROOK_ERROR) {
+		return BROOK_ERROR;
+	}
 	b->length += bytes;
-	
+
 	int r = brook_http_parse(connection);
-    
-    // ... if my buffer is full, create new chain buffer ...
+
+	// ... if my buffer is full, create new chain buffer ...
 	if (b->length >= b->size && r == BROOK_DONE) {
-        connection->pos->next = malloc(sizeof(brook_chain_t));
-        connection->pos = connection->pos->next;
-        connection->pos->next = NULL;
-        return BROOK_DONE;
+		connection->pos->next = malloc(sizeof(brook_chain_t));
+		connection->pos = connection->pos->next;
+		connection->pos->next = NULL;
+		return BROOK_DONE;
 	}
 
 	return r;
@@ -142,52 +133,51 @@ brook_read_message_connection (brook_connection_t* connection) {
 int
 brook_write_message_connection (brook_connection_t* connection) {
 
-    brook_http_response_t* response = connection->http->response;
-	
+	brook_http_response_t* response = connection->http->response;
+
 	if (response->response_len_sended >= response->response_len) {
 		connection->state = CLOSED;
 		return BROOK_OK;
 	}
-	
-	response->response_len_sended += brook_socket_write(connection->socket, response->response, response->response_len);
+
+	response->response_len_sended += brook_socket_write(connection->socket, response->response + response->response_len_sended, response->response_len - response->response_len_sended);
 	return BROOK_DONE;
-	
+
 }
 
 int
 brook_connection_write_psql (brook_connection_t* connection, int pg_socket) {
-	
+
 	// ... TODO: FOR NOW ONLY JSON-API WILL COMUNICATE WITH DB ...
-    int result = BROOK_ERROR;
+	int result = BROOK_ERROR;
 	PGconn* db = brook_postgres_get_connection_from_socket(connection->conf, pg_socket);
-	
+
 	if (connection->http->type == JSON_API) {
 		result = brook_json_api_write_query(connection->http, db);
 	}
-    		
+
 	return result;
 }
 
 int
 brook_connection_read_psql (brook_connection_t* connection, int pg_socket) {
-    
-    int result = BROOK_ERROR;
-    PGconn* db = brook_postgres_get_connection_from_socket(connection->conf, pg_socket);
 
-    if (connection->http->type == JSON_API) {
-        result = brook_json_api_read_query(connection->http, db);
-    }
-    
-    // ... after read if not more necessary ... //
-    if (result != BROOK_DONE) {
-        brook_postgres_free_connection(connection->conf, pg_socket);
-    }
-	
+	int result = BROOK_ERROR;
+	PGconn* db = brook_postgres_get_connection_from_socket(connection->conf, pg_socket);
+
+	if (connection->http->type == JSON_API) {
+			result = brook_json_api_read_query(connection->http, db);
+	}
+
+	// ... after read if not more necessary ... //
+	if (result != BROOK_DONE) {
+			brook_postgres_free_connection(connection->conf, pg_socket);
+	}
+
 	return result;
 }
 
 int
 brook_connection_write_redis (brook_connection_t* connection) {
-	
 	return BROOK_OK;
 }

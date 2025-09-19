@@ -15,6 +15,6 @@
     #include "brook_kqueue.h"
 #endif
 
-#define MAX_EVENTS 128
+#define MAX_EVENTS 1024
 
 #endif /* brook_os_h */

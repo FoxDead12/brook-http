@@ -15,11 +15,11 @@ typedef enum brook_http_response_state_e brook_http_response_state_t;
 
 
 struct brook_http_response_s {
-    
+
     int         response_status;
     brook_str_t response_status_description;
     brook_str_t response_content_type;
-    
+
 	u_char* 	response;
     size_t      response_len;
 	size_t      response_len_sended;

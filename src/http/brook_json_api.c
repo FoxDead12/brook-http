@@ -16,9 +16,9 @@ const char* QUERY_UPDATE = "UPDATE %s SET %s WHERE %s";
 
 int
 brook_json_api_free (brook_http_t* request) {
-    
+
     brook_json_api_query_chain_t* header = request->json_api->querys_list;
-    
+
     while (header != NULL) {
         brook_json_api_query_chain_t* tmp = header->next;
         free(header->query_s.query);
@@ -26,13 +26,13 @@ brook_json_api_free (brook_http_t* request) {
         header = NULL;
         header = tmp;
     }
-    
+
     request->json_api->querys_list = NULL;
-    
+
     json_object_put(request->json_api->result);
-    
+
     free(request->json_api);
-    
+
     return BROOK_OK;
 }
 
@@ -78,7 +78,7 @@ brook_json_api_setup (brook_http_t* request) {
         query_s->limit = (brook_str_t) brook_string("100");
         query_s->offset = (brook_str_t) brook_string("0");
 //   const char* QUERY_SELECT = "SELECT %s FROM %s %s ORDER BY %s LIMIT %s OFFSET %s";
-        
+
         asprintf(&query_s->query, query_s->query_template,
                  "*",
                  query_s->table.data,
@@ -86,7 +86,7 @@ brook_json_api_setup (brook_http_t* request) {
                  query_s->order.data,
                  query_s->limit.data,
                  query_s->offset.data);
-        
+
 
     } else if (request->method == DELETE) {
 
@@ -122,7 +122,7 @@ brook_json_api_setup (brook_http_t* request) {
 
 int
 brook_json_api_write_query (brook_http_t* request, PGconn* db) {
-    
+
 	if (request->json_api == NULL) {
         // ... need setup json api ...
 		if (brook_json_api_setup(request) == BROOK_ERROR) {
@@ -134,7 +134,7 @@ brook_json_api_write_query (brook_http_t* request, PGconn* db) {
 	PQsendQuery(db, q_chain->query_s.query);
 
 	request->connection->state = READING_PSQL_MESSAGE;
-    
+
 	return BROOK_OK;
 }
 
@@ -166,9 +166,9 @@ brook_json_api_read_query (brook_http_t* request, PGconn* db) {
 
     size_t body_len = 0;
     const char* body = json_object_to_json_string_length(request->json_api->result, 0, &body_len);
-    
+
     brook_http_response_send(request->connection, 200, (u_char*) body, body_len);
-    
+
 	return BROOK_OK;
 }
 
@@ -199,8 +199,8 @@ brook_json_api_parse_postgres_result (brook_http_t* request, PGresult *res) {
     int nrows = PQntuples(res);
 
     json_object* data = json_object_new_array();
-    
-    
+
+
     for (int i = 0; i < nrows; i++) {
         json_object *item = json_object_new_object();
         for (int j = 0; j < nfields; j++) {
@@ -210,9 +210,9 @@ brook_json_api_parse_postgres_result (brook_http_t* request, PGresult *res) {
         }
         json_object_array_add(data, item);
     }
-    
+
     json_object_object_add(request->json_api->result, "data", data);
-    
+
     return BROOK_OK;
 }
 

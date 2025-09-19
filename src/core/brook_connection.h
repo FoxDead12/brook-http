@@ -31,9 +31,8 @@ enum brook_connection_status_e {
 
 	WRITING_SOCKET_MESSAGE,
 	WRITING_REDIS_MESSAGE,
-    WRITING_BEANSTALK_MESSAGE,
 	WRITING_PSQL_MESSAGE,
-    
+
     CLOSED
 };
 
@@ -46,7 +45,7 @@ struct brook_connection_s {
     brook_chain_t*            ch_buf;
 	brook_chain_t*            pos;
     brook_http_t*             http;
-    
+
     int                       socket_ext;
     brook_services_ex_t       socket_ext_type;
 };

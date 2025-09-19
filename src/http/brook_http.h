@@ -31,13 +31,13 @@ enum brook_http_method_s {
 };
 
 enum brook_http_status_s {
-    
+
 	// ... action related to 'READING_SOCKET_MESSAGE' ...
 	READ_HEADER,
 	READ_BODY,
 
-	
-	
+
+
     /*
 	// ... action relates to 'READING_REDIS_MESSAGE' ...
 	VALIDATE_USER_RESPONSE,
@@ -82,16 +82,16 @@ struct brook_http_s {
 	brook_str_t         params;
 	brook_http_header_t header;
 
-    brook_gatekeeper_t* gatekeeper_route;
+	brook_gatekeeper_t* gatekeeper_route;
 
 	brook_buffer_t* _h;
 	brook_chain_t* _b;
 	brook_chain_t* _bp;
-	
+
 	brook_json_api_t* json_api;
-	
-    // ... response ... //
-    brook_http_response_t* response;
+
+	// ... response ... //
+	brook_http_response_t* response;
 
 };
 
