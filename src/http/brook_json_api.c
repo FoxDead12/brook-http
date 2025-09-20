@@ -9,7 +9,11 @@
 #include "brook_http.h"
 #include "../core/brook_core.h"
 
-const char* QUERY_SELECT = "SELECT %s FROM %s %s ORDER BY %s LIMIT %s OFFSET %s";
+const char* QUERY_SELECT = "SELECT %.*s FROM %s ORDER BY %s LIMIT %s OFFSET %s";
+const char* QUERY_SELECT_FILTER = "SELECT %s FROM %s WHERE %s ORDER BY %s LIMIT %s OFFSET %s";
+
+const char* QUERY_SELECT_ID = "SELECT %s FROM %s WHERE id = '%.*s'";
+
 const char* QUERY_DELETE = "DELETE FROM %s WHERE id = '%.*s'";
 const char* QUERY_INSERT = "INSERT INTO %s VALUES %s";
 const char* QUERY_UPDATE = "UPDATE %s SET %s WHERE %s";
@@ -54,8 +58,8 @@ brook_json_api_setup (brook_http_t* request) {
 
     // ... create struct in request ...
     request->json_api               = malloc(sizeof(brook_json_api_t));
-    request->json_api->request    = request;
-    request->json_api->s_resource = server_resource;
+    request->json_api->request      = request;
+    request->json_api->s_resource   = server_resource;
     request->json_api->result       = json_object_new_object();
     request->json_api->querys_list = malloc(sizeof(brook_json_api_query_chain_t));
 
@@ -72,21 +76,27 @@ brook_json_api_setup (brook_http_t* request) {
 
         // ... SELECT -> need attributes, table, filter, order by, and page (limit, offset) ...
         query_s->type = Q_SELECT;
-        query_s->query_template = (char*) QUERY_SELECT;
 
-        query_s->order = (brook_str_t) brook_string("id");
-        query_s->limit = (brook_str_t) brook_string("100");
-        query_s->offset = (brook_str_t) brook_string("0");
-//   const char* QUERY_SELECT = "SELECT %s FROM %s %s ORDER BY %s LIMIT %s OFFSET %s";
+        if (brook_json_api_parse_id(request, query_s) == BROOK_OK) {
 
-        asprintf(&query_s->query, query_s->query_template,
-                 "*",
-                 query_s->table.data,
-                 "",
-                 query_s->order.data,
-                 query_s->limit.data,
-                 query_s->offset.data);
+            query_s->query_template = QUERY_SELECT_ID;
+            asprintf(&query_s->query, query_s->query_template, "*", query_s->table.data, query_s->id.len, query_s->id.data);
 
+        } else {
+            query_s->query_template = (char*) QUERY_SELECT; // TODO: THIS CHANGE IF EXISTE FILTERS
+
+            query_s->attributes = json_get_str("attributes", server_resource, (brook_str_t) brook_string("*"));
+            query_s->order = json_get_str("order", server_resource, (brook_str_t) brook_string("created_at"));
+            query_s->limit = json_get_str("limit", server_resource, (brook_str_t) brook_string("100"));
+            query_s->offset = (brook_str_t) brook_string("0"); // COME FROM URL PARAMS (page=2)
+
+            asprintf(&query_s->query, query_s->query_template,
+                     query_s->attributes,
+                     query_s->table.data,
+                     query_s->order.data,
+                     query_s->limit.data,
+                     query_s->offset.data);
+        }
 
     } else if (request->method == DELETE) {
 

@@ -104,6 +104,9 @@ brook_kevent_handle (int kq, struct kevent event, brook_config_t* conf) {
     }
 
     if (event.flags & EV_EOF) {
+        if (c->socket_ext_type == PSQL) {
+            brook_postgres_free_connection(c->conf, c->socket_ext);
+        }
         brook_kqueue_set_descriptor(kq, c->socket, EVFILT_READ, EV_DELETE, 0, 0, NULL);
         brook_kqueue_set_descriptor(kq, c->socket, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
         brook_close_connection(c);

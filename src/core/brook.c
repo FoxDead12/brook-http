@@ -20,7 +20,7 @@ main(int argc, const char * argv[]) {
 
 	brook_resources_generator(&conf);
     brook_gatekeeper_generator(&conf);
-	
+
 	// start master process OR single process //
 #if DEBUG
     brook_start_single_process(&conf);
@@ -75,7 +75,7 @@ brook_create_configuration (brook_config_t* conf) {
 		conf->postgres_conns = malloc(sizeof(brook_postgres_t));
 		conf->postgres_con_worker = json_get_int("postgres_connection_per_worker", conf->json, 4);
 	}
-	
+
     free(data);
 
     if (conf->port == 0) {
@@ -92,7 +92,7 @@ brook_create_configuration (brook_config_t* conf) {
 
 int
 brook_gatekeeper_generator (brook_config_t* conf) {
-    
+
     // read configuration file
     FILE* file = brook_open_file(BROOK_GATEKEEPER_DIRECTORY, "r");
     if (file == NULL) {
@@ -103,18 +103,18 @@ brook_gatekeeper_generator (brook_config_t* conf) {
     // ... convert data of file to json
     char* gatekeeper_file = brook_read_file(file);
     json_object* gatekeeper_json = json_tokener_parse(gatekeeper_file);
-    
+
     // ... build object to manager gatekeeper
     if (brook_gatekeeper_build(conf, gatekeeper_json) == BROOK_ERROR) {
         return BROOK_ERROR;
     }
-    
+
     // ... free data
     free(gatekeeper_file);
     json_object_put(gatekeeper_json);
-    
+
     brook_close_file(file);
-            
+
     return BROOK_OK;
 }
 
@@ -132,25 +132,25 @@ brook_resources_generator (brook_config_t* conf) {
 		fprintf(stderr, "Error : Failed to open input directory (%s) - %s\n", dir, strerror(errno));
         return BROOK_ERROR;
 	}
-	    
+
     // ... iterate each file in directory
 	while ((in_file = readdir(FD))) {
-		
+
 		// ... ignore hidden files in unix
 		if (!strcmp (in_file->d_name, "."))
 			continue;
 		if (!strcmp (in_file->d_name, ".."))
 			continue;
-            
+
         // ... create file path
         char file_path[2048] = {0};
         snprintf(file_path, 2048, "%s/%s", dir, (u_char*) in_file->d_name);
-        
+
         // ... open file and read
 		file = brook_open_file(file_path, "r");
         if (file == NULL) continue;
         char* file_content = brook_read_file(file);
-        
+
         // ... copy content of file to json object
         json_object* json = json_tokener_parse(file_content);
         free(file_content);
@@ -165,8 +165,8 @@ brook_resources_generator (brook_config_t* conf) {
 		brook_close_file(file);
 
 	}
-    
+
     closedir(FD);
-	    
+
     return BROOK_OK;
 }

@@ -41,26 +41,25 @@ struct brook_json_api_s {
 
 struct brook_json_api_query_s {
 	brook_json_api_type_t type;
-    
+
     char*          query_template;
     char*          query;
-    
+
     brook_str_t    table;
     brook_str_t    id;
-    
+
     brook_array_t* filter;
     brook_str_t    order;
     brook_str_t    limit;
     brook_str_t    offset;
-    
-    json_object*   attributes;
+	brook_str_t    attributes;
 };
 
 
 struct brook_json_api_query_chain_s {
     brook_json_api_query_t query_s;
     brook_json_api_query_chain_t* next;
-};  
+};
 
 int brook_json_api_free(brook_http_t* request);
 int brook_json_api_write_query(brook_http_t* request, PGconn* db);
