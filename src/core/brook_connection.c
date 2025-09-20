@@ -84,7 +84,7 @@ brook_close_connection (brook_connection_t* connection) {
 			brook_json_api_free(connection->http);
 		}
 		{
-			free(connection->http->response->response);
+			free(connection->http->response->header);
 			free(connection->http->response);
 		}
 		free(connection->http);
@@ -135,12 +135,22 @@ brook_write_message_connection (brook_connection_t* connection) {
 
 	brook_http_response_t* response = connection->http->response;
 
-	if (response->response_len_sended >= response->response_len) {
+	if (response->header_data_sended >= response->header_len && response->body_data_sended >= response->body_len) {
 		connection->state = CLOSED;
 		return BROOK_OK;
 	}
 
-	response->response_len_sended += brook_socket_write(connection->socket, response->response + response->response_len_sended, response->response_len - response->response_len_sended);
+	if (response->sending_body == 0) {
+
+		response->header_data_sended += brook_socket_write(connection->socket, response->header + response->header_data_sended, response->header_len - response->header_data_sended);
+		if (response->header_data_sended >= response->header_len) {
+			response->sending_body = 1;
+		}
+
+	} else {
+		response->body_data_sended += brook_socket_write(connection->socket, response->body + response->body_data_sended, response->body_len - response->body_data_sended);
+	}
+
 	return BROOK_DONE;
 
 }

@@ -13,7 +13,7 @@
 typedef struct brook_wait_list_s brook_wait_list_t;
 
 struct brook_wait_list_s {
-    void* c;
+	brook_connection_t* c;
     brook_wait_list_t* next;
 };
 

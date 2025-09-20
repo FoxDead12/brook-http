@@ -32,13 +32,14 @@ brook_http_response_send (brook_connection_t* connection, int status, u_char* bo
         "Content-Type: %.*s\r\n"
         "Content-Length: %zu\r\n"
         "Server: brook\r\n"
-        "connection: keep-alive\r\n"
-        "\r\n"
-		"%.*s";
+        "\r\n";
+    response->header_len = asprintf((char**) &response->header, template, status, response->response_status_description.data, response->response_content_type.len, response->response_content_type.data, body_len);
+    response->body = body;
+    response->body_len = body_len;
 
-	response->response_len = asprintf((char**) &response->response, template, status, response->response_status_description.data, response->response_content_type.len, response->response_content_type.data, body_len, body_len, body);
-
-	response->response_len_sended = 0;
+    response->header_data_sended = 0;
+    response->body_data_sended = 0;
+    response->sending_body = 0;
 
     return BROOK_OK;
 }

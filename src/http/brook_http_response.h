@@ -20,9 +20,15 @@ struct brook_http_response_s {
     brook_str_t response_status_description;
     brook_str_t response_content_type;
 
-	u_char* 	response;
-    size_t      response_len;
-	size_t      response_len_sended;
+    u_char*     header;
+    size_t      header_len;
+
+    u_char*     body;
+    size_t      body_len;
+
+	size_t      header_data_sended;
+    size_t      body_data_sended;
+    int         sending_body; // 0 - false ; 1 - true
 };
 
 

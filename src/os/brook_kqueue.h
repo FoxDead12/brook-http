@@ -15,6 +15,6 @@ int brook_kqueue_set_descriptor(int kq, int fd, int filter, int flags, int fflag
 void brook_kevent_handle(int kq, struct kevent event, brook_config_t* conf);
 int brook_kevent_read(brook_connection_t* connection, struct kevent event);
 int brook_kevent_write(brook_connection_t* connection, struct kevent event);
-int brook_kevent_user(int kq, brook_wait_list_t* list);
+brook_connection_t* brook_kevent_user(void);
 
 #endif /* brook_kqueue_h */
