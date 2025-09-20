@@ -25,10 +25,6 @@ brook_http_parse (brook_connection_t* connection) {
 		r = brook_http_body_parse(connection);
 	}
 
-	if (r == BROOK_OK && (connection->state == WAITING_POOL_DB || connection->state == WAITING_POOL_REDIS)) {
-		printf("tenho de esperar por uma conexão\n");
-	}
-
 	return r;
 }
 

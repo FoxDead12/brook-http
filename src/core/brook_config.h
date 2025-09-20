@@ -62,7 +62,7 @@ struct brook_config_s {
     brook_config_regex_t     regex;
     json_object*             resources;
     brook_array_t*           gatekeeper;
-	
+
 	// ... database configurations ...
 	brook_postgres_t*		 postgres_conns;
 	int                      postgres_con_worker;

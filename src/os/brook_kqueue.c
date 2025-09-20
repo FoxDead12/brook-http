@@ -7,6 +7,9 @@
 
 #include "brook_kqueue.h"
 
+brook_wait_list_t* brook_event_await = NULL;
+brook_wait_list_t* brook_event_await_last = NULL;
+
 int
 brook_start_kernel_event (brook_config_t* conf) {
 
@@ -18,6 +21,13 @@ brook_start_kernel_event (brook_config_t* conf) {
     brook_kqueue_set_descriptor(kq, conf->socket, EVFILT_READ, EV_ADD, 0, 0, NULL);
     brook_kqueue_set_descriptor(kq, conf->brook_parent_process, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, NULL);
     brook_kqueue_set_descriptor(kq, 1, EVFILT_USER, EV_ADD | EV_ENABLE | EV_CLEAR, 0, 0, NULL);
+
+    // ... set events to postgress connections
+    for (int i = 0; i < conf->postgres_con_worker; i++) {
+        int socket = PQsocket(conf->postgres_conns->conns[i]);
+        brook_kqueue_set_descriptor(kq, socket, EVFILT_READ, EV_ADD | EV_DISABLE | EV_CLEAR, 0, 0, NULL);
+        brook_kqueue_set_descriptor(kq, socket, EVFILT_WRITE, EV_ADD | EV_DISABLE | EV_CLEAR, 0, 0, NULL);
+    }
 
     while (1) {
         int n = kevent(kq, NULL, 0, kq_list, MAX_EVENTS, NULL);
@@ -85,28 +95,47 @@ brook_kevent_handle (int kq, struct kevent event, brook_config_t* conf) {
 
     }
 
-    if (r != BROOK_DONE && (event.filter != EVFILT_USER)) {
-		// Não pode remover o evento de user //
-        brook_kqueue_set_descriptor(kq, (int) event.ident, event.filter, EV_DELETE, 0, 0, NULL);
-    }
-
     if (r == BROOK_OK) {
         if (c->state == WAITING_POOL_DB || c->state == WAITING_POOL_REDIS) {
-            brook_kqueue_set_descriptor(kq, 1, EVFILT_USER, 0, NOTE_TRIGGER, 0, c);
+            printf("estou a espera de uma conexao\n");
+
+            brook_wait_list_t* item = malloc(sizeof(brook_wait_list_t));
+            item->c = c;
+            item->next = NULL;
+
+            if (brook_event_await == NULL) {
+                brook_event_await = item;
+                brook_event_await_last = item;
+            } else {
+                brook_event_await_last->next = item;
+                brook_event_await_last = item;
+            }
+
+            brook_kqueue_set_descriptor(kq, c->socket, EVFILT_READ, EV_DISABLE, 0, 0, NULL);
+            brook_kqueue_set_descriptor(kq, 1, EVFILT_USER, 0, NOTE_TRIGGER, 0, brook_event_await);
 		} else if (c->state == WRITING_PSQL_MESSAGE) {
-			brook_kqueue_set_descriptor(kq, c->socket_ext, EVFILT_WRITE, EV_ADD | EV_CLEAR, 0, 0, c);
+            printf("a escrever a query para o psql\n");
+            brook_kqueue_set_descriptor(kq, c->socket_ext, EVFILT_READ, EV_DISABLE, 0, 0, NULL);
+			brook_kqueue_set_descriptor(kq, c->socket_ext, EVFILT_WRITE, EV_ENABLE, 0, 0, c);
 		} else if (c->state == READING_PSQL_MESSAGE) {
-			brook_kqueue_set_descriptor(kq, c->socket_ext, EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, c);
+            printf("a ler a query para o psql\n");
+			brook_kqueue_set_descriptor(kq, c->socket_ext, EVFILT_READ, EV_ENABLE, 0, 0, c);
+            brook_kqueue_set_descriptor(kq, c->socket_ext, EVFILT_WRITE, EV_DISABLE, 0, 0, NULL);
 		} else if (c->state == WRITING_SOCKET_MESSAGE) {
+            printf("a escrever o resultado para o cliente\n");
+            brook_kqueue_set_descriptor(kq, c->socket_ext, EVFILT_READ, EV_DISABLE, 0, 0, NULL);
+            brook_kqueue_set_descriptor(kq, c->socket_ext, EVFILT_WRITE, EV_DISABLE, 0, 0, NULL);
 			brook_kqueue_set_descriptor(kq, c->socket, EVFILT_WRITE, EV_ADD | EV_CLEAR, 0, 0, c);
-		} else if (c->state == CLOSED) {
 
             if (c->socket_ext_type == PSQL) {
                 brook_postgres_free_connection(c->conf, c->socket_ext);
             }
 
+		} else if (c->state == CLOSED) {
+            printf("fechar a conexao do cliente\n");
+            brook_kqueue_set_descriptor(kq, c->socket, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+            brook_kqueue_set_descriptor(kq, c->socket, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
 			brook_close_connection(c);
-
 		}
     }
 
@@ -210,8 +239,10 @@ brook_kevent_write (brook_connection_t* connection, struct kevent event) {
 }
 
 int
-brook_kevent_user (int kq, brook_connection_t* connection) {
-    printf("LUL\n");
+brook_kevent_user (int kq, brook_wait_list_t* list) {
+
+    brook_connection_t* connection = list->c;
+
     if (connection->state == WAITING_POOL_DB) {
 
 		PGconn* db = brook_postgres_get_connection(connection->conf);
@@ -220,6 +251,11 @@ brook_kevent_user (int kq, brook_connection_t* connection) {
         connection->state = WRITING_PSQL_MESSAGE;
         connection->socket_ext_type = PSQL;
         connection->socket_ext = PQsocket(db);
+
+        list = list->c;
+        if (list != NULL) {
+            brook_kqueue_set_descriptor(kq, 1, EVFILT_USER, 0, NOTE_TRIGGER, 0, brook_event_await);
+        }
 
 		return BROOK_OK;
 
