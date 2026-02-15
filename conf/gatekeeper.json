@@ -1,7 +1,0 @@
-[
-  {
-    "method": ["GET", "POST", "PATCH", "DELETE"],
-    "route": "^/products(.+)?",
-    "resource": "products"
-  }
-]

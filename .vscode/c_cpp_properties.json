@@ -1,0 +1,20 @@
+{
+  "configurations": [
+    {
+      "name": "Mac M4",
+      "intelliSenseMode": "macos-clang-arm64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "c17",
+      "cppStandard": "c++17",
+      "includePath": [
+          "${workspaceFolder}/**",
+          "/opt/homebrew/include",
+          "/opt/homebrew/opt/postgresql@15/include",
+          "/Library/Developer/CommandLineTools/usr/include",
+          "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include"
+      ],
+      "defines": []
+    }
+  ],
+  "version": 4
+}
