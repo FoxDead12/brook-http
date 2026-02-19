@@ -3,6 +3,19 @@
 
 #include "core/config.h"
 
+#define T(v) (1 << ((v) & 7))
+# define BIT_AT(a, i)                                                \
+  (!!((unsigned int) (a)[(unsigned int) (i) >> 3] &                  \
+  (1 << ((unsigned int) (i) & 7))))
+
+  // ... to allow UTF8 + ASCII bytes
+// #define IS_URL_CHAR(c)                                                         \
+//   (BIT_AT(normal_url_char, (unsigned char)c) || ((c) & 0x80))
+
+// ... to only allow ASCII bytes
+#define IS_URL_CHAR(c)      (BIT_AT(normal_url_char, (unsigned char)c))
+
+
 typedef enum {
   DELETE,
   GET,
