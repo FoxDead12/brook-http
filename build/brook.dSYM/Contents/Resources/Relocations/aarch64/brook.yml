@@ -1,0 +1,5 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     '/Users/dx3/Developer/brook-http/build/brook'
+relocations:     []
+...

@@ -2,18 +2,28 @@
   "configurations": [
     {
       "name": "Mac M4",
-      "intelliSenseMode": "macos-clang-arm64",
+      "intelliSenseMode": "macos-gcc-arm64",
       "compilerPath": "/usr/bin/gcc",
       "cStandard": "c17",
       "cppStandard": "c++17",
       "includePath": [
-          "${workspaceFolder}/**",
+        "${workspaceFolder}/includes",   // pega todos os headers, incluindo core/socket.h
+        "/opt/homebrew/include",
+        "/opt/homebrew/opt/postgresql@15/include",
+        "/Library/Developer/CommandLineTools/usr/include",
+        "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include"
+      ],
+      "defines": [],
+      "browse": {
+        "path": [
+          "${workspaceFolder}/includes",
           "/opt/homebrew/include",
           "/opt/homebrew/opt/postgresql@15/include",
           "/Library/Developer/CommandLineTools/usr/include",
           "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include"
-      ],
-      "defines": []
+        ],
+        "limitSymbolsToIncludedHeaders": true
+      }
     }
   ],
   "version": 4

@@ -1,0 +1,33 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "cppbuild",
+      "label": "Build Projeto C",
+      "command": "/usr/bin/gcc",
+      "args": [
+        "-fdiagnostics-color=always",
+        "-g",
+        "${workspaceFolder}/src/brook.c",
+        "${workspaceFolder}/src/**/*.c",
+        "-I${workspaceFolder}/includes",
+        "-I/opt/homebrew/opt/postgresql@15/include",
+        "-L/opt/homebrew/opt/postgresql@15/lib",               // path libpq
+        "-lpq",                                                // link libpq
+        "-o",
+        "${workspaceFolder}/build/brook"                        // executável final
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "detail": "Compila todos os arquivos do src/ com includes e libpq no macOS ARM"
+    }
+  ]
+}

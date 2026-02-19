@@ -1,0 +1,28 @@
+#ifndef _BROOK_CONFIG_H
+#define  _BROOK_CONFIG_H
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/socket.h>
+#include <fcntl.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <unistd.h>
+#include <poll.h>
+#include <arpa/inet.h>
+
+#define BROOK_OK    0
+#define BROOK_ERROR -1
+#define BROOK_DONE  -2
+
+// ... internal includes ...
+#include "types.h"
+#include "socket.h"
+#include "connection.h"
+
+// ... server settings ...
+extern int MAX_CLIENTS;       // ... i don't now if will be possible has 1024 connections, depende of systems settings
+struct pollfd* _fds;
+brook_connection_t** _connections;
+
+#endif
