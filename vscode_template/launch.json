@@ -1,0 +1,24 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Projeto C (Mac M4)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/brook",   // executável a rodar
+      "args": [],                                   // argumentos da linha de comando
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",                  // diretório de trabalho
+      "environment": [],
+      "externalConsole": false,                     // true se quiser terminal externo
+      "MIMode": "lldb",                             // depurador no macOS
+      "preLaunchTask": "Build Projeto C",          // roda o tasks.json antes de debugar
+      "setupCommands": [
+        {
+          "description": "Ativar pretty-printing para structs",
+          "text": "type summary add --expand"
+        }
+      ]
+    }
+  ]
+}
