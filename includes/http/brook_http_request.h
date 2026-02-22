@@ -19,6 +19,8 @@
 #define CONTENT_LENGTH "content-length"
 #define CONTENT_TYPE "content-type"
 
+#define MAX_BODY_SIZE 1048576 // 1 MB
+
 typedef enum {
   DELETE,
   GET,
@@ -38,7 +40,9 @@ enum state {
   s_req_header_value,
   s_req_header_value_done,
 
-  s_headers_done
+  s_req_headers_done,
+  s_req_body,
+  s_req_done
 };
 
 enum header_state {

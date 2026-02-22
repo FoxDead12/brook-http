@@ -80,10 +80,12 @@ brook_connection_read ( brook_connection_t* con ) {
   buffer->len += _n;
 
   // ... make http parse, consoant reading ...
-  brook_http_parse(con->_parser, buf, _n);
+  if ( brook_http_parse(con->_parser, buf, _n) == BROOK_ERROR ) {
+    return BROOK_ERROR;
+  }
 
   // ... only make this logic when is parsing header ...
-  if ( con->_parser->state < s_headers_done ) {
+  if ( con->_parser->state < s_req_headers_done ) {
     // we have a problem, header is big than 4096 bytes
     // so will realoc buffer to a bigger size
     size_t size_to_sum = 4096;
@@ -107,11 +109,44 @@ brook_connection_read ( brook_connection_t* con ) {
     unsigned char* buf = buffer->data;
 
     // ... repeate process, to get new pointers in parser (parser need has memory in one sequencial array) ...
-    brook_http_parse(con->_parser, buf, buffer->len);
+    if ( brook_http_parse(con->_parser, buf, buffer->len) == BROOK_ERROR ) {
+      return BROOK_ERROR;
+    }
 
+  } else {
+
+    // ... check if i need read more data (body), because all header is parsed ...
+    brook_http_parse_t* parser = con->_parser;
+
+    if ( parser->method == POST || parser->method == PUT ) {
+      if ( parser->content_length > 0 ) {
+        // need get data so check if is ok
+
+        if ( parser->content_length > MAX_BODY_SIZE ) {
+          printf("body is to big\n");
+          return BROOK_ERROR;
+        }
+
+        if ( parser->nread < parser->content_length ) {
+          parser->state = s_req_body;
+        } else {
+          parser->state = s_req_done;
+        }
+
+      } else {
+        // its all parsed, now flow to send job
+        parser->state = s_req_done;
+      }
+    } else {
+      parser->state = s_req_done;
+    }
   }
 
-  return BROOK_OK;
+  if ( con->_parser->state == s_req_done ) {
+    return BROOK_OK; // parser is finish
+  } else {
+    return BROOK_DONE; // parser is finish
+  }
 }
 
 int
@@ -129,3 +164,6 @@ brook_add_connection ( brook_connection_t* con ) {
 
   return BROOK_OK;
 }
+
+
+

@@ -217,7 +217,7 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
           break;
         } else if ( parser->index == 1 && ch == '\n' ) {
           parser->index = 0;
-          parser->state = s_headers_done;
+          parser->state = s_req_headers_done;
           printf("terminei de fazer parse dos headers do http\n");
           break;
         }
@@ -306,7 +306,6 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
 
       case s_req_header_value:
       {
-
         if ( ch == '\r' ) {
           parser->index = 1;
           break;
@@ -332,6 +331,15 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
           t += ch - '0';
           parser->content_length = t;
         }
+        break;
+      }
+
+      case s_req_headers_done:
+      case s_req_body:
+      {
+        // ... for now we dont do nothing in body, just ignore
+        // ... only count the read body bytes if necessary
+        ++parser->nread;
         break;
       }
 
