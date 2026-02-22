@@ -11,8 +11,8 @@
         "${workspaceFolder}/src/brook.c",
         "${workspaceFolder}/src/**/*.c",
         "-I${workspaceFolder}/includes",
-        "-I/opt/homebrew/opt/postgresql@15/include",
-        "-L/opt/homebrew/opt/postgresql@15/lib",               // path libpq
+        "-I/usr/local/Homebrew/opt/postgresql@15/include",
+        "-L/usr/local/Homebrew/opt/postgresql@15/lib",               // path libpq
         "-lpq",                                                // link libpq
         "-o",
         "${workspaceFolder}/build/brook"                        // executável final

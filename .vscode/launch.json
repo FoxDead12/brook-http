@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug Projeto C (Mac M4)",
+      "name": "Debug Projeto C (Mac M1 PRO)",
       "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceFolder}/build/brook",   // executável a rodar
