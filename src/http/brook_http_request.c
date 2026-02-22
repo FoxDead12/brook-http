@@ -174,12 +174,153 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
           }
         }
 
+        if ( parser->state != s_req_url ) {
+          parser->index = 0;
+        }
         break;
       }
 
       case s_req_minor:
       {
+        if ( parser->index == 0 && ch == 'H' ) {
+        } else if ( parser->index == 1 && ch == 'T' ) {
+        } else if ( parser->index == 2 && ch == 'T' ) {
+        } else if ( parser->index == 3 && ch == 'P' ) {
+        } else if ( parser->index == 4 && ch == '/' ) {
+        } else if ( parser->index == 5 && ch == '1' ) {
+        } else if ( parser->index == 6 && ch == '.' ) {
+        } else if ( parser->index == 7 && ch == '1' ) {
+          parser->http_minor = 1;
+        } else if ( parser->index == 8 && ch == '\r' ) {
+        } else if ( parser->index == 9 && ch == '\n' ) {
+          parser->state = s_req_header_field_start;
+        } else {
+          printf("invalid HTTP version\n");
+          return BROOK_ERROR;
+        }
 
+        ++parser->index;
+        if ( parser->state != s_req_minor ) {
+          parser->index = 0;
+        }
+        break;
+      }
+
+      case s_req_header_field_start:
+      {
+        if (ch == ' ' || ch == '\t') {
+          break;
+        }
+
+        if ( parser->index == 0 && ch == '\r' ) {
+          parser->index = 1;
+          break;
+        } else if ( parser->index == 1 && ch == '\n' ) {
+          parser->index = 0;
+          parser->state = s_headers_done;
+          printf("terminei de fazer parse dos headers do http\n");
+          break;
+        }
+
+        parser->index = 0;
+        parser->state = s_req_header_field;
+        parser->header_state = s_general;
+
+        char c = tokens[ch];
+        if ( c == 0 ) {
+          printf("invalid byte in header token '%c' '/'\n", ch);
+          return BROOK_ERROR;
+        }
+
+        // ... set state from first letter of header ...
+        switch (c) {
+          case 'c':
+            parser->header_state = s_C;
+            break;
+          default:
+            parser->header_state = s_general;
+            break;
+        }
+
+        break;
+      }
+
+      case s_req_header_field:
+      {
+        // ... is the end of header ':' ...
+        if ( ch == ':' ) {
+          parser->state = s_req_header_value_start;
+          printf("encontrei um header token\n");
+          break;
+        }
+
+        // ... parse all header token ...
+        char c = tokens[ch];
+        if ( c == 0 ) {
+          printf("invalid byte in header token '%c' '/'\n", ch);
+          return BROOK_ERROR;
+        }
+
+        // ... testing matches to header ...
+        if ( parser->header_state == s_C && c == 'o' ) {
+          parser->header_state = s_CO;
+          ++parser->index;
+        } else if ( parser->header_state == s_CO && c == 'n' ) {
+          parser->header_state = s_CON;
+          ++parser->index;
+        } else if ( parser->header_state == s_CON && c == 't' ) {
+          parser->header_state = s_CONTENT;
+          ++parser->index;
+        }else if ( parser->header_state == s_CONTENT ) {
+          ++parser->index;
+          if ( parser->index <= sizeof(CONTENT_LENGTH) - 1 && c == CONTENT_LENGTH[parser->index] ) {
+            // ... for now is content length, keep going
+            if ( parser->index == (sizeof(CONTENT_LENGTH) - 2) ) {
+              parser->header_state = s_content_length;
+            }
+          } else if ( parser->index <= sizeof(CONTENT_TYPE) - 1 && c == CONTENT_TYPE[parser->index] ) {
+            // ... for now is content length, keep going
+            if ( parser->index == (sizeof(CONTENT_TYPE) - 2) ) {
+              parser->header_state = s_content_type;
+            }
+          } else {
+            parser->header_state = s_general;
+          }
+        } else {
+          parser->header_state = s_general;
+        }
+
+        break;
+      }
+
+      case s_req_header_value_start:
+      {
+        if (ch == ' ' || ch == '\t') {
+          break;
+        }
+        parser->state = s_req_header_value;
+      }
+
+      case s_req_header_value:
+      {
+        if ( ch == '\n') {
+          parser->state = s_req_header_field_start;
+          parser->index = 0;
+          printf("encontrei um header value\n");
+
+          if ( parser->header_state == s_content_length ) {
+            printf("preciso de buscar o valor do content length\n");
+          }
+
+          if ( parser->header_state == s_content_type ) {
+            printf("preciso de buscar o valor do content type\n");
+          }
+        }
+        if ( ch == '\r' ) {
+        }
+
+        // ... fazer parse dos headers ...
+        break;
       }
 
       default: break;

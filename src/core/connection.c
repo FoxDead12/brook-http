@@ -30,6 +30,7 @@ brook_handle_connection ( brook_conf_t* config ) {
   con->_parser->method = 0;
   con->_parser->nread = 0;
   con->_parser->state = 0;
+  con->_parser->header_state = 0;
 
   // ... add conection to list ...
   brook_add_connection(con);
@@ -77,10 +78,38 @@ brook_connection_read ( brook_connection_t* con ) {
 
   buffer->free -= _n;
   buffer->len += _n;
-  printf("Foi lido %zu bytes\n", _n);
 
   // ... make http parse, consoant reading ...
   brook_http_parse(con->_parser, buf, _n);
+
+  // ... only make this logic when is parsing header ...
+  if ( con->_parser->state < s_headers_done ) {
+    // we have a problem, header is big than 4096 bytes
+    // so will realoc buffer to a bigger size
+    size_t size_to_sum = 4096;
+
+    // ... store old buffer information ...
+    unsigned char* d_old = buffer->data;
+    size_t s_old = buffer->size;
+
+    // ... recalculate new space ...
+    buffer->size = s_old + size_to_sum;
+    buffer->free = buffer->size - buffer->len;
+
+    // ... TODO: limit header size (ex. 12500) a sanity check todo...
+
+    // ... realoc data of buffer ...
+    buffer->data = realloc(d_old, buffer->size);
+
+    // ... reset state of parser, to start over ...
+    con->_parser->state = s_req_start;
+
+    unsigned char* buf = buffer->data;
+
+    // ... repeate process, to get new pointers in parser (parser need has memory in one sequencial array) ...
+    brook_http_parse(con->_parser, buf, buffer->len);
+
+  }
 
   return BROOK_OK;
 }

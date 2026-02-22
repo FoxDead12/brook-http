@@ -37,7 +37,8 @@ typedef struct brook_buffer_chain_s {
 
 typedef struct {
 
-  unsigned char state;        // ... state of parse
+  unsigned char state;          // ... state of parse
+  unsigned short header_state;  // ... state of header parse
 
   unsigned short http_minor;  // ... version of http
   unsigned short method;      // ... method of http request [brook_method_e]
