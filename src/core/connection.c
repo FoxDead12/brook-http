@@ -2,7 +2,7 @@
 #include "http/brook_http_request.h"
 
 int
-brook_handle_connection ( brook_conf_t* config ) {
+brook_handle_connection ( brook_conf_t* config) {
   // ... accept file descriptor connection ...
   struct sockaddr_in _addr;
   socklen_t addr_len = sizeof(_addr);
@@ -115,6 +115,8 @@ brook_connection_read ( brook_connection_t* con ) {
 
   } else {
 
+    printf("url: %.*s\n", con->_parser->url.len, con->_parser->url.data);
+
     // ... check if i need read more data (body), because all header is parsed ...
     brook_http_parse_t* parser = con->_parser;
 
@@ -158,6 +160,8 @@ brook_add_connection ( brook_connection_t* con ) {
       struct pollfd* _fd = &_fds[i];
       _fd->fd = con->_fd;
       _fd->events = POLLIN;          // ... only add event of READING
+
+      con->_pfd = _fd;
       _connections[i] = con;        // ... this will make index 0 of array always empty
     }
   }
@@ -165,5 +169,36 @@ brook_add_connection ( brook_connection_t* con ) {
   return BROOK_OK;
 }
 
+int
+brook_destroy_connection ( brook_connection_t* con ) {
+
+  // ... close socket ...
+  close(con->_fd);
+
+  // ... clean fd struct ...
+  struct pollfd* _fd = con->_pfd;
+  _fd->fd = -1;
+  _fd->events = POLLIN;
+
+  // ... free memory buffers ...
+  brook_buffer_chain_t* buffer = con->_data;
+  brook_buffer_chain_t* tmp = NULL;
+
+  while ( buffer != NULL ) {
+    tmp = buffer;
+    buffer = buffer->next;
+
+    free(tmp->data);
+    free(tmp);
+  }
+
+  // ... free http parser ...
+  free(con->_parser);
+
+  // ... at least free con ...
+  free(con);
+
+  return BROOK_OK;
+}
 
 

@@ -90,6 +90,9 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
 
       case s_req_start:
       {
+        parser->url.data = NULL;
+        parser->url.len = 0;
+
         if ( ch == '\r' || ch == '\n' ) {
           return BROOK_ERROR;
         }
@@ -163,15 +166,20 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
         } else {
           if ( parser->index == 1 ) {
             if ( ch == '/' ) {
+              parser->url.data = &data[i];
+              parser->url.len = 0;
               parser->index = 2;
             } else {
               printf("invalid url start '/'\n");
               return BROOK_ERROR;
             }
+          } else if ( ch == '?' ) {
+            // ... this is a necessary field, so assume its ok
           } else if ( !IS_URL_CHAR(ch) ) {
             printf("invalid tokens url\n");
             return BROOK_ERROR;
           }
+          ++parser->url.len;
         }
 
         if ( parser->state != s_req_url ) {

@@ -1,6 +1,6 @@
 #include "core/process.h"
 
-int MAX_CLIENTS = 1024;
+int MAX_CLIENTS = 1024;   // ... max connections at same time ...
 
 /**
  * Process logic, will run event loop logic,
@@ -23,6 +23,7 @@ brook_process_start ( brook_conf_t* config ) {
   }
 
   // ... set in poll the server socket ...
+  // ... will has two types of sockets in fd (socket server, beanstalkd client socket)
   _fds[0].fd = config->socket;
 
   // ... event loop start here ...
@@ -37,26 +38,27 @@ brook_process_start ( brook_conf_t* config ) {
 
     // ... check all descriptors ...
     for ( int i = 0; i < MAX_CLIENTS; i++ ) {
-      struct pollfd _fd = _fds[i];
+      struct pollfd* _fd = &_fds[i];
 
       // ... ignore empty index's ...
-      if ( _fd.fd == -1 ) continue;
+      if ( _fd->fd == -1 ) continue;
 
-      if ( _fd.fd == config->socket && _fd.revents & POLLIN ) {
+      if ( _fd->fd == config->socket && _fd->revents & POLLIN ) {
         // ... need accept TCP connection ...
         brook_handle_connection(config);
 
-      } else if ( _fd.revents & POLLIN ) {
+      } else if ( _fd->revents & POLLIN ) {
         // ... events de leitura dos sockets ...
         brook_connection_t* con = _connections[i];
-        switch (brook_connection_read(con)) {
-          case BROOK_OK:
-            // ... parse is done ...
-            _fds[i].events &= ~POLLIN;      // ... remove reads events ...
-            break;
-          default: break;
+        int r = brook_connection_read(con);
+        if ( r == BROOK_ERROR ) {
+          // ... TODO: handle erros of connection read, need destroy objects and responde to client
+          // TODO: generate response error ...
+          brook_destroy_connection(con);
         }
       }
+
+
     }
 
   }

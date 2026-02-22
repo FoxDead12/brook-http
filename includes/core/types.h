@@ -33,10 +33,10 @@ typedef struct brook_buffer_chain_s {
   size_t free;      // ... memory free to fill all buffer
   unsigned char* data;
   struct brook_buffer_chain_s* next;
+
 } brook_buffer_chain_t;
 
 typedef struct {
-
   unsigned char state;          // ... state of parse
   unsigned short header_state;  // ... state of header parse
 
@@ -48,19 +48,23 @@ typedef struct {
   uint64_t nread;             // ... bytes already read/already check
   uint64_t content_length;
 
+  brook_str_t url;
+
 } brook_http_parse_t;
-
-
 
 // ... struct to define the connection struct, will handle all necessary data to manager a connection ...
 typedef struct {
+  struct pollfd* _pfd;
   brook_conf_t* _config;
+
   int   _fd;              // ... is the socket
   int   _status;
   int   _port;
   char  _ip[INET_ADDRSTRLEN];
+
   brook_buffer_chain_t* _data;
   brook_http_parse_t* _parser;
+
 } brook_connection_t;
 
 #endif
