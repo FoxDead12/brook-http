@@ -299,27 +299,39 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
           break;
         }
         parser->state = s_req_header_value;
+        if ( parser->header_state == s_content_length ) {
+          parser->content_length = 0;
+        }
       }
 
       case s_req_header_value:
       {
-        if ( ch == '\n') {
-          parser->state = s_req_header_field_start;
-          parser->index = 0;
-          printf("encontrei um header value\n");
 
-          if ( parser->header_state == s_content_length ) {
-            printf("preciso de buscar o valor do content length\n");
-          }
-
-          if ( parser->header_state == s_content_type ) {
-            printf("preciso de buscar o valor do content type\n");
-          }
-        }
         if ( ch == '\r' ) {
+          parser->index = 1;
+          break;
+        } else if ( ch == '\n' ) {
+          if ( parser->index == 1 ) {
+            parser->state = s_req_header_field_start;
+            parser->index = 0;
+            break;
+          } else {
+            printf("Barra N '||n' e invalido no meio do valor \n");
+            return BROOK_ERROR;
+          }
         }
 
-        // ... fazer parse dos headers ...
+        // ... parsing value of Content-Length ...
+        if ( parser->header_state == s_content_length ) {
+          if ( !IS_NUM(ch) ) {
+            printf("o valor do content length nao e numero\n");
+            return BROOK_ERROR;
+          }
+          uint64_t t = parser->content_length;
+          t *= 10;
+          t += ch - '0';
+          parser->content_length = t;
+        }
         break;
       }
 

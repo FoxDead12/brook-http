@@ -14,6 +14,7 @@
 
 // ... to only allow ASCII bytes
 #define IS_URL_CHAR(c)      (BIT_AT(normal_url_char, (unsigned char)c))
+#define IS_NUM(c)           ((c) >= '0' && (c) <= '9')
 
 #define CONTENT_LENGTH "content-length"
 #define CONTENT_TYPE "content-type"
