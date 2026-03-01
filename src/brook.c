@@ -14,11 +14,13 @@ main(int argc, char **argv) {
 
   // ... init socket of server and add to config ...
   config->socket = brook_socket(3001);
-
   if ( config->socket == -1 ) {
     free(config);
     return BROOK_ERROR;
   }
+
+  // ... load gatekeeper file ...
+  brook_gatekeeper_load(config);
 
   // ... start event loop ( for now is only one process ) ...
   brook_process_start(config);

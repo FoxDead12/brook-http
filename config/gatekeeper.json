@@ -1,0 +1,30 @@
+[
+  {
+    "method": ["GET"],
+    "route": "/first-example/:id",
+    "job": {
+      "tube": "firt-job"
+    }
+  },
+  {
+    "method": ["GET"],
+    "route": "/first-example/:id/prototype",
+    "job": {
+      "tube": "firt-job"
+    }
+  },
+  {
+    "method": ["POST", "PATCH"],
+    "route": "/second-example/*",
+    "job": {
+      "tube": "second-job"
+    }
+  },
+  {
+    "method": ["GET", "PATCH"],
+    "route": "/third-example",
+    "job": {
+      "tube": "third-job"
+    }
+  }
+]

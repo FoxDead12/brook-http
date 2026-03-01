@@ -10,6 +10,10 @@
 #include <unistd.h>
 #include <poll.h>
 #include <arpa/inet.h>
+#include <netdb.h>
+#include <limits.h>
+#include <cjson/cJSON.h>
+#include <string.h>
 
 #define BROOK_OK    0
 #define BROOK_ERROR -1
@@ -19,6 +23,7 @@
 #include "types.h"
 #include "socket.h"
 #include "connection.h"
+#include "gatekeeper.h"
 
 // ... server settings ...
 extern int MAX_CLIENTS;       // ... i don't now if will be possible has 1024 connections, depende of systems settings

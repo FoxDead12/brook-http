@@ -14,6 +14,9 @@
         "-I/opt/homebrew/opt/postgresql@15/include",
         "-L/opt/homebrew/opt/postgresql@15/lib",               // path libpq
         "-lpq",                                                // link libpq
+        "-I/opt/homebrew/include",
+        "-L/opt/homebrew/lib",
+        "-lcjson",
         "-o",
         "${workspaceFolder}/build/brook"                        // executável final
       ],
