@@ -39,10 +39,8 @@ brook_process_start ( brook_conf_t* config ) {
     // ... check all descriptors ...
     for ( int i = 0; i < MAX_CLIENTS; i++ ) {
       struct pollfd* _fd = &_fds[i];
-
       // ... ignore empty index's ...
       if ( _fd->fd == -1 ) continue;
-
       if ( _fd->fd == config->socket && _fd->revents & POLLIN ) {
         // ... need accept TCP connection ...
         brook_handle_connection(config);
@@ -54,13 +52,10 @@ brook_process_start ( brook_conf_t* config ) {
         if ( r == BROOK_ERROR ) {
           // ... TODO: handle erros of connection read, need destroy objects and responde to client
           // TODO: generate response error ...
-          brook_destroy_connection(con);
+          brook_destroy_connection(con); // TODO: this is temporrary, because we need reply
         }
       }
-
-
     }
-
   }
 
   return BROOK_OK;

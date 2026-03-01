@@ -98,7 +98,7 @@ brook_connection_read ( brook_connection_t* con ) {
     buffer->size = s_old + size_to_sum;
     buffer->free = buffer->size - buffer->len;
 
-    // ... TODO: limit header size (ex. 12500) a sanity check todo...
+    // ... TODO: limit header buffer max size (ex: 12500) a sanity check todo ...
 
     // ... realoc data of buffer ...
     buffer->data = realloc(d_old, buffer->size);
@@ -115,10 +115,11 @@ brook_connection_read ( brook_connection_t* con ) {
 
   } else {
 
-    printf("url: %.*s\n", con->_parser->url.len, con->_parser->url.data);
-
     // ... check if i need read more data (body), because all header is parsed ...
     brook_http_parse_t* parser = con->_parser;
+
+    // ... make validations of header request ...
+    // ... validate gatekeeper ...
 
     if ( parser->method == POST || parser->method == PUT ) {
       if ( parser->content_length > 0 ) {
@@ -142,6 +143,9 @@ brook_connection_read ( brook_connection_t* con ) {
     } else {
       parser->state = s_req_done;
     }
+
+    // ... if its all ok s_req_done (request is done) we will create job payload ...
+
   }
 
   if ( con->_parser->state == s_req_done ) {
