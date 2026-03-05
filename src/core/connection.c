@@ -118,6 +118,13 @@ brook_connection_read ( brook_connection_t* con ) {
     // ... check if i need read more data (body), because all header is parsed ...
     brook_http_parse_t* parser = con->_parser;
 
+    printf("fiz parse do url: %.*s\n", parser->url.len, parser->url.data);
+
+    if ( parser->params.data != NULL ) {
+      printf("fiz parse dos parametros: %.*s\n", parser->params.len, parser->params.data);
+    }
+
+
     // ... make validations of header request ...
     // ... validate gatekeeper ...
 

@@ -93,6 +93,9 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
         parser->url.data = NULL;
         parser->url.len = 0;
 
+        parser->params.data = NULL;
+        parser->params.len = 0;
+
         if ( ch == '\r' || ch == '\n' ) {
           return BROOK_ERROR;
         }
@@ -123,6 +126,8 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
         } else if ( parser->method == POST ) {
           if (parser->index == 1 && c == 'u') {
             parser->method = PUT;
+          } else if (parser->index == 1 && c == 'a') {
+            parser->method = PATCH;
           } else if (parser->index == 1 && c == 'o') {
           } else if (parser->index == 2 && c == 's') {
           } else if (parser->index == 3 && c == 't') {
@@ -132,6 +137,14 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
           }
         } else if ( parser->method == PUT ) {
           if (parser->index == 2 && c == 't') {
+            parser->state = s_req_url;
+          } else {
+            return BROOK_ERROR;
+          }
+        } else if (  parser->method == PATCH ) {
+          if (parser->index == 2 && c == 't') {
+          } else if (parser->index == 3 && c == 'c') {
+          } else if (parser->index == 4 && c == 'h') {
             parser->state = s_req_url;
           } else {
             return BROOK_ERROR;
@@ -175,6 +188,11 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
             }
           } else if ( ch == '?' ) {
             // ... this is a necessary field, so assume its ok
+            parser->state = s_req_params;
+            parser->index = 0;              // ... need force reset of index (url is done)
+            parser->params.data = &data[i];
+            parser->params.len = 0;
+            continue;
           } else if ( !IS_URL_CHAR(ch) ) {
             printf("invalid tokens url\n");
             return BROOK_ERROR;
@@ -183,6 +201,24 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
         }
 
         if ( parser->state != s_req_url ) {
+          parser->index = 0;
+        }
+        break;
+      }
+
+      case s_req_params:
+      {
+        if ( ch == ' ' || ch == '\t' ) {
+          parser->state = s_req_minor;
+        } else {
+          if ( !IS_URL_CHAR(ch) ) {
+            printf("invalid tokens url\n");
+            return BROOK_ERROR;
+          }
+          ++parser->params.len;
+        }
+
+        if ( parser->state != s_req_params ) {
           parser->index = 0;
         }
         break;

@@ -21,17 +21,11 @@
 
 #define MAX_BODY_SIZE 1048576 // 1 MB
 
-typedef enum {
-  DELETE,
-  GET,
-  POST,
-  PUT
-} brook_method_e;
-
 enum state {
   s_req_start,
   s_req_method,
   s_req_url,
+  s_req_params,
   s_req_minor,
 
   s_req_header_field_start,

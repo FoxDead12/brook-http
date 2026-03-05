@@ -4,8 +4,29 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+typedef enum {
+  DELETE,
+  GET,
+  POST,
+  PUT,
+  PATCH
+} brook_method_e;
+
+typedef struct brook_gatekeeper_node_s {
+  char* segment;    // "/first-example/:id" -> this route has two segments separate bar
+
+  struct brook_gatekeeper_node_s* child;
+  struct brook_gatekeeper_node_s* sibling;
+
+  // ... jobs options ...
+  char* tube;
+  uint32_t methods_mask;
+
+} brook_gatekeeper_node_t;
+
 typedef struct {
   int socket;
+  brook_gatekeeper_node_t* root;
 } brook_conf_t;
 
 // ... struct to define a "string" will be used to buffers read ...
@@ -49,6 +70,7 @@ typedef struct {
   uint64_t content_length;
 
   brook_str_t url;
+  brook_str_t params;
 
 } brook_http_parse_t;
 
