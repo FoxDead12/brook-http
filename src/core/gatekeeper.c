@@ -51,9 +51,6 @@ brook_gatekeeper_load ( brook_conf_t* config ) {
   }
 
   int array_size = cJSON_GetArraySize(json);
-  printf("Array tem %d elementos\n", array_size);
-
-  config->root = brook_gatekeeper_create_node(NULL);
 
   for (int i = 0; i < array_size; i++) {
     cJSON *item = cJSON_GetArrayItem(json, i);
@@ -77,6 +74,7 @@ brook_gatekeeper_load ( brook_conf_t* config ) {
 
     uint32_t method_mask = 0;
     cJSON *method = NULL;
+
     cJSON_ArrayForEach(method, methods) {
       if ( !cJSON_IsString(method) ) continue;
       if (strcmp(method->valuestring, "DELETE") == 0) {
@@ -92,8 +90,7 @@ brook_gatekeeper_load ( brook_conf_t* config ) {
       }
     }
 
-    printf("Inserir route: %s -> %s\n", route->valuestring, tube->valuestring);
-    brook_gatekeeper_insert_route(config->root, route->valuestring, tube->valuestring, method_mask);
+    config->root = brook_gatekeeper_insert_route(config->root, route->valuestring, tube->valuestring, method_mask);
   }
 
   cJSON_Delete(json);
@@ -103,14 +100,20 @@ brook_gatekeeper_load ( brook_conf_t* config ) {
 }
 
 brook_gatekeeper_node_t*
-brook_gatekeeper_create_node ( const char* segment ) {
-  brook_gatekeeper_node_t* n = malloc(sizeof(brook_gatekeeper_node_t));
-  n->segment = segment ? strdup(segment) : NULL;
-  n->tube = NULL;
-  n->methods_mask = 0;
-  n->child = NULL;
-  n->sibling = NULL;
-  return n;
+brook_gatekeeper_create_node ( const char* path, const char* tube, uint32_t method_mask ) {
+
+  brook_gatekeeper_node_t* node = malloc(sizeof(brook_gatekeeper_node_t));
+  node->methods_mask = method_mask;
+
+  node->url.data = strdup(path);
+  node->url.len = strlen(path);
+
+  node->tube.data = strdup(tube);
+  node->tube.len = strlen(tube);
+
+  node->left = NULL;
+  node->rigth = NULL;
+  return node;
 }
 
 /**
@@ -119,74 +122,49 @@ brook_gatekeeper_create_node ( const char* segment ) {
  * This system will be simple only compare the exact url, will assume url are static
  * if is necessary variables need be sended in params of url
  */
-int
+brook_gatekeeper_node_t*
 brook_gatekeeper_insert_route ( brook_gatekeeper_node_t* root, const char* path, const char* tube, uint32_t method_mask ) {
 
-  char tmp[PATH_MAX] = {0};
-  strcpy(tmp, path);
-
-  brook_gatekeeper_node_t* current = root;
-  char* token = strtok(tmp, "/");
-
-  while ( token ) {
-
-    // ... variables to manager if we move down in tree ...
-    brook_gatekeeper_node_t *child = current->child;
-    brook_gatekeeper_node_t *prev = NULL;
-
-    // ... will change to siblings if necessary ...
-    while (child && strcmp(child->segment, token) != 0) {
-      prev = child;
-      child = child->sibling;
-    }
-
-    if (!child) {
-      // ... create new node ...
-      child = brook_gatekeeper_create_node(token);
-
-      if (prev) {
-        // ... add children to a sibling (we move to rigth in tree)
-        prev->sibling = child;
-      } else {
-        // ... we only move down in tree, so keep flow
-        current->child = child;
-      }
-    }
-
-    current = child;
-    token = strtok(NULL, "/");
+  if ( root == NULL ) {
+    return brook_gatekeeper_create_node(path, tube, method_mask);
   }
 
-  // ... already parse all url, we are in new item ...
-  current->tube = strdup(tube);
-  current->methods_mask = method_mask;
+  int res = strncmp(root->url.data, path, root->url.len);
 
-  return BROOK_OK;
+  if ( res < 0 ) {
+    root->left = brook_gatekeeper_insert_route(root->left, path, tube, method_mask);
+  } else if ( res > 0 ) {
+    root->rigth = brook_gatekeeper_insert_route(root->rigth, path, tube, method_mask);
+  } else {
+    root->methods_mask |= method_mask;
+  }
+
+  return root;
 }
 
-const char*
-brook_gatekeeper_match_route ( brook_gatekeeper_node_t *root, const char *path ) {
-  char temp[PATH_MAX];
-  strcpy(temp, path);
-
-  brook_gatekeeper_node_t *current = root;
-  char *token = strtok(temp, "/");
-
-  while (token && current) {
-    brook_gatekeeper_node_t *child = current->child;
-
-    // procurar segmento correspondente
-    while (child && strcmp(child->segment, token) != 0) {
-      child = child->sibling;
-    }
-
-    if (!child) return NULL;
-
-    current = child;
-    token = strtok(NULL, "/");
+brook_gatekeeper_node_t*
+brook_gatekeeper_match_route ( brook_gatekeeper_node_t *root, brook_str_t url, uint32_t method ) {
+  if ( root == NULL ) {
+    return NULL;
   }
 
-  if (current) return current->tube;
+  int res = 0;
+  if ( root->url.len > url.len ) {
+    // ... this case problably don't crash because is inside a buffer
+    res = strncmp(root->url.data, url.data, root->url.len);
+  } else {
+    res = strncmp(root->url.data, url.data, url.len);
+  }
 
-  return NULL;
+  if ( res == 0 ) {
+    if ( root->methods_mask & (1 << method) ) {
+      return root;
+    } else {
+      return NULL;
+    }
+  } else if ( res < 0 ) {
+    return brook_gatekeeper_match_route(root->left, url, method);
+  } else {
+    return brook_gatekeeper_match_route(root->rigth, url, method);
+  }
 }

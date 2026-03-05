@@ -141,7 +141,7 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
           } else {
             return BROOK_ERROR;
           }
-        } else if (  parser->method == PATCH ) {
+        } else if ( parser->method == PATCH ) {
           if (parser->index == 2 && c == 't') {
           } else if (parser->index == 3 && c == 'c') {
           } else if (parser->index == 4 && c == 'h') {

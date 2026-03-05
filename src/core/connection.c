@@ -124,9 +124,15 @@ brook_connection_read ( brook_connection_t* con ) {
       printf("fiz parse dos parametros: %.*s\n", parser->params.len, parser->params.data);
     }
 
-
     // ... make validations of header request ...
     // ... validate gatekeeper ...
+    brook_gatekeeper_node_t* route = brook_gatekeeper_match_route(con->_config->root, parser->url, parser->method);
+    if ( route == NULL ) {
+      printf("404 ROUTE NOT FOUND\n");
+      return BROOK_ERROR;
+    } else {
+      con->role = route;
+    }
 
     if ( parser->method == POST || parser->method == PUT ) {
       if ( parser->content_length > 0 ) {
@@ -151,11 +157,13 @@ brook_connection_read ( brook_connection_t* con ) {
       parser->state = s_req_done;
     }
 
-    // ... if its all ok s_req_done (request is done) we will create job payload ...
-
   }
 
   if ( con->_parser->state == s_req_done ) {
+
+    // ... if its all ok s_req_done (request is done) we will create job payload ...
+
+
     return BROOK_OK; // parser is finish
   } else {
     return BROOK_DONE; // parser is finish

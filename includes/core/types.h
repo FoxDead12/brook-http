@@ -12,23 +12,6 @@ typedef enum {
   PATCH
 } brook_method_e;
 
-typedef struct brook_gatekeeper_node_s {
-  char* segment;    // "/first-example/:id" -> this route has two segments separate bar
-
-  struct brook_gatekeeper_node_s* child;
-  struct brook_gatekeeper_node_s* sibling;
-
-  // ... jobs options ...
-  char* tube;
-  uint32_t methods_mask;
-
-} brook_gatekeeper_node_t;
-
-typedef struct {
-  int socket;
-  brook_gatekeeper_node_t* root;
-} brook_conf_t;
-
 // ... struct to define a "string" will be used to buffers read ...
 typedef struct {
   size_t len;
@@ -56,6 +39,20 @@ typedef struct brook_buffer_chain_s {
   struct brook_buffer_chain_s* next;
 
 } brook_buffer_chain_t;
+
+typedef struct brook_gatekeeper_node_s {
+  brook_str_t url;
+  // ... jobs options ...
+  brook_str_t tube;
+  uint32_t methods_mask;
+  struct brook_gatekeeper_node_s* left;
+  struct brook_gatekeeper_node_s* rigth;
+} brook_gatekeeper_node_t;
+
+typedef struct {
+  int socket;
+  brook_gatekeeper_node_t* root;
+} brook_conf_t;
 
 typedef struct {
   unsigned char state;          // ... state of parse
@@ -87,6 +84,7 @@ typedef struct {
   brook_buffer_chain_t* _data;
   brook_http_parse_t* _parser;
 
+  brook_gatekeeper_node_t* role;
 } brook_connection_t;
 
 #endif
