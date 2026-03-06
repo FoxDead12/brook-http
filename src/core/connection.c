@@ -1,5 +1,6 @@
 #include "core/connection.h"
-#include "http/brook_http_request.h"
+#include "http/http_request.h"
+#include "http/http_response.h"
 
 int
 brook_handle_connection ( brook_conf_t* config) {
@@ -31,6 +32,10 @@ brook_handle_connection ( brook_conf_t* config) {
   con->_parser->nread = 0;
   con->_parser->state = 0;
   con->_parser->header_state = 0;
+
+  con->reponse.data.data = NULL;
+  con->reponse.data.len = 0;
+  con->reponse.nwrite = 0;
 
   // ... add conection to list ...
   brook_add_connection(con);
@@ -128,7 +133,7 @@ brook_connection_read ( brook_connection_t* con ) {
     // ... validate gatekeeper ...
     brook_gatekeeper_node_t* route = brook_gatekeeper_match_route(con->_config->root, parser->url, parser->method);
     if ( route == NULL ) {
-      printf("404 ROUTE NOT FOUND\n");
+      brook_connection_reply(con, 404, (brook_str_t) brook_str("Route not found"), (brook_str_t) brook_str("Invalid route in system check url and method"));
       return BROOK_ERROR;
     } else {
       con->role = route;
@@ -156,14 +161,10 @@ brook_connection_read ( brook_connection_t* con ) {
     } else {
       parser->state = s_req_done;
     }
-
   }
 
   if ( con->_parser->state == s_req_done ) {
-
     // ... if its all ok s_req_done (request is done) we will create job payload ...
-
-
     return BROOK_OK; // parser is finish
   } else {
     return BROOK_DONE; // parser is finish
@@ -179,13 +180,35 @@ brook_add_connection ( brook_connection_t* con ) {
       struct pollfd* _fd = &_fds[i];
       _fd->fd = con->_fd;
       _fd->events = POLLIN;          // ... only add event of READING
-
-      con->_pfd = _fd;
+      con->_pfd = &_fds[i];
       _connections[i] = con;        // ... this will make index 0 of array always empty
+      return BROOK_OK;
     }
   }
 
+  return BROOK_ERROR;
+}
+
+int
+brook_connection_reply ( brook_connection_t* con, uint16_t code, brook_str_t message, brook_str_t detail ) {
+  brook_http_response_static(con, code, message, detail);
+  con->_pfd->events = POLLOUT;
   return BROOK_OK;
+}
+
+int
+brook_connection_write ( brook_connection_t* con ) {
+
+  char* p = con->reponse.data.data + con->reponse.nwrite;
+  uint64_t b = con->reponse.data.len - con->reponse.nwrite;
+  con->reponse.nwrite += send(con->_fd, p, b, 0);
+
+  if ( con->reponse.nwrite >= con->reponse.data.len ) {
+    brook_destroy_connection(con);
+    return BROOK_OK;
+  }
+
+  return BROOK_DONE;
 }
 
 int
@@ -197,7 +220,8 @@ brook_destroy_connection ( brook_connection_t* con ) {
   // ... clean fd struct ...
   struct pollfd* _fd = con->_pfd;
   _fd->fd = -1;
-  _fd->events = POLLIN;
+  _fd->events = 0;
+  _fd->revents = 0;
 
   // ... free memory buffers ...
   brook_buffer_chain_t* buffer = con->_data;
@@ -209,6 +233,10 @@ brook_destroy_connection ( brook_connection_t* con ) {
 
     free(tmp->data);
     free(tmp);
+  }
+
+  if ( con->reponse.data.data ) {
+    free(con->reponse.data.data);
   }
 
   // ... free http parser ...

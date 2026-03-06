@@ -19,41 +19,57 @@ brook_process_start ( brook_conf_t* config ) {
   // ... clean struct ...
   for ( int i = 0; i < MAX_CLIENTS; i++ ) {
     _fds[i].fd = -1;
-    _fds[i].events = POLLIN;
+    _fds[i].events = 0;
+    _fds[i].revents = 0;
   }
 
   // ... set in poll the server socket ...
   // ... will has two types of sockets in fd (socket server, beanstalkd client socket)
   _fds[0].fd = config->socket;
+  _fds[0].events = POLLIN;
+  _fds[0].revents = POLLIN;
 
+  int fds_num = 1;
   // ... event loop start here ...
   while (1) {
 
+    printf("fds_num: %d\n", fds_num);
     // ... wait for events in sockets/file descriptors ...
-    int nready = poll(_fds, MAX_CLIENTS, -1);
+    int nready = poll(_fds, fds_num, -1);
     if ( nready == -1 ) {
       perror("poll");
       return BROOK_ERROR;
     }
 
+    int t = fds_num;
     // ... check all descriptors ...
-    for ( int i = 0; i < MAX_CLIENTS; i++ ) {
+    for ( int i = 0; i < t; i++ ) {
       struct pollfd* _fd = &_fds[i];
       // ... ignore empty index's ...
       if ( _fd->fd == -1 ) continue;
       if ( _fd->fd == config->socket && _fd->revents & POLLIN ) {
         // ... need accept TCP connection ...
         brook_handle_connection(config);
+        ++fds_num;
 
       } else if ( _fd->revents & POLLIN ) {
         // ... events de leitura dos sockets ...
         brook_connection_t* con = _connections[i];
-        int r = brook_connection_read(con);
-        if ( r == BROOK_ERROR ) {
-          // ... TODO: handle erros of connection read, need destroy objects and responde to client
-          // TODO: generate response error ...
-          brook_destroy_connection(con); // TODO: this is temporrary, because we need reply
+        brook_connection_read(con);
+
+      } else if ( _fd->revents & POLLOUT ) {
+        brook_connection_t* con = _connections[i];
+        if ( brook_connection_write(con) == BROOK_OK ) {
+          --fds_num;
         }
+
+      } else if ( _fd->revents & (POLLHUP | POLLERR) ) {
+        brook_connection_t* con = _connections[i];
+        if ( con != NULL ) {
+          brook_destroy_connection(con);
+          --fds_num;
+        }
+
       }
     }
   }

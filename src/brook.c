@@ -11,6 +11,7 @@ main(int argc, char **argv) {
 
   // ... create config of server ...
   brook_conf_t *config = malloc(sizeof(brook_conf_t));
+  config->root = NULL;
 
   // ... init socket of server and add to config ...
   config->socket = brook_socket(3001);

@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define brook_str(str)    { sizeof(str) - 1, (u_char *) str }
+
 typedef enum {
   DELETE,
   GET,
@@ -29,7 +31,6 @@ typedef struct {
   size_t free;      // ... memory free to fill all buffer
   unsigned char* data;
 } brook_buffer_t;
-
 
 typedef struct brook_buffer_chain_s {
   size_t size;      // ... memory alloced to buffer
@@ -71,6 +72,12 @@ typedef struct {
 
 } brook_http_parse_t;
 
+typedef struct {
+  uint64_t nwrite;             // ... bytes already write/sended check
+  brook_str_t data;            // ... pointer to buffer of all response message
+} brook_http_response_t;
+
+
 // ... struct to define the connection struct, will handle all necessary data to manager a connection ...
 typedef struct {
   struct pollfd* _pfd;
@@ -85,6 +92,9 @@ typedef struct {
   brook_http_parse_t* _parser;
 
   brook_gatekeeper_node_t* role;
+
+  brook_http_response_t reponse;
+
 } brook_connection_t;
 
 #endif

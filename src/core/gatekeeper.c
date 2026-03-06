@@ -31,9 +31,10 @@ brook_gatekeeper_load ( brook_conf_t* config ) {
   rewind(gatekeeper);
 
   // ...
-  char* buffer = malloc(size);
+  char* buffer = malloc(size + 1);
   fread(buffer, 1, size, gatekeeper);
   fclose(gatekeeper);
+  buffer[size] = '\0';
 
   // ... parse JSON ...
   cJSON* json = cJSON_Parse(buffer);

@@ -1,4 +1,4 @@
-#include "http/brook_http_request.h"
+#include "http/http_request.h"
 
 
 /* Tokens as defined by rfc 2616. Also lowercases them.
@@ -395,9 +395,3 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
   return BROOK_OK;
 }
 
-int
-brook_http_parse_method () {
-
-
-  return BROOK_OK;
-}
