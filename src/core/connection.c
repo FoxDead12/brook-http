@@ -78,6 +78,7 @@ brook_connection_read ( brook_connection_t* con ) {
 
   size_t _n = brook_socket_recv(con->_fd, buf, buffer->free);
   if ( _n == 0 || _n == -1) {
+    brook_connection_reply(con, 500, (brook_str_t) brook_str("Can't read data from socket"), (brook_str_t) brook_str("Can't read data from socket"));
     return BROOK_ERROR;
   }
 
@@ -86,6 +87,7 @@ brook_connection_read ( brook_connection_t* con ) {
 
   // ... make http parse, consoant reading ...
   if ( brook_http_parse(con->_parser, buf, _n) == BROOK_ERROR ) {
+    brook_connection_reply(con, 400, (brook_str_t) brook_str("Invalid HTTP message"), (brook_str_t) brook_str("Probably send invalid format or invalid bit"));
     return BROOK_ERROR;
   }
 
@@ -115,6 +117,7 @@ brook_connection_read ( brook_connection_t* con ) {
 
     // ... repeate process, to get new pointers in parser (parser need has memory in one sequencial array) ...
     if ( brook_http_parse(con->_parser, buf, buffer->len) == BROOK_ERROR ) {
+      brook_connection_reply(con, 400, (brook_str_t) brook_str("Invalid HTTP message"), (brook_str_t) brook_str("Probably send invalid format or invalid bit"));
       return BROOK_ERROR;
     }
 
@@ -123,28 +126,22 @@ brook_connection_read ( brook_connection_t* con ) {
     // ... check if i need read more data (body), because all header is parsed ...
     brook_http_parse_t* parser = con->_parser;
 
-    printf("fiz parse do url: %.*s\n", parser->url.len, parser->url.data);
-
-    if ( parser->params.data != NULL ) {
-      printf("fiz parse dos parametros: %.*s\n", parser->params.len, parser->params.data);
-    }
-
     // ... make validations of header request ...
     // ... validate gatekeeper ...
     brook_gatekeeper_node_t* route = brook_gatekeeper_match_route(con->_config->root, parser->url, parser->method);
     if ( route == NULL ) {
-      brook_connection_reply(con, 404, (brook_str_t) brook_str("Route not found"), (brook_str_t) brook_str("Invalid route in system check url and method"));
+      brook_connection_reply(con, 404, (brook_str_t) brook_str("Route not found"), (brook_str_t) brook_str("Invalid route check url and method"));
       return BROOK_ERROR;
     } else {
       con->role = route;
     }
 
-    if ( parser->method == POST || parser->method == PUT ) {
+    if ( parser->method == POST || parser->method == PUT || parser->method == PATCH ) {
       if ( parser->content_length > 0 ) {
         // need get data so check if is ok
 
         if ( parser->content_length > MAX_BODY_SIZE ) {
-          printf("body is to big\n");
+          brook_connection_reply(con, 413, (brook_str_t) brook_str("Body is too large"), (brook_str_t) brook_str("Your body pass the limit of server body max size"));
           return BROOK_ERROR;
         }
 
@@ -175,13 +172,14 @@ int
 brook_add_connection ( brook_connection_t* con ) {
 
   // ... add to array of files descriptors to poll() of kernel ...
-  for (int i = 0; i < MAX_CLIENTS; i++) {
+  for (int i = 0; i < MAX_FD; i++) {
     if ( _fds[i].fd == -1 ) {
       struct pollfd* _fd = &_fds[i];
       _fd->fd = con->_fd;
       _fd->events = POLLIN;          // ... only add event of READING
       con->_pfd = &_fds[i];
       _connections[i] = con;        // ... this will make index 0 of array always empty
+      CURRENT_FD = i > CURRENT_FD ? i : CURRENT_FD;       // TODO: this need be analyze because number will never down
       return BROOK_OK;
     }
   }
@@ -222,6 +220,10 @@ brook_destroy_connection ( brook_connection_t* con ) {
   _fd->fd = -1;
   _fd->events = 0;
   _fd->revents = 0;
+
+  while (CURRENT_FD > 0 && _fds[CURRENT_FD].fd == -1) {
+    CURRENT_FD--;
+  }
 
   // ... free memory buffers ...
   brook_buffer_chain_t* buffer = con->_data;

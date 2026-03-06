@@ -26,7 +26,10 @@
 #include "gatekeeper.h"
 
 // ... server settings ...
-extern int MAX_CLIENTS;       // ... i don't now if will be possible has 1024 connections, depende of systems settings
+extern int MAX_FD;       // ... i don't now if will be possible has 1024 connections, depende of systems settings
+extern int CURRENT_FD;
+
+
 struct pollfd* _fds;
 brook_connection_t** _connections;
 

@@ -1,6 +1,7 @@
 #include "core/process.h"
 
-int MAX_CLIENTS = 1024;   // ... max connections at same time ...
+int MAX_FD = 1024;   // ... max connections at same time ...
+int CURRENT_FD = 0;
 
 /**
  * Process logic, will run event loop logic,
@@ -13,11 +14,11 @@ brook_process_start ( brook_conf_t* config ) {
   printf("[%d] Process will start event loop\n", getpid());
 
   // ... set values of global variables of process ...
-  _fds = malloc(sizeof(struct pollfd) * MAX_CLIENTS);
-  _connections = malloc(sizeof(brook_connection_t*) * MAX_CLIENTS);
+  _fds = malloc(sizeof(struct pollfd) * MAX_FD);
+  _connections = malloc(sizeof(brook_connection_t*) * MAX_FD);
 
   // ... clean struct ...
-  for ( int i = 0; i < MAX_CLIENTS; i++ ) {
+  for ( int i = 0; i < MAX_FD; i++ ) {
     _fds[i].fd = -1;
     _fds[i].events = 0;
     _fds[i].revents = 0;
@@ -29,19 +30,18 @@ brook_process_start ( brook_conf_t* config ) {
   _fds[0].events = POLLIN;
   _fds[0].revents = POLLIN;
 
-  int fds_num = 1;
+  int static_fds = 1;         // ... for now is only tcp socket of server
   // ... event loop start here ...
   while (1) {
 
-    printf("fds_num: %d\n", fds_num);
     // ... wait for events in sockets/file descriptors ...
-    int nready = poll(_fds, fds_num, -1);
+    int nready = poll(_fds, CURRENT_FD + static_fds, -1);
     if ( nready == -1 ) {
       perror("poll");
       return BROOK_ERROR;
     }
 
-    int t = fds_num;
+    int t = CURRENT_FD + static_fds;
     // ... check all descriptors ...
     for ( int i = 0; i < t; i++ ) {
       struct pollfd* _fd = &_fds[i];
@@ -50,7 +50,6 @@ brook_process_start ( brook_conf_t* config ) {
       if ( _fd->fd == config->socket && _fd->revents & POLLIN ) {
         // ... need accept TCP connection ...
         brook_handle_connection(config);
-        ++fds_num;
 
       } else if ( _fd->revents & POLLIN ) {
         // ... events de leitura dos sockets ...
@@ -59,15 +58,12 @@ brook_process_start ( brook_conf_t* config ) {
 
       } else if ( _fd->revents & POLLOUT ) {
         brook_connection_t* con = _connections[i];
-        if ( brook_connection_write(con) == BROOK_OK ) {
-          --fds_num;
-        }
+        brook_connection_write(con);
 
       } else if ( _fd->revents & (POLLHUP | POLLERR) ) {
         brook_connection_t* con = _connections[i];
         if ( con != NULL ) {
           brook_destroy_connection(con);
-          --fds_num;
         }
 
       }
