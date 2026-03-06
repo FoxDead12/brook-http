@@ -122,7 +122,6 @@ brook_connection_read ( brook_connection_t* con ) {
     }
 
   } else {
-
     // ... check if i need read more data (body), because all header is parsed ...
     brook_http_parse_t* parser = con->_parser;
 
@@ -170,15 +169,16 @@ brook_connection_read ( brook_connection_t* con ) {
 
 int
 brook_add_connection ( brook_connection_t* con ) {
-
   // ... add to array of files descriptors to poll() of kernel ...
   for (int i = 0; i < MAX_FD; i++) {
     if ( _fds[i].fd == -1 ) {
       struct pollfd* _fd = &_fds[i];
       _fd->fd = con->_fd;
       _fd->events = POLLIN;          // ... only add event of READING
+
       con->_pfd = &_fds[i];
       _connections[i] = con;        // ... this will make index 0 of array always empty
+
       CURRENT_FD = i > CURRENT_FD ? i : CURRENT_FD;       // TODO: this need be analyze because number will never down
       return BROOK_OK;
     }
@@ -196,7 +196,6 @@ brook_connection_reply ( brook_connection_t* con, uint16_t code, brook_str_t mes
 
 int
 brook_connection_write ( brook_connection_t* con ) {
-
   char* p = con->reponse.data.data + con->reponse.nwrite;
   uint64_t b = con->reponse.data.len - con->reponse.nwrite;
   con->reponse.nwrite += send(con->_fd, p, b, 0);

@@ -14,7 +14,7 @@ main(int argc, char **argv) {
   config->root = NULL;
 
   // ... init socket of server and add to config ...
-  config->socket = brook_socket(3001);
+  config->socket = brook_socket(6001);
   if ( config->socket == -1 ) {
     free(config);
     return BROOK_ERROR;

@@ -77,6 +77,11 @@ typedef struct {
   brook_str_t data;            // ... pointer to buffer of all response message
 } brook_http_response_t;
 
+typedef struct {
+  uint64_t id;
+
+} brook_job_t;
+
 
 // ... struct to define the connection struct, will handle all necessary data to manager a connection ...
 typedef struct {
