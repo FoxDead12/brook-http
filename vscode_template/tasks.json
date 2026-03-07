@@ -17,6 +17,7 @@
         "-I/opt/homebrew/include",
         "-L/opt/homebrew/lib",
         "-lcjson",
+        "-lbeanstalkclient",
         "-o",
         "${workspaceFolder}/build/brook"                        // executável final
       ],

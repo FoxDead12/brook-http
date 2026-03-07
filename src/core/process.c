@@ -1,4 +1,5 @@
 #include "core/process.h"
+#include "core/beanstalkd.h"
 
 int MAX_FD = 1024;   // ... max connections at same time ...
 int CURRENT_FD = 0;
@@ -16,6 +17,8 @@ brook_process_start ( brook_conf_t* config ) {
   // ... set values of global variables of process ...
   _fds = malloc(sizeof(struct pollfd) * MAX_FD);
   _connections = malloc(sizeof(brook_connection_t*) * MAX_FD);
+
+  brook_beanstalkd_connect();
 
   // ... clean struct ...
   for ( int i = 0; i < MAX_FD; i++ ) {
