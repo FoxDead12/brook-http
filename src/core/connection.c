@@ -190,7 +190,7 @@ brook_add_connection ( brook_connection_t* con ) {
 int
 brook_connection_reply ( brook_connection_t* con, uint16_t code, brook_str_t message, brook_str_t detail ) {
   brook_http_response_static(con, code, message, detail);
-  con->_pfd->events = POLLOUT;
+  con->_pfd->events = POLLOUT;      // ... change events of poll socket
   return BROOK_OK;
 }
 

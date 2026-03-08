@@ -1,18 +1,67 @@
 #include "core/beanstalkd.h"
 
+// Flag para sabermos quando o trabalho terminou
+static int job_done = 0;
+
+void on_put_done(bsc *client, struct bsc_put_info *info) {
+    if (info->response.code == BSC_PUT_RES_INSERTED) {
+        printf(">>> Resposta lida do socket: JOB INSERTED ID: %llu\n", info->response.id);
+    } else {
+        printf(">>> Resposta lida do socket: Erro código %d\n", info->response.code);
+    }
+    job_done = 1; // Sinaliza para parar o loop
+}
+
+void on_use_done(bsc *client, struct bsc_use_info *info) {
+    printf(">>> Resposta lida do socket: USING tube %s\n", info->response.tube);
+}
+
+void my_error_handler(bsc *client, bsc_error_t error) {
+    fprintf(stderr, "Erro de conexão ou protocolo: %d\n", error);
+    job_done = 1;
+}
+
 int
 brook_beanstalkd_connect () {
+  char errstr[BSC_ERRSTR_LEN];
 
-  char errorstr[1024];
-  bsc *client = bsc_new("localhost", "11301", "", brook_beanstalkd_on_error, 4096, 16, 4, errorstr);
-
-  if ( client == NULL ) {
-    fprintf(stderr, "Client Beanstalkd can't connect: %s\n", errorstr);
-    return 1;
+  // 1. Criar o cliente
+  bsc *client = bsc_new("127.0.0.1", "11301", "default", my_error_handler, 1024, 1024, 256, errstr);
+  if (!client) {
+      printf("Erro ao iniciar: %s\n", errstr);
+      return 1;
   }
 
-  bsc_error_t bsc_error = bsc_put(client, NULL, NULL, 1, 0, 10, strlen("baba"), "baba", false);
+  // 2. Conectar (Isso faz o connect() do socket)
+  if (!bsc_connect(client, errstr)) {
+      printf("Falha na conexão: %s\n", errstr);
+      return 1;
+  }
 
+  // 3. Agendar comandos (Eles entram na fila outq mas NÃO saem ainda)
+  printf("Agendando comandos...\n");
+  bsc_use(client, on_use_done, NULL, "meu_tubo_especifico");
+
+  char *msg = "Ola Beanstalkd!";
+  bsc_put(client, on_put_done, NULL, 1024, 0, 60, strlen(msg), msg, false);
+
+  // 4. O LOOP CERTO: Processar o socket enquanto o job não terminar
+  // Em vez de 'for i < 10', usamos um loop que realmente atende o socket
+  printf("Iniciando processamento de leitura/escrita no socket...\n");
+
+  while (!job_done) {
+    // Tenta escrever dados pendentes no socket
+    bsc_write(client);
+
+    // Tenta ler respostas do socket
+    bsc_read(client);
+
+    // Pequena pausa para não fritar a CPU, já que é non-blocking
+    usleep(10000);
+  }
+
+  printf("Finalizado.\n");
+  bsc_free(client);
   return BROOK_OK;
 }
 
