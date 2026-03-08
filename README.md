@@ -14,7 +14,7 @@
 
 ###
 
-<p align="left">Beanstalkd</p>
+<p align="left">beanstalkd</p>
 
 ###
 

@@ -19,7 +19,7 @@ brook_http_response_static ( brook_connection_t* con, uint16_t code, brook_str_t
   const char* extra_headers = "Content-Type: application/json\r\nServer: brook-http\r\n";
   const char *template = "HTTP/1.1 %d %s\r\n%sContent-Length: %d\r\n\r\n%s";
 
-  con->reponse.data.len = asprintf(&con->reponse.data.data, template,
+  con->_reponse.data.len = asprintf(&con->_reponse.data.data, template,
     code, brook_http_status_code_str(code), extra_headers, length, b);
 
   cJSON_Delete(body);

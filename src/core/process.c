@@ -18,7 +18,10 @@ brook_process_start ( brook_conf_t* config ) {
   _fds = malloc(sizeof(struct pollfd) * MAX_FD);
   _connections = malloc(sizeof(brook_connection_t*) * MAX_FD);
 
-  brook_beanstalkd_connect();
+  if ( brook_beanstalkd_connect() == BROOK_ERROR ) {
+    perror("brook_beanstalkd_connect");
+    return BROOK_ERROR;
+  }
 
   // ... clean struct ...
   for ( int i = 0; i < MAX_FD; i++ ) {
@@ -33,7 +36,11 @@ brook_process_start ( brook_conf_t* config ) {
   _fds[0].events = POLLIN;
   _fds[0].revents = POLLIN;
 
-  int static_fds = 1;         // ... for now is only tcp socket of server
+  _fds[1].fd = bean_client->fd;
+  _fds[1].events = POLLIN;
+  _fds[1].revents = POLLIN;
+
+  int static_fds = 2;         // ... for now is only tcp socket of server and beanstalkd client
   // ... event loop start here ...
   while (1) {
 
@@ -54,21 +61,35 @@ brook_process_start ( brook_conf_t* config ) {
         // ... need accept TCP connection ...
         brook_handle_connection(config);
 
-      } else if ( _fd->revents & POLLIN ) {
-        // ... events de leitura dos sockets ...
-        brook_connection_t* con = _connections[i];
-        brook_connection_read(con);
+      } else if ( _fd->fd == bean_client->fd ) {
 
-      } else if ( _fd->revents & POLLOUT ) {
-        brook_connection_t* con = _connections[i];
-        brook_connection_write(con);
-
-      } else if ( _fd->revents & (POLLHUP | POLLERR) ) {
-        brook_connection_t* con = _connections[i];
-        if ( con != NULL ) {
-          brook_destroy_connection(con);
+        // ... beanstalkd data to read ...
+        if ( _fd->revents & POLLIN ) {
+          bsc_read(bean_client);
         }
 
+        // ... beanstalkd data to write
+        if ( _fd->revents & POLLOUT ) {
+          brook_benstalkd_write();
+        }
+
+      } else {
+        if ( _fd->revents & POLLIN ) {
+          // ... events de leitura dos sockets ...
+          brook_connection_t* con = _connections[i];
+          brook_connection_read(con);
+
+        } else if ( _fd->revents & POLLOUT ) {
+          brook_connection_t* con = _connections[i];
+          brook_connection_write(con);
+
+        } else if ( _fd->revents & (POLLHUP | POLLERR) ) {
+          brook_connection_t* con = _connections[i];
+          if ( con != NULL ) {
+            brook_destroy_connection(con);
+          }
+
+        }
       }
     }
   }

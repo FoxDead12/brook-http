@@ -78,7 +78,16 @@ typedef struct {
 } brook_http_response_t;
 
 typedef struct {
+  unsigned char state;
+
   uint64_t id;
+
+  uint32_t priority;
+  uint32_t ttr;
+  uint32_t delay;
+
+  brook_str_t tube;
+  brook_str_t data;
 
 } brook_job_t;
 
@@ -93,12 +102,12 @@ typedef struct {
   int   _port;
   char  _ip[INET_ADDRSTRLEN];
 
-  brook_buffer_chain_t* _data;
-  brook_http_parse_t* _parser;
+  brook_buffer_chain_t*    _data;
+  brook_http_parse_t*      _parser;
+  brook_http_response_t    _reponse;
+  brook_gatekeeper_node_t* _role;
 
-  brook_gatekeeper_node_t* role;
-
-  brook_http_response_t reponse;
+  brook_job_t job;
 
 } brook_connection_t;
 

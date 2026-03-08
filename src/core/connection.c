@@ -1,4 +1,5 @@
 #include "core/connection.h"
+#include "core/beanstalkd.h"
 #include "http/http_request.h"
 #include "http/http_response.h"
 
@@ -33,9 +34,9 @@ brook_handle_connection ( brook_conf_t* config) {
   con->_parser->state = 0;
   con->_parser->header_state = 0;
 
-  con->reponse.data.data = NULL;
-  con->reponse.data.len = 0;
-  con->reponse.nwrite = 0;
+  con->_reponse.data.data = NULL;
+  con->_reponse.data.len = 0;
+  con->_reponse.nwrite = 0;
 
   // ... add conection to list ...
   brook_add_connection(con);
@@ -132,7 +133,7 @@ brook_connection_read ( brook_connection_t* con ) {
       brook_connection_reply(con, 404, (brook_str_t) brook_str("Route not found"), (brook_str_t) brook_str("Invalid route check url and method"));
       return BROOK_ERROR;
     } else {
-      con->role = route;
+      con->_role = route;
     }
 
     if ( parser->method == POST || parser->method == PUT || parser->method == PATCH ) {
@@ -161,6 +162,8 @@ brook_connection_read ( brook_connection_t* con ) {
 
   if ( con->_parser->state == s_req_done ) {
     // ... if its all ok s_req_done (request is done) we will create job payload ...
+    brook_connection_create_job(con);
+
     return BROOK_OK; // parser is finish
   } else {
     return BROOK_DONE; // parser is finish
@@ -188,6 +191,24 @@ brook_add_connection ( brook_connection_t* con ) {
 }
 
 int
+brook_connection_create_job (brook_connection_t* con) {
+  con->job.state = 0;
+  con->job.id = 0;
+
+  con->job.priority = 1;
+  con->job.delay = 0;
+  con->job.ttr = 1000;
+
+  con->job.data.data = "OLA";
+  con->job.data.len = 3;
+
+  con->job.tube = con->_role->tube;
+
+  // ... make logic of beanstalkd to add job to queue of client ...
+  brook_benstalkd_create_job(con);
+}
+
+int
 brook_connection_reply ( brook_connection_t* con, uint16_t code, brook_str_t message, brook_str_t detail ) {
   brook_http_response_static(con, code, message, detail);
   con->_pfd->events = POLLOUT;      // ... change events of poll socket
@@ -196,11 +217,11 @@ brook_connection_reply ( brook_connection_t* con, uint16_t code, brook_str_t mes
 
 int
 brook_connection_write ( brook_connection_t* con ) {
-  char* p = con->reponse.data.data + con->reponse.nwrite;
-  uint64_t b = con->reponse.data.len - con->reponse.nwrite;
-  con->reponse.nwrite += send(con->_fd, p, b, 0);
+  char* p = con->_reponse.data.data + con->_reponse.nwrite;
+  uint64_t b = con->_reponse.data.len - con->_reponse.nwrite;
+  con->_reponse.nwrite += send(con->_fd, p, b, 0);
 
-  if ( con->reponse.nwrite >= con->reponse.data.len ) {
+  if ( con->_reponse.nwrite >= con->_reponse.data.len ) {
     brook_destroy_connection(con);
     return BROOK_OK;
   }
@@ -236,8 +257,8 @@ brook_destroy_connection ( brook_connection_t* con ) {
     free(tmp);
   }
 
-  if ( con->reponse.data.data ) {
-    free(con->reponse.data.data);
+  if ( con->_reponse.data.data ) {
+    free(con->_reponse.data.data);
   }
 
   // ... free http parser ...
