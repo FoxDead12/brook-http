@@ -101,6 +101,9 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
         }
         parser->index = 1;
         parser->method = 0;
+        parser->nheader = 0;
+        parser->nread = 0;
+
         switch (tokens[ch]) {
           case 'g': parser->method = GET; break;
           case 'p': parser->method = POST; /* in this time of validiti can be POST or PUT */ break;
@@ -262,6 +265,7 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
         } else if ( parser->index == 1 && ch == '\n' ) {
           parser->index = 0;
           parser->state = s_req_headers_done;
+          parser->nheader += i;
           printf("terminei de fazer parse dos headers do http\n");
           break;
         }

@@ -79,7 +79,7 @@ brook_connection_read ( brook_connection_t* con ) {
 
   size_t _n = brook_socket_recv(con->_fd, buf, buffer->free);
   if ( _n == 0 || _n == -1) {
-    brook_connection_reply(con, 500, (brook_str_t) brook_str("Can't read data from socket"), (brook_str_t) brook_str("Can't read data from socket"));
+    brook_connection_reply(con, 500, (brook_str_t) brook_str("Network Read Error"), (brook_str_t) brook_str("Interrupted system call or connection reset during recv operation. Check network stability."));
     return BROOK_ERROR;
   }
 
@@ -88,7 +88,7 @@ brook_connection_read ( brook_connection_t* con ) {
 
   // ... make http parse, consoant reading ...
   if ( brook_http_parse(con->_parser, buf, _n) == BROOK_ERROR ) {
-    brook_connection_reply(con, 400, (brook_str_t) brook_str("Invalid HTTP message"), (brook_str_t) brook_str("Probably send invalid format or invalid bit"));
+    brook_connection_reply(con, 400, (brook_str_t) brook_str("Malformed HTTP Request"), (brook_str_t) brook_str("The request syntax is invalid or contains non-compliant characters. Please verify the protocol headers and body structure."));
     return BROOK_ERROR;
   }
 
@@ -118,7 +118,7 @@ brook_connection_read ( brook_connection_t* con ) {
 
     // ... repeate process, to get new pointers in parser (parser need has memory in one sequencial array) ...
     if ( brook_http_parse(con->_parser, buf, buffer->len) == BROOK_ERROR ) {
-      brook_connection_reply(con, 400, (brook_str_t) brook_str("Invalid HTTP message"), (brook_str_t) brook_str("Probably send invalid format or invalid bit"));
+      brook_connection_reply(con, 400, (brook_str_t) brook_str("Malformed HTTP Request"), (brook_str_t) brook_str("The request syntax is invalid or contains non-compliant characters. Please verify the protocol headers and body structure."));
       return BROOK_ERROR;
     }
 
@@ -130,7 +130,7 @@ brook_connection_read ( brook_connection_t* con ) {
     // ... validate gatekeeper ...
     brook_gatekeeper_node_t* route = brook_gatekeeper_match_route(con->_config->root, parser->url, parser->method);
     if ( route == NULL ) {
-      brook_connection_reply(con, 404, (brook_str_t) brook_str("Route not found"), (brook_str_t) brook_str("Invalid route check url and method"));
+      brook_connection_reply(con, 404, (brook_str_t) brook_str("Resource Not Found"), (brook_str_t) brook_str("The requested endpoint does not exist. Please verify the URL path and the HTTP method used."));
       return BROOK_ERROR;
     } else {
       con->_role = route;
@@ -141,7 +141,7 @@ brook_connection_read ( brook_connection_t* con ) {
         // need get data so check if is ok
 
         if ( parser->content_length > MAX_BODY_SIZE ) {
-          brook_connection_reply(con, 413, (brook_str_t) brook_str("Body is too large"), (brook_str_t) brook_str("Your body pass the limit of server body max size"));
+          brook_connection_reply(con, 413, (brook_str_t) brook_str("Payload Too Large"), (brook_str_t) brook_str("The request body exceeds the maximum size limit allowed by this server."));
           return BROOK_ERROR;
         }
 
@@ -162,7 +162,7 @@ brook_connection_read ( brook_connection_t* con ) {
 
   if ( con->_parser->state == s_req_done ) {
     // ... if its all ok s_req_done (request is done) we will create job payload ...
-    brook_connection_create_job(con);
+    brook_benstalkd_create_job(con);
 
     return BROOK_OK; // parser is finish
   } else {
@@ -188,24 +188,6 @@ brook_add_connection ( brook_connection_t* con ) {
   }
 
   return BROOK_ERROR;
-}
-
-int
-brook_connection_create_job (brook_connection_t* con) {
-  con->job.state = 0;
-  con->job.id = 0;
-
-  con->job.priority = 1;
-  con->job.delay = 0;
-  con->job.ttr = 1000;
-
-  con->job.data.data = "OLA";
-  con->job.data.len = 3;
-
-  con->job.tube = con->_role->tube;
-
-  // ... make logic of beanstalkd to add job to queue of client ...
-  brook_benstalkd_create_job(con);
 }
 
 int

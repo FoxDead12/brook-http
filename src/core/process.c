@@ -15,8 +15,9 @@ brook_process_start ( brook_conf_t* config ) {
   printf("[%d] Process will start event loop\n", getpid());
 
   // ... set values of global variables of process ...
-  _fds = malloc(sizeof(struct pollfd) * MAX_FD);
-  _connections = malloc(sizeof(brook_connection_t*) * MAX_FD);
+  int static_fds = 2;         // ... for now is only tcp socket of server and beanstalkd client
+  _fds = malloc(sizeof(struct pollfd) * (MAX_FD + static_fds));
+  _connections = malloc(sizeof(brook_connection_t*) * (MAX_FD + static_fds));
 
   if ( brook_beanstalkd_connect() == BROOK_ERROR ) {
     perror("brook_beanstalkd_connect");
@@ -40,7 +41,6 @@ brook_process_start ( brook_conf_t* config ) {
   _fds[1].events = POLLIN;
   _fds[1].revents = POLLIN;
 
-  int static_fds = 2;         // ... for now is only tcp socket of server and beanstalkd client
   // ... event loop start here ...
   while (1) {
 

@@ -11,5 +11,11 @@ void brook_benstalkd_connection_error(bsc *client, bsc_error_t error);
 void brook_benstalkd_on_use(bsc *client, struct bsc_use_info *info);
 void brook_benstalkd_on_put(bsc *client, struct bsc_put_info *info);
 
+enum job_state {
+  s_job_create,
+  s_job_used,
+  s_job_put,
+  s_job_receive
+};
 
 #endif

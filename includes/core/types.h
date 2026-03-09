@@ -64,6 +64,7 @@ typedef struct {
 
   unsigned short index;       // ... used to keep flow in multi bytes validate
 
+  uint64_t nheader;
   uint64_t nread;             // ... bytes already read/already check
   uint64_t content_length;
 
@@ -85,6 +86,9 @@ typedef struct {
   uint32_t priority;
   uint32_t ttr;
   uint32_t delay;
+
+  uint32_t retray;
+  uint32_t max_retray;
 
   brook_str_t tube;
   brook_str_t data;
