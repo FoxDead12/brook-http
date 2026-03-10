@@ -1,5 +1,6 @@
 #include "core/process.h"
 #include "core/beanstalkd.h"
+#include "core/redis.h"
 
 int MAX_FD = 1024;   // ... max connections at same time ...
 int CURRENT_FD = 0;
@@ -15,12 +16,17 @@ brook_process_start ( brook_conf_t* config ) {
   printf("[%d] Process will start event loop\n", getpid());
 
   // ... set values of global variables of process ...
-  int static_fds = 2;         // ... for now is only tcp socket of server and beanstalkd client
+  int static_fds = 3;         // ... for now is only tcp socket of server and beanstalkd client and redis client
   _fds = malloc(sizeof(struct pollfd) * (MAX_FD + static_fds));
   _connections = malloc(sizeof(brook_connection_t*) * (MAX_FD + static_fds));
 
   if ( brook_beanstalkd_connect() == BROOK_ERROR ) {
     perror("brook_beanstalkd_connect");
+    return BROOK_ERROR;
+  }
+
+  if ( brook_redis_connect(config) == BROOK_ERROR ) {
+    perror("brook_redis_connect");
     return BROOK_ERROR;
   }
 
@@ -37,9 +43,13 @@ brook_process_start ( brook_conf_t* config ) {
   _fds[0].events = POLLIN;
   _fds[0].revents = POLLIN;
 
-  _fds[1].fd = bean_client->fd;
-  _fds[1].events = POLLIN;
-  _fds[1].revents = POLLIN;
+  _fds[POOL_INDEX_BEANSTALKD].fd = bean_client->fd;
+  _fds[POOL_INDEX_BEANSTALKD].events = POLLIN;
+  _fds[POOL_INDEX_BEANSTALKD].revents = POLLIN;
+
+  _fds[POOL_INDEX_REDIS].fd = redis_client->c.fd;
+  _fds[POOL_INDEX_REDIS].events = POLLIN;
+  _fds[POOL_INDEX_REDIS].revents = POLLIN;
 
   // ... event loop start here ...
   while (1) {
@@ -62,17 +72,23 @@ brook_process_start ( brook_conf_t* config ) {
         brook_handle_connection(config);
 
       } else if ( _fd->fd == bean_client->fd ) {
-
         // ... beanstalkd data to read ...
         if ( _fd->revents & POLLIN ) {
           bsc_read(bean_client);
         }
-
         // ... beanstalkd data to write
         if ( _fd->revents & POLLOUT ) {
           brook_benstalkd_write();
         }
-
+      } else if ( _fd->fd == redis_client->c.fd ) {
+        // ... redis data to read ...
+        if ( _fd->revents & POLLIN ) {
+          redisAsyncHandleRead(redis_client);
+        }
+        // ... redis data to write
+        if ( _fd->revents & POLLOUT ) {
+          redisAsyncHandleWrite(redis_client);
+        }
       } else {
         if ( _fd->revents & POLLIN ) {
           // ... events de leitura dos sockets ...

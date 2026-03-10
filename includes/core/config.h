@@ -15,13 +15,14 @@
 #include <cjson/cJSON.h>
 #include <string.h>
 #include "beanstalkclient.h"
+#include "hiredis/async.h"
 
 #define BROOK_OK    0
 #define BROOK_ERROR -1
 #define BROOK_DONE  -2
 
 #define POOL_INDEX_BEANSTALKD 1
-
+#define POOL_INDEX_REDIS 2
 
 
 // ... internal includes ...
@@ -34,6 +35,7 @@
 extern int MAX_FD;       // ... i don't now if will be possible has 1024 connections, depende of systems settings
 extern int CURRENT_FD;
 extern bsc* bean_client;
+extern redisAsyncContext* redis_client;
 
 struct pollfd* _fds;
 brook_connection_t** _connections;

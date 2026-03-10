@@ -18,6 +18,7 @@
         "-L/opt/homebrew/lib",
         "-lcjson",
         "-lbeanstalkclient",
+        "-lhiredis",
         "-o",
         "${workspaceFolder}/build/brook"                        // executável final
       ],
