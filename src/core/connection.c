@@ -243,6 +243,11 @@ brook_destroy_connection ( brook_connection_t* con ) {
     free(con->_reponse.data.data);
   }
 
+  // ... free job ...
+  if ( con->job.data.data ) {
+    free(con->job.data.data);
+  }
+
   // ... free http parser ...
   free(con->_parser);
 

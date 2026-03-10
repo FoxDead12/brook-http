@@ -265,7 +265,7 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
         } else if ( parser->index == 1 && ch == '\n' ) {
           parser->index = 0;
           parser->state = s_req_headers_done;
-          parser->nheader += i;
+          parser->nheader += i + 1;             // ... sum one value because this will indicate the end of header and start of body, and we wuant point to start of body
           printf("terminei de fazer parse dos headers do http\n");
           break;
         }

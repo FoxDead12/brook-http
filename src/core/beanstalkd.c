@@ -34,8 +34,7 @@ brook_benstalkd_create_job ( brook_connection_t* con ) {
   con->job.max_retray = 3;
   con->job.retray = 0;
 
-  con->job.data.data = "OLA";
-  con->job.data.len = 3;
+  brook_benstalkd_job_payload(con);
 
   con->job.tube = con->_role->tube;
 
@@ -47,6 +46,43 @@ brook_benstalkd_create_job ( brook_connection_t* con ) {
 
   // ... beanstalkd add event of write ...
   _fds[POOL_INDEX_BEANSTALKD].events |= POLLOUT;
+
+  return BROOK_OK;
+}
+
+int
+brook_benstalkd_job_payload ( brook_connection_t* con ) {
+
+  // ... transform http body in json object ...
+  char* tmp = malloc(con->_parser->content_length);
+
+  brook_buffer_chain_t* buffer = con->_data;
+  int range_start = con->_parser->nheader;
+  int bytes = 0;
+
+  while ( buffer != NULL ) {
+    char* rec = tmp + bytes;
+    char* send = buffer->data + range_start;
+    uint64_t b = buffer->len - range_start;
+
+    memcpy(rec, send, b);
+
+    bytes += b;
+    range_start = 0;
+    buffer = buffer->next;
+  }
+
+  cJSON* json = cJSON_Parse(tmp);
+
+  if ( json == NULL ) {
+    brook_connection_reply(con, 400, (brook_str_t) brook_str("Invalid JSON"), (brook_str_t) brook_str("The provided payload is not a valid JSON."));
+    return BROOK_ERROR;
+  }
+
+  con->job.data.data = cJSON_PrintUnformatted(json);
+  con->job.data.len = strlen(con->job.data.data);
+
+  cJSON_Delete(json);
 
   return BROOK_OK;
 }
@@ -80,7 +116,9 @@ brook_benstalkd_on_put ( bsc *client, struct bsc_put_info *info ) {
     con->job.id = info->response.id;
   } else {
     if ( con->job.retray < con->job.max_retray ) {
+      bsc_use(bean_client, brook_benstalkd_on_use, con, con->job.tube.data);
       bsc_put(bean_client, brook_benstalkd_on_put, con, con->job.priority, con->job.delay, con->job.ttr, con->job.data.len, con->job.data.data, false);
+      _fds[POOL_INDEX_BEANSTALKD].events |= POLLOUT;
       ++con->job.retray;
     } else {
       // ... need call response ...
