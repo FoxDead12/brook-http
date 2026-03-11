@@ -72,17 +72,36 @@ brook_benstalkd_job_payload ( brook_connection_t* con ) {
     buffer = buffer->next;
   }
 
-  cJSON* json = cJSON_Parse(tmp);
-
-  if ( json == NULL ) {
+  /*
+    {
+      "job": {
+        "channel": process id
+        "payload": http body
+      }
+    }
+  */
+  cJSON* job = cJSON_CreateObject();
+  if ( job == NULL ) {
     brook_connection_reply(con, 400, (brook_str_t) brook_str("Invalid JSON"), (brook_str_t) brook_str("The provided payload is not a valid JSON."));
     return BROOK_ERROR;
   }
 
-  con->job.data.data = cJSON_PrintUnformatted(json);
+  cJSON_AddStringToObject(job, "channel", _process_brook_id);
+
+  cJSON* payload = cJSON_Parse(tmp);
+  if ( payload == NULL ) {
+    cJSON_Delete(job);
+    brook_connection_reply(con, 400, (brook_str_t) brook_str("Invalid JSON"), (brook_str_t) brook_str("The provided payload is not a valid JSON."));
+    return BROOK_ERROR;
+  }
+
+  cJSON_AddItemToObject(job, "payload", payload);
+
+  con->job.data.data = cJSON_PrintUnformatted(job);
   con->job.data.len = strlen(con->job.data.data);
 
-  cJSON_Delete(json);
+  cJSON_Delete(job);
+  free(tmp);
 
   return BROOK_OK;
 }

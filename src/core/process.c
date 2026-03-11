@@ -4,6 +4,7 @@
 
 int MAX_FD = 1024;   // ... max connections at same time ...
 int CURRENT_FD = 0;
+char _process_brook_id[32] = {0};
 
 /**
  * Process logic, will run event loop logic,
@@ -19,6 +20,10 @@ brook_process_start ( brook_conf_t* config ) {
   int static_fds = 3;         // ... for now is only tcp socket of server and beanstalkd client and redis client
   _fds = malloc(sizeof(struct pollfd) * (MAX_FD + static_fds));
   _connections = malloc(sizeof(brook_connection_t*) * (MAX_FD + static_fds));
+
+  // ... generate id of process ...
+  pid_t current_pid = getpid();
+  snprintf(_process_brook_id, sizeof(_process_brook_id), "brook-%d", (int)current_pid);
 
   if ( brook_beanstalkd_connect() == BROOK_ERROR ) {
     perror("brook_beanstalkd_connect");
@@ -44,11 +49,11 @@ brook_process_start ( brook_conf_t* config ) {
   _fds[0].revents = POLLIN;
 
   _fds[POOL_INDEX_BEANSTALKD].fd = bean_client->fd;
-  _fds[POOL_INDEX_BEANSTALKD].events = POLLIN;
+  _fds[POOL_INDEX_BEANSTALKD].events = POLLIN | POLLOUT;
   _fds[POOL_INDEX_BEANSTALKD].revents = POLLIN;
 
   _fds[POOL_INDEX_REDIS].fd = redis_client->c.fd;
-  _fds[POOL_INDEX_REDIS].events = POLLIN;
+  _fds[POOL_INDEX_REDIS].events = POLLIN | POLLOUT;
   _fds[POOL_INDEX_REDIS].revents = POLLIN;
 
   // ... event loop start here ...
@@ -87,7 +92,7 @@ brook_process_start ( brook_conf_t* config ) {
         }
         // ... redis data to write
         if ( _fd->revents & POLLOUT ) {
-          redisAsyncHandleWrite(redis_client);
+          brook_redis_write();
         }
       } else {
         if ( _fd->revents & POLLIN ) {
