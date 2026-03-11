@@ -48,7 +48,7 @@ int main() {
     bsc *client;
     fd_set readset, writeset;
 
-    client = bsc_new(host, port, "default", NULL, 4096, 4096, 1024, errstr);
+    client = bsc_new(host, port, "third-job", NULL, 4096, 4096, 1024, errstr);
     if (!client) {
         fprintf(stderr, "Erro ao conectar: %s\n", errstr);
         return 1;
@@ -60,31 +60,38 @@ int main() {
     // bsc_ignore(client, NULL, NULL, "third-job");
 
     // Iniciar a primeira reserva
-    printf("Worker iniciado. Ouvindo tube: default\n");
+    printf("Worker iniciado. Ouvindo tube: third-job\n");
     bsc_reserve(client, reserve_cb, NULL, BSC_RESERVE_NO_TIMEOUT);
 
-    // O loop infinito do consumidor
     while (keep_running) {
         FD_ZERO(&readset);
         FD_ZERO(&writeset);
+
+        // Verificação de segurança: o cliente ainda é válido?
+        if (client->fd < 0) break;
+
         FD_SET(client->fd, &readset);
 
-        // Se houver comandos para enviar (como o delete), ativa o bit de escrita
-        if (!AQ_EMPTY(client->outq)) {
+        // Verifique sempre se há dados para escrever ANTES do select
+        if (client->outq && !AQ_EMPTY(client->outq)) {
             FD_SET(client->fd, &writeset);
         }
 
-        if (select(client->fd + 1, &readset, &writeset, NULL, NULL) < 0) {
+        struct timeval tv = {1, 0}; // Timeout de 1s para evitar bloqueio eterno
+        int n = select(client->fd + 1, &readset, &writeset, NULL, &tv);
+
+        if (n < 0) {
             perror("select");
             break;
         }
 
-        if (FD_ISSET(client->fd, &readset)) {
-          bsc_read(client);
-        }
-
-        if (FD_ISSET(client->fd, &writeset)) {
-            bsc_write(client);
+        if (n > 0) {
+            if (FD_ISSET(client->fd, &readset)) {
+                bsc_read(client);
+            }
+            if (FD_ISSET(client->fd, &writeset)) {
+                bsc_write(client);
+            }
         }
     }
 
