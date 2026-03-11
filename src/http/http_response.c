@@ -8,22 +8,106 @@
 
 int
 brook_http_response_static ( brook_connection_t* con, uint16_t code, brook_str_t message, brook_str_t detail ) {
-  // ... build body json ...
-  cJSON *body = cJSON_CreateObject();
-  cJSON_AddStringToObject(body, "message", message.data);
-  cJSON_AddStringToObject(body, "detail", detail.data);
-  cJSON_AddNumberToObject(body, "code", code);
+  {
+    char http[100] = {0};
+    int b = snprintf(http, sizeof(http), "HTTP/1.1 %d %s", code, brook_http_status_code_str(code));
+    brook_str_t _h;
+    _h.data = http;
+    _h.len = b;
+    brook_http_response_add_header(con, _h);
+  }
 
-  int length = strlen(cJSON_Print(body));
-  char* b = cJSON_Print(body);
-  const char* extra_headers = "Content-Type: application/json\r\nServer: brook-http\r\n";
-  const char *template = "HTTP/1.1 %d %s\r\n%sContent-Length: %d\r\n\r\n%s";
+  brook_http_response_add_header(con, (brook_str_t) brook_str("Content-Type: application/json"));
+  brook_http_response_add_header(con, (brook_str_t) brook_str("Server: brook-http"));
 
-  con->_reponse.data.len = asprintf(&con->_reponse.data.data, template,
-    code, brook_http_status_code_str(code), extra_headers, length, b);
+  {
+    // ... build body json ...
+    cJSON *body = cJSON_CreateObject();
+    cJSON_AddStringToObject(body, "message", message.data);
+    cJSON_AddStringToObject(body, "detail", detail.data);
+    cJSON_AddNumberToObject(body, "code", code);
 
-  cJSON_Delete(body);
-  free(b);
+    brook_str_t _s_body;
+    _s_body.data = cJSON_Print(body);
+    _s_body.len = strlen(_s_body.data);
+
+    brook_http_response_add_body(con, _s_body);
+
+    cJSON_Delete(body);
+    free(_s_body.data);
+  }
+
+  return BROOK_OK;
+}
+
+
+int
+brook_http_response_add_header (brook_connection_t* con, brook_str_t data) {
+  brook_http_response_buffer_join(con, data);
+  brook_http_response_buffer_join(con, (brook_str_t) brook_str("\r\n"));
+  return BROOK_OK;
+}
+
+int
+brook_http_response_add_body (brook_connection_t* con, brook_str_t data) {
+  brook_http_response_buffer_join(con, (brook_str_t) brook_str("\r\n"));
+  brook_http_response_buffer_join(con, data);
+  return BROOK_OK;
+}
+
+int
+brook_http_response_buffer_join (brook_connection_t* con, brook_str_t data) {
+
+  size_t bwrite = 0;
+  size_t len = 0;
+  int work = 0;
+
+  while ( work == 0 ) {
+    // add to buffer response the data receive in buffer
+    brook_buffer_chain_t* buffer = con->_reponse._data;
+    brook_buffer_chain_t* last = NULL;
+
+    while ( buffer != NULL && buffer->free == 0 ) {
+      last = buffer;
+      buffer = buffer->next;
+    }
+
+    if ( buffer == NULL ) {
+      printf("Nao existe nenhum buffer de escrita\n");
+      buffer = malloc(sizeof(brook_buffer_chain_t));
+      buffer->data = malloc(4096);
+      buffer->next = NULL;
+      buffer->size = 4096;
+      buffer->len = 0;
+      buffer->nread = 0;
+      buffer->free = 4096;
+
+      if ( last == NULL ) {
+        con->_reponse._data = buffer;
+      } else {
+        last->next = buffer;
+      }
+    }
+
+    unsigned char* buf = buffer->data + buffer->len;
+    unsigned char* src = data.data + bwrite;
+    len = data.len - bwrite;
+
+    if ( len > buffer->free ) {
+      // will need repeate process
+      len = buffer->free;
+      work = 0;
+    } else {
+      work = 1;
+    }
+
+    memcpy(buf, src, len);
+    bwrite += len;
+    buffer->len += len;
+    buffer->free -= len;
+
+  }
+
   return BROOK_OK;
 }
 

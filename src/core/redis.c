@@ -51,14 +51,65 @@ brook_redis_on_connect (const redisAsyncContext *c, int status) {
 }
 
 void
-brook_redis_on_message ( redisAsyncContext* redis_con, void* message, void* data ) {
+brook_redis_on_message ( redisAsyncContext* redis_con, void* message, void* _ ) {
 
   redisReply *reply = message;
-  // brook_conf_t* config = data;
-
   if ( !reply ) return;
+  if ( !reply->element[2]->str ) return;
 
-  printf("channel: %s\n", reply->element[1]->str);
-  printf("message: %s\n", reply->element[2]->str);
+  // ... we assume this message is alway job response ...
+  /*
+    response payload:
+    {
+      job_id: 123
+      headers: {}
+      payload: {}
+    }
+  */
+
+  cJSON* data = cJSON_Parse(reply->element[2]->str);
+  if ( data == NULL ) {
+    // ... ignore message, if json is invalid
+    printf("receive a invalid message from redis.\n");
+    return;
+  }
+
+  // ... parse keys of main object ...
+  cJSON* _j_job_id  = NULL;
+  cJSON* _j_headers = NULL;
+  cJSON* _j_payload = NULL;
+  _j_job_id  = cJSON_GetObjectItemCaseSensitive(data, "job_id");
+  _j_headers = cJSON_GetObjectItemCaseSensitive(data, "headers");
+  _j_payload = cJSON_GetObjectItemCaseSensitive(data, "payload");
+
+  if ( !cJSON_IsNumber(_j_job_id) ) {
+    // ... usar id_val
+    printf("job id is not valid number\n");
+    return;
+  }
+
+  uint64_t job_id = _j_job_id->valueint;
+  brook_connection_t* con = NULL;
+
+  for ( int i = CURRENT_FD; i >= 0; i-- ) {
+    if ( _connections[i] && _connections[i]->job.id == job_id ) {
+      con = _connections[i];
+      break;
+    }
+  }
+
+  if ( con == NULL ) {
+    printf("don't have job with id: %d\n", job_id);
+    return;
+  }
+
+  // ... we have json ...
+  brook_str_t body;
+  body.data = cJSON_PrintUnformatted(_j_payload);
+  body.len = strlen(body.data);
+
+  brook_connection_reply(con, 200, (brook_str_t) brook_str("Obrigado pela submição"), (brook_str_t) brook_str("Obrigado pela submição"));
+
+  free(body.data);
 
 }

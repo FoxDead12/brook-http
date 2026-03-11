@@ -66,6 +66,7 @@ brook_connection_read ( brook_connection_t* con ) {
     buffer->next = NULL;
     buffer->size = 4096;
     buffer->len = 0;
+    buffer->nread = 0;
     buffer->free = 4096;
 
     if ( last == NULL ) {
@@ -199,16 +200,30 @@ brook_connection_reply ( brook_connection_t* con, uint16_t code, brook_str_t mes
 
 int
 brook_connection_write ( brook_connection_t* con ) {
-  char* p = con->_reponse.data.data + con->_reponse.nwrite;
-  uint64_t b = con->_reponse.data.len - con->_reponse.nwrite;
-  con->_reponse.nwrite += send(con->_fd, p, b, 0);
 
-  if ( con->_reponse.nwrite >= con->_reponse.data.len ) {
+  unsigned char* buf = con->_reponse._data->data + con->_reponse._data->nread;
+  size_t len = con->_reponse._data->len - con->_reponse._data->nread;
+
+  size_t b = send(con->_fd, buf, len, 0);
+  con->_reponse._data->nread += b;
+
+  // ... if we dont send all buffer will return to send the next of buffer
+  if ( con->_reponse._data->len != con->_reponse._data->nread ) {
+    return BROOK_DONE;
+  }
+
+  brook_buffer_chain_t* buffer = con->_reponse._data;
+  if ( buffer->next != NULL ) {
+    con->_reponse._data = buffer->next;
+    free(buffer->data);
+    free(buffer);
+    return BROOK_DONE;
+  } else {
+    free(buffer->data);
+    free(buffer);
     brook_destroy_connection(con);
     return BROOK_OK;
   }
-
-  return BROOK_DONE;
 }
 
 int
@@ -237,10 +252,6 @@ brook_destroy_connection ( brook_connection_t* con ) {
 
     free(tmp->data);
     free(tmp);
-  }
-
-  if ( con->_reponse.data.data ) {
-    free(con->_reponse.data.data);
   }
 
   // ... free job ...

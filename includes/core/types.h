@@ -36,6 +36,7 @@ typedef struct brook_buffer_chain_s {
   size_t size;      // ... memory alloced to buffer
   size_t len;       // ... current memory used in buffer
   size_t free;      // ... memory free to fill all buffer
+  size_t nread;     // ... only will use when is reading from buffer
   unsigned char* data;
   struct brook_buffer_chain_s* next;
 
@@ -76,6 +77,8 @@ typedef struct {
 typedef struct {
   uint64_t nwrite;             // ... bytes already write/sended check
   brook_str_t data;            // ... pointer to buffer of all response message
+  brook_buffer_chain_t* _data;
+
 } brook_http_response_t;
 
 typedef struct {
