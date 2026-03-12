@@ -39,10 +39,10 @@ brook_benstalkd_create_job ( brook_connection_t* con ) {
   con->job.tube = con->_role->tube;
 
   // ... set tube to send job ...
-  bsc_use(bean_client, brook_benstalkd_on_use, con, con->job.tube.data);
+  bsc_use(bean_client, brook_benstalkd_on_use, con, (const char*) con->job.tube.data);
 
   // ... put job to beanstalkd
-  bsc_put(bean_client, brook_benstalkd_on_put, con, con->job.priority, con->job.delay, con->job.ttr, con->job.data.len, con->job.data.data, false);
+  bsc_put(bean_client, brook_benstalkd_on_put, con, con->job.priority, con->job.delay, con->job.ttr, con->job.data.len, (const char*) con->job.data.data, false);
 
   // ... beanstalkd add event of write ...
   _fds[POOL_INDEX_BEANSTALKD].events |= POLLOUT;
@@ -52,25 +52,6 @@ brook_benstalkd_create_job ( brook_connection_t* con ) {
 
 int
 brook_benstalkd_job_payload ( brook_connection_t* con ) {
-
-  // ... transform http body in json object ...
-  char* tmp = malloc(con->_parser->content_length);
-
-  brook_buffer_chain_t* buffer = con->_data;
-  int range_start = con->_parser->nheader;
-  int bytes = 0;
-
-  while ( buffer != NULL ) {
-    char* rec = tmp + bytes;
-    char* send = buffer->data + range_start;
-    uint64_t b = buffer->len - range_start;
-
-    memcpy(rec, send, b);
-
-    bytes += b;
-    range_start = 0;
-    buffer = buffer->next;
-  }
 
   /*
     {
@@ -88,21 +69,41 @@ brook_benstalkd_job_payload ( brook_connection_t* con ) {
 
   cJSON_AddStringToObject(job, "channel", _process_brook_id);
 
-  cJSON* payload = cJSON_Parse(tmp);
-  if ( payload == NULL ) {
-    cJSON_Delete(job);
-    brook_connection_reply(con, 400, (brook_str_t) brook_str("Invalid JSON"), (brook_str_t) brook_str("The provided payload is not a valid JSON."));
-    return BROOK_ERROR;
+
+  // ... add payload of request to job ...
+  if ( con->_parser->content_length > 0 && (con->_parser->method == POST || con->_parser->method == PATCH) ) {
+    // ... transform http body in json object ...
+    char* tmp = malloc(con->_parser->content_length);
+
+    brook_buffer_chain_t* buffer = con->_data;
+    int range_start = con->_parser->nheader;
+    int bytes = 0;
+
+    while ( buffer != NULL ) {
+      char* rec = tmp + bytes;
+      unsigned char* send = buffer->data + range_start;
+      uint64_t b = buffer->len - range_start;
+      memcpy(rec, send, b);
+      bytes += b;
+      range_start = 0;
+      buffer = buffer->next;
+    }
+
+    cJSON* payload = cJSON_Parse(tmp);
+    free(tmp);
+    if ( payload == NULL ) {
+      cJSON_Delete(job);
+      brook_connection_reply(con, 400, (brook_str_t) brook_str("Invalid JSON"), (brook_str_t) brook_str("The provided payload is not a valid JSON."));
+      return BROOK_ERROR;
+    }
+
+    cJSON_AddItemToObject(job, "payload", payload);
   }
 
-  cJSON_AddItemToObject(job, "payload", payload);
-
-  con->job.data.data = cJSON_PrintUnformatted(job);
+  con->job.data.data = (unsigned char*) cJSON_PrintUnformatted(job);
   con->job.data.len = strlen(con->job.data.data);
 
   cJSON_Delete(job);
-  free(tmp);
-
   return BROOK_OK;
 }
 

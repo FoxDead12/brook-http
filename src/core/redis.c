@@ -99,17 +99,24 @@ brook_redis_on_message ( redisAsyncContext* redis_con, void* message, void* _ ) 
   }
 
   if ( con == NULL ) {
-    printf("don't have job with id: %d\n", job_id);
+    printf("don't have job with id: %d\n", (const char*) job_id);
     return;
   }
+
+  brook_http_response_add_status(con, 200);
+  brook_http_response_add_header(con, (brook_str_t) brook_str("Content-Type: application/json"));
+  brook_http_response_add_header(con, (brook_str_t) brook_str("Server: brook-http"));
 
   // ... we have json ...
   brook_str_t body;
   body.data = cJSON_PrintUnformatted(_j_payload);
-  body.len = strlen(body.data);
+  body.len = strlen((const char*) body.data);
 
-  brook_connection_reply(con, 200, (brook_str_t) brook_str("Obrigado pela submição"), (brook_str_t) brook_str("Obrigado pela submição"));
+  brook_http_response_add_content_length(con, body.len);
+  brook_http_response_add_body(con, body);
 
   free(body.data);
 
+  con->_pfd->events = POLLOUT;      // ... change events of poll socket
+  return;
 }

@@ -4,6 +4,7 @@
 #include "core/config.h"
 #include "hiredis/async.h"
 #include <hiredis/sds.h>
+#include "http/http_response.h"
 
 
 int brook_redis_connect(brook_conf_t* config);

@@ -66,7 +66,7 @@ brook_process_start ( brook_conf_t* config ) {
       return BROOK_ERROR;
     }
 
-    int t = CURRENT_FD + static_fds;
+    int t = CURRENT_FD + static_fds; // ... this dont make sense only for first iteration when server start clean
     // ... check all descriptors ...
     for ( int i = 0; i < t; i++ ) {
       struct pollfd* _fd = &_fds[i];

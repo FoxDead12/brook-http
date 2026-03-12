@@ -5,6 +5,11 @@
 
 int
 brook_handle_connection ( brook_conf_t* config) {
+
+  if ( CURRENT_FD >= MAX_FD ) {
+    return BROOK_ERROR;
+  }
+
   // ... accept file descriptor connection ...
   struct sockaddr_in _addr;
   socklen_t addr_len = sizeof(_addr);
