@@ -10,10 +10,9 @@ int
 brook_http_response_static ( brook_connection_t* con, uint16_t code, brook_str_t message, brook_str_t detail ) {
   {
     char http[100] = {0};
-    int b = snprintf(http, sizeof(http), "HTTP/1.1 %d %s", code, brook_http_status_code_str(code));
     brook_str_t _h;
     _h.data = http;
-    _h.len = b;
+    _h.len = snprintf(http, sizeof(http), "HTTP/1.1 %d %s", code, brook_http_status_code_str(code));
     brook_http_response_add_header(con, _h);
   }
 
@@ -31,6 +30,13 @@ brook_http_response_static ( brook_connection_t* con, uint16_t code, brook_str_t
     _s_body.data = cJSON_Print(body);
     _s_body.len = strlen(_s_body.data);
 
+    {
+      char len[100] = {0};
+      brook_str_t _l;
+      _l.data = len;
+      _l.len = snprintf(len, sizeof(len), "Content-Length: %d", strlen(_s_body.data));
+      brook_http_response_add_header(con, _l);
+    }
     brook_http_response_add_body(con, _s_body);
 
     cJSON_Delete(body);
