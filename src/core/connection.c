@@ -168,8 +168,8 @@ brook_connection_read ( brook_connection_t* con ) {
 
   if ( con->_parser->state == s_req_done ) {
     // ... if its all ok s_req_done (request is done) we will create job payload ...
+    con->_pfd->events &= ~POLLIN;
     brook_benstalkd_create_job(con);
-
     return BROOK_OK; // parser is finish
   } else {
     return BROOK_DONE; // parser is finish

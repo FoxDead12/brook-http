@@ -69,7 +69,6 @@ brook_benstalkd_job_payload ( brook_connection_t* con ) {
 
   cJSON_AddStringToObject(job, "channel", _process_brook_id);
 
-
   // ... add payload of request to job ...
   if ( con->_parser->content_length > 0 && (con->_parser->method == POST || con->_parser->method == PATCH) ) {
     // ... transform http body in json object ...
