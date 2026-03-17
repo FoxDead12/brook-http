@@ -7,7 +7,7 @@ brook_redis_connect ( brook_conf_t* config ) {
   redis_client = redisAsyncConnect("127.0.0.1", 6380);
 
   if ( redis_client == NULL || redis_client->err ) {
-    printf("Can't connect connect to redis: %s\n", redis_client->err);
+    printf("Can't connect connect to redis: %d\n", redis_client->err);
     return BROOK_ERROR;
   }
 
@@ -99,7 +99,7 @@ brook_redis_on_message ( redisAsyncContext* redis_con, void* message, void* _ ) 
   }
 
   if ( con == NULL ) {
-    printf("don't have job with id: %d\n", (const char*) job_id);
+    printf("don't have job with id: %s\n", (const char*) job_id);
     return;
   }
 

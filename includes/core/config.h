@@ -1,9 +1,10 @@
 #ifndef _BROOK_CONFIG_H
 #define  _BROOK_CONFIG_H
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/socket.h>
+#include <sys/types.h>
+#include <signal.h>
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -38,7 +39,7 @@ extern bsc* bean_client;
 extern redisAsyncContext* redis_client;
 extern char _process_brook_id[32];
 
-struct pollfd* _fds;
-brook_connection_t** _connections;
+extern struct pollfd* _fds;
+extern brook_connection_t** _connections;
 
 #endif

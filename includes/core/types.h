@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define brook_str(str)    { sizeof(str) - 1, (u_char *) str }
+#define brook_str(str) { sizeof(str) - 1, (unsigned char*) str }
 
 typedef enum {
   DELETE,

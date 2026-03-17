@@ -5,6 +5,8 @@
 int MAX_FD = 1024;   // ... max connections at same time ...
 int CURRENT_FD = 0;
 char _process_brook_id[32] = {0};
+struct pollfd* _fds = NULL;
+brook_connection_t** _connections = NULL;
 
 /**
  * Process logic, will run event loop logic,
