@@ -39,9 +39,11 @@ brook_handle_connection ( brook_conf_t* config) {
   con->_parser->state = 0;
   con->_parser->header_state = 0;
 
-  con->_reponse.data.data = NULL;
-  con->_reponse.data.len = 0;
+  con->_reponse._data = NULL;
   con->_reponse.nwrite = 0;
+
+  con->job.data.data = NULL;
+  con->job.tube.data = NULL;
 
   // ... add conection to list ...
   brook_add_connection(con);
@@ -260,7 +262,7 @@ brook_destroy_connection ( brook_connection_t* con ) {
   }
 
   // ... free job ...
-  if ( con->job.data.data ) {
+  if ( con->job.data.data != NULL ) {
     free(con->job.data.data);
   }
 

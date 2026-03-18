@@ -82,7 +82,7 @@ brook_http_response_buffer_join (brook_connection_t* con, brook_str_t data) {
   size_t len = 0;
   int work = 0;
 
-  while ( work == 0 ) {
+  while ( bwrite < data.len ) {
     // add to buffer response the data receive in buffer
     brook_buffer_chain_t* buffer = con->_reponse._data;
     brook_buffer_chain_t* last = NULL;
@@ -107,6 +107,8 @@ brook_http_response_buffer_join (brook_connection_t* con, brook_str_t data) {
       } else {
         last->next = buffer;
       }
+    } else {
+      printf("ja existia buffer\n");
     }
 
     unsigned char* buf = buffer->data + buffer->len;
@@ -116,10 +118,9 @@ brook_http_response_buffer_join (brook_connection_t* con, brook_str_t data) {
     if ( len > buffer->free ) {
       // will need repeate process
       len = buffer->free;
-      work = 0;
-    } else {
-      work = 1;
     }
+
+    printf("a escrever: %.*s\n", data.len, data.data);
 
     memcpy(buf, src, len);
     bwrite += len;
