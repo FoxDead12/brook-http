@@ -75,11 +75,17 @@ brook_redis_on_message ( redisAsyncContext* redis_con, void* message, void* _ ) 
   }
 
   // ... parse keys of main object ...
+  brook_connection_t* con = NULL;
   cJSON* _j_job_id  = NULL;
   cJSON* _j_headers = NULL;
   cJSON* _j_payload = NULL;
+  cJSON* _j_status = NULL;
+  uint64_t job_id = 0;
+  uint16_t status = 0;
+
   _j_job_id  = cJSON_GetObjectItemCaseSensitive(data, "job_id");
   _j_headers = cJSON_GetObjectItemCaseSensitive(data, "headers");
+  _j_status = cJSON_GetObjectItemCaseSensitive(data, "status");
   _j_payload = cJSON_GetObjectItemCaseSensitive(data, "payload");
 
   if ( !cJSON_IsNumber(_j_job_id) ) {
@@ -88,8 +94,8 @@ brook_redis_on_message ( redisAsyncContext* redis_con, void* message, void* _ ) 
     return;
   }
 
-  uint64_t job_id = _j_job_id->valueint;
-  brook_connection_t* con = NULL;
+  job_id = _j_job_id->valueint;
+  status = _j_status->valueint;
 
   for ( int i = CURRENT_FD; i >= 0; i-- ) {
     if ( _connections[i] && _connections[i]->job.id == job_id ) {
@@ -103,7 +109,7 @@ brook_redis_on_message ( redisAsyncContext* redis_con, void* message, void* _ ) 
     return;
   }
 
-  brook_http_response_add_status(con, 200);
+  brook_http_response_add_status(con, status);
   brook_http_response_add_header(con, (brook_str_t) brook_str("Content-Type: application/json"));
   brook_http_response_add_header(con, (brook_str_t) brook_str("Server: brook-http"));
 

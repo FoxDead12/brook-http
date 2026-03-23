@@ -31,6 +31,7 @@
 #include "socket.h"
 #include "connection.h"
 #include "gatekeeper.h"
+#include "logger.h"
 
 // ... server settings ...
 extern int MAX_FD;       // ... i don't now if will be possible has 1024 connections, depende of systems settings
