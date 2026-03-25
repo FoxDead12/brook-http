@@ -9,6 +9,8 @@ main(int argc, char **argv) {
    *   Here will be execute the HTTP server called "brook"
   */
 
+  brook_log(LOG_INFO, "Brook server start...\n");
+
   // ... create config of server ...
   brook_conf_t *config = malloc(sizeof(brook_conf_t));
   config->root = NULL;

@@ -75,6 +75,7 @@ typedef struct {
 } brook_http_parse_t;
 
 typedef struct {
+  uint16_t status;
   uint64_t nwrite;             // ... bytes already write/sended check
   brook_buffer_chain_t* _data;
 

@@ -9,13 +9,13 @@ brook_beanstalkd_connect () {
   // ... create client of beanstalkd ...
   bean_client = bsc_new("127.0.0.1", "11301", "default", brook_benstalkd_connection_error, 1024, 1024, 256, errstr);
   if ( !bean_client ) {
-    printf("Can't create beanstalkd client: %s\n", errstr);
+    //printf("Can't create beanstalkd client: %s\n", errstr);
     return BROOK_ERROR;
   }
 
   // ... connect client ...
   if ( !bsc_connect(bean_client, errstr) ) {
-    printf("Can't connect connect to beantslakd: %s\n", errstr);
+    //printf("Can't connect connect to beantslakd: %s\n", errstr);
     return BROOK_ERROR;
   }
 
@@ -109,7 +109,8 @@ brook_benstalkd_job_payload ( brook_connection_t* con ) {
 int
 brook_benstalkd_write () {
   bsc_write(bean_client);
-  if (AQ_NODES_FREE(bean_client->outq) == bean_client->outq->size && bean_client->outq_offset == 0) {
+  if (AQ_NODES_FREE(bean_client->outq) == bean_client->outq->size) {
+    bean_client->outq_offset = 0;
     _fds[POOL_INDEX_BEANSTALKD].events &= ~POLLOUT;
   }
   return BROOK_OK;
@@ -117,7 +118,7 @@ brook_benstalkd_write () {
 
 void
 brook_benstalkd_connection_error ( bsc *client, bsc_error_t error ) {
-  printf("beanstalkd connection error or protocol: %d\n", error);
+  //printf("beanstalkd connection error or protocol: %d\n", error);
   exit(BROOK_ERROR);
 }
 

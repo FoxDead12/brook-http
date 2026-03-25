@@ -16,7 +16,7 @@ brook_connection_t** _connections = NULL;
 int
 brook_process_start ( brook_conf_t* config ) {
 
-  printf("[%d] Process will start event loop\n", getpid());
+  //printf("[%d] Process will start event loop\n", getpid());
 
   // ... set values of global variables of process ...
   int static_fds = 3;         // ... for now is only tcp socket of server and beanstalkd client and redis client
@@ -48,27 +48,29 @@ brook_process_start ( brook_conf_t* config ) {
   // ... will has two types of sockets in fd (socket server, beanstalkd client socket)
   _fds[0].fd = config->socket;
   _fds[0].events = POLLIN;
-  _fds[0].revents = POLLIN;
+  _fds[0].revents = 0;
 
   _fds[POOL_INDEX_BEANSTALKD].fd = bean_client->fd;
   _fds[POOL_INDEX_BEANSTALKD].events = POLLIN | POLLOUT;
-  _fds[POOL_INDEX_BEANSTALKD].revents = POLLIN;
+  _fds[POOL_INDEX_BEANSTALKD].revents = 0;
 
   _fds[POOL_INDEX_REDIS].fd = redis_client->c.fd;
   _fds[POOL_INDEX_REDIS].events = POLLIN | POLLOUT;
-  _fds[POOL_INDEX_REDIS].revents = POLLIN;
+  _fds[POOL_INDEX_REDIS].revents = 0;
 
+
+  CURRENT_FD += static_fds;
   // ... event loop start here ...
   while (1) {
 
     // ... wait for events in sockets/file descriptors ...
-    int nready = poll(_fds, CURRENT_FD + static_fds, -1);
+    int nready = poll(_fds, CURRENT_FD, -1);
     if ( nready == -1 ) {
       perror("poll");
       return BROOK_ERROR;
     }
 
-    int t = CURRENT_FD + static_fds; // ... this dont make sense only for first iteration when server start clean
+    int t = CURRENT_FD; // ... this dont make sense only for first iteration when server start clean
     // ... check all descriptors ...
     for ( int i = 0; i < t; i++ ) {
       struct pollfd* _fd = &_fds[i];
@@ -85,6 +87,7 @@ brook_process_start ( brook_conf_t* config ) {
         }
         // ... beanstalkd data to write
         if ( _fd->revents & POLLOUT ) {
+          brook_log(LOG_ERR, "Estou a escrever no BEANSTALKD\n");
           brook_benstalkd_write();
         }
       } else if ( _fd->fd == redis_client->c.fd ) {
@@ -94,6 +97,7 @@ brook_process_start ( brook_conf_t* config ) {
         }
         // ... redis data to write
         if ( _fd->revents & POLLOUT ) {
+          brook_log(LOG_ERR, "Estou a escrever no redis\n");
           brook_redis_write();
         }
       } else {
@@ -112,6 +116,8 @@ brook_process_start ( brook_conf_t* config ) {
             brook_destroy_connection(con);
           }
 
+        } else {
+          // brook_log(LOG_ERR, "I receivei event i don't know\n");
         }
       }
     }

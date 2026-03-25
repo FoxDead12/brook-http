@@ -186,7 +186,7 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
               parser->url.len = 0;
               parser->index = 2;
             } else {
-              printf("invalid url start '/'\n");
+              ////printf("invalid url start '/'\n");
               return BROOK_ERROR;
             }
           } else if ( ch == '?' ) {
@@ -197,7 +197,7 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
             parser->params.len = 0;
             continue;
           } else if ( !IS_URL_CHAR(ch) ) {
-            printf("invalid tokens url\n");
+            ////printf("invalid tokens url\n");
             return BROOK_ERROR;
           }
           ++parser->url.len;
@@ -215,7 +215,7 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
           parser->state = s_req_minor;
         } else {
           if ( !IS_URL_CHAR(ch) ) {
-            printf("invalid tokens url\n");
+            ////printf("invalid tokens url\n");
             return BROOK_ERROR;
           }
           ++parser->params.len;
@@ -242,7 +242,7 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
         } else if ( parser->index == 9 && ch == '\n' ) {
           parser->state = s_req_header_field_start;
         } else {
-          printf("invalid HTTP version\n");
+          ////printf("invalid HTTP version\n");
           return BROOK_ERROR;
         }
 
@@ -266,7 +266,7 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
           parser->index = 0;
           parser->state = s_req_headers_done;
           parser->nheader += i + 1;             // ... sum one value because this will indicate the end of header and start of body, and we wuant point to start of body
-          printf("terminei de fazer parse dos headers do http\n");
+          ////printf("terminei de fazer parse dos headers do http\n");
           break;
         }
 
@@ -276,7 +276,7 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
 
         char c = tokens[ch];
         if ( c == 0 ) {
-          printf("invalid byte in header token '%c' '/'\n", ch);
+          ////printf("invalid byte in header token '%c' '/'\n", ch);
           return BROOK_ERROR;
         }
 
@@ -298,14 +298,14 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
         // ... is the end of header ':' ...
         if ( ch == ':' ) {
           parser->state = s_req_header_value_start;
-          printf("encontrei um header token\n");
+          ////printf("encontrei um header token\n");
           break;
         }
 
         // ... parse all header token ...
         char c = tokens[ch];
         if ( c == 0 ) {
-          printf("invalid byte in header token '%c' '/'\n", ch);
+          ////printf("invalid byte in header token '%c' '/'\n", ch);
           return BROOK_ERROR;
         }
 
@@ -363,7 +363,7 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
             parser->index = 0;
             break;
           } else {
-            printf("Barra N '||n' e invalido no meio do valor \n");
+            ////printf("Barra N '||n' e invalido no meio do valor \n");
             return BROOK_ERROR;
           }
         }
@@ -371,7 +371,7 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
         // ... parsing value of Content-Length ...
         if ( parser->header_state == s_content_length ) {
           if ( !IS_NUM(ch) ) {
-            printf("o valor do content length nao e numero\n");
+            ////printf("o valor do content length nao e numero\n");
             return BROOK_ERROR;
           }
           uint64_t t = parser->content_length;

@@ -37,7 +37,7 @@ brook_http_response_static ( brook_connection_t* con, uint16_t code, brook_str_t
 
 int
 brook_http_response_add_status (brook_connection_t* con, uint16_t status) {
-  char http[100] = {0};
+  unsigned char http[100] = {0};
   brook_str_t _h;
 
   _h.data = http;
@@ -45,6 +45,8 @@ brook_http_response_add_status (brook_connection_t* con, uint16_t status) {
 
   brook_http_response_buffer_join(con, _h);
   brook_http_response_buffer_join(con, (brook_str_t) brook_str("\r\n"));
+
+  con->_reponse.status = status;
   return BROOK_OK;
 }
 
@@ -93,7 +95,7 @@ brook_http_response_buffer_join (brook_connection_t* con, brook_str_t data) {
     }
 
     if ( buffer == NULL ) {
-      printf("Nao existe nenhum buffer de escrita\n");
+      //printf("Nao existe nenhum buffer de escrita\n");
       buffer = malloc(sizeof(brook_buffer_chain_t));
       buffer->data = malloc(4096);
       buffer->next = NULL;
@@ -108,7 +110,7 @@ brook_http_response_buffer_join (brook_connection_t* con, brook_str_t data) {
         last->next = buffer;
       }
     } else {
-      printf("ja existia buffer\n");
+      //printf("ja existia buffer\n");
     }
 
     unsigned char* buf = buffer->data + buffer->len;
@@ -120,7 +122,7 @@ brook_http_response_buffer_join (brook_connection_t* con, brook_str_t data) {
       len = buffer->free;
     }
 
-    printf("a escrever: %.*s\n", data.len, data.data);
+    //printf("a escrever: %.*s\n", data.len, data.data);
 
     memcpy(buf, src, len);
     bwrite += len;

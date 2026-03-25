@@ -7,7 +7,7 @@ brook_redis_connect ( brook_conf_t* config ) {
   redis_client = redisAsyncConnect("127.0.0.1", 6380);
 
   if ( redis_client == NULL || redis_client->err ) {
-    printf("Can't connect connect to redis: %d\n", redis_client->err);
+    //printf("Can't connect connect to redis: %d\n", redis_client->err);
     return BROOK_ERROR;
   }
 
@@ -33,7 +33,7 @@ brook_redis_on_disconnect (const redisAsyncContext *c, int status) {
     fprintf(stderr, "Erro: Redis desconectado inesperadamente: %s\n", c->errstr);
   } else {
     // A desconexão foi solicitada via redisAsyncDisconnect
-    printf("Redis desconectado manualmente.\n");
+    //printf("Redis desconectado manualmente.\n");
   }
   exit(BROOK_ERROR);
 }
@@ -70,7 +70,7 @@ brook_redis_on_message ( redisAsyncContext* redis_con, void* message, void* _ ) 
   cJSON* data = cJSON_Parse(reply->element[2]->str);
   if ( data == NULL ) {
     // ... ignore message, if json is invalid
-    printf("receive a invalid message from redis.\n");
+    //printf("receive a invalid message from redis.\n");
     return;
   }
 
@@ -90,7 +90,7 @@ brook_redis_on_message ( redisAsyncContext* redis_con, void* message, void* _ ) 
 
   if ( !cJSON_IsNumber(_j_job_id) ) {
     // ... usar id_val
-    printf("job id is not valid number\n");
+    //printf("job id is not valid number\n");
     return;
   }
 
@@ -105,7 +105,7 @@ brook_redis_on_message ( redisAsyncContext* redis_con, void* message, void* _ ) 
   }
 
   if ( con == NULL ) {
-    printf("don't have job with id: %s\n", (const char*) job_id);
+    //printf("don't have job with id: %s\n", (const char*) job_id);
     return;
   }
 

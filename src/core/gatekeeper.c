@@ -39,13 +39,13 @@ brook_gatekeeper_load ( brook_conf_t* config ) {
   // ... parse JSON ...
   cJSON* json = cJSON_Parse(buffer);
   if ( !json ) {
-    printf("Erro no parse JSON\n");
+    //printf("Erro no parse JSON\n");
     free(buffer);
     return 1;
   }
 
   if (!cJSON_IsArray(json)) {
-    printf("O JSON não é um array!\n");
+    //printf("O JSON não é um array!\n");
     cJSON_Delete(json);
     free(buffer);
     return 1;

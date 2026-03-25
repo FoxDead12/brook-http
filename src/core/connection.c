@@ -20,7 +20,7 @@ brook_handle_connection ( brook_conf_t* config) {
     return BROOK_DONE;
   }
 
-  printf("Nova conexao estabelecida\n");
+  // printf("Nova conexao estabelecida\n");
 
   // ... create connection struct and
   brook_connection_t* con = malloc(sizeof(brook_connection_t));
@@ -41,6 +41,7 @@ brook_handle_connection ( brook_conf_t* config) {
 
   con->_reponse._data = NULL;
   con->_reponse.nwrite = 0;
+  con->_reponse.status = 0;
 
   con->job.data.data = NULL;
   con->job.tube.data = NULL;
@@ -48,13 +49,15 @@ brook_handle_connection ( brook_conf_t* config) {
   // ... add conection to list ...
   brook_add_connection(con);
 
+  brook_log(LOG_INFO, "[%s][%d][CONNECT] stablish IP: %s Port: %d \n", con->_ip, con->_port, con->_ip, con->_port);
+
   return BROOK_OK;
 }
 
 int
 brook_connection_read ( brook_connection_t* con ) {
 
-  printf("Tenho dados para ler\n");
+  //printf("Tenho dados para ler\n");
 
   // ... get buffer from chain or create if needed ...
   // ... check free buffer to write ...
@@ -67,7 +70,7 @@ brook_connection_read ( brook_connection_t* con ) {
   }
 
   if ( buffer == NULL ) {
-    printf("Nao existe nenhum buffer\n");
+    //printf("Nao existe nenhum buffer\n");
     buffer = malloc(sizeof(brook_buffer_chain_t));
     buffer->data = malloc(4096);
     buffer->next = NULL;
@@ -172,6 +175,9 @@ brook_connection_read ( brook_connection_t* con ) {
     // ... if its all ok s_req_done (request is done) we will create job payload ...
     con->_pfd->events &= ~POLLIN;
     brook_benstalkd_create_job(con);
+
+    brook_log(LOG_INFO, "[%s][%d][REQUEST] method: %d url: %.*s \n", con->_ip, con->_port, con->_parser->method, con->_parser->url.len, con->_parser->url.data);
+
     return BROOK_OK; // parser is finish
   } else {
     return BROOK_DONE; // parser is finish
@@ -226,6 +232,9 @@ brook_connection_write ( brook_connection_t* con ) {
     free(buffer);
     return BROOK_DONE;
   } else {
+
+    brook_log(LOG_INFO, "[%s][%d][RESPONSE] status: %d \n", con->_ip, con->_port, con->_reponse.status);
+
     free(buffer->data);
     free(buffer);
     brook_destroy_connection(con);
