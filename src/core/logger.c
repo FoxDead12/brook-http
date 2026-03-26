@@ -29,6 +29,11 @@ brook_log_init ( brook_conf_t* config ) {
   char file_path[1024];
   snprintf(file_path, sizeof(file_path), "%s/brook-http-%s.log", config->log, date_str);
 
+  if (LOGGER_FILE != NULL && LOGGER_FILE != stdout && LOGGER_FILE != stderr) {
+    fclose(LOGGER_FILE);
+    LOGGER_FILE = NULL;
+  }
+
   // ... open file ...
   LOGGER_FILE = fopen(file_path, "a");
 
