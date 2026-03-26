@@ -34,8 +34,9 @@ static char * type[LOG_LEVEL_LEN] = {
 
 extern time_t logger_current_time;
 extern struct tm * logger_time;
-// extern log_ring logger_ring;
+extern FILE* logger_file;
 
+void brook_log_init();
 void brook_log (LOG_LEVEL level, const char * fmt, ...);
 
 #endif

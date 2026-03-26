@@ -8,6 +8,7 @@ main(int argc, char **argv) {
    *  Hello,
    *   Here will be execute the HTTP server called "brook"
   */
+  brook_log_init();
 
   brook_log(LOG_INFO, "Brook server start...\n");
 
