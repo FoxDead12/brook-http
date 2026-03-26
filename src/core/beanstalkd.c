@@ -72,7 +72,10 @@ brook_benstalkd_job_payload ( brook_connection_t* con ) {
   // ... add payload of request to job ...
   if ( con->_parser->content_length > 0 && (con->_parser->method == POST || con->_parser->method == PATCH) ) {
     // ... transform http body in json object ...
-    char* tmp = malloc(con->_parser->content_length);
+    char* tmp = malloc(con->_parser->content_length + 1);
+    if (tmp == NULL) return BROOK_ERROR;
+
+    tmp[con->_parser->content_length] = '\0';
 
     brook_buffer_chain_t* buffer = con->_data;
     int range_start = con->_parser->nheader;
@@ -97,6 +100,11 @@ brook_benstalkd_job_payload ( brook_connection_t* con ) {
     }
 
     cJSON_AddItemToObject(job, "payload", payload);
+  }
+
+  if (con->job.data.data != NULL) {
+    free(con->job.data.data);
+    con->job.data.data = NULL;
   }
 
   con->job.data.data = (unsigned char*) cJSON_PrintUnformatted(job);

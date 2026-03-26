@@ -245,6 +245,14 @@ brook_connection_write ( brook_connection_t* con ) {
 int
 brook_destroy_connection ( brook_connection_t* con ) {
 
+  // ... remove pointer from main array in memory ...
+  for (int i = 0; i <= CURRENT_FD; i++) {
+    if (_connections[i] == con) {
+      _connections[i] = NULL;
+      break;
+    }
+  }
+
   // ... close socket ...
   close(con->_fd);
 

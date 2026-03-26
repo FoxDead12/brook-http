@@ -89,8 +89,7 @@ brook_redis_on_message ( redisAsyncContext* redis_con, void* message, void* _ ) 
   _j_payload = cJSON_GetObjectItemCaseSensitive(data, "payload");
 
   if ( !cJSON_IsNumber(_j_job_id) ) {
-    // ... usar id_val
-    //printf("job id is not valid number\n");
+    cJSON_Delete(data);
     return;
   }
 
@@ -98,14 +97,16 @@ brook_redis_on_message ( redisAsyncContext* redis_con, void* message, void* _ ) 
   status = _j_status->valueint;
 
   for ( int i = CURRENT_FD; i >= 0; i-- ) {
-    if ( _connections[i] && _connections[i]->job.id == job_id ) {
-      con = _connections[i];
-      break;
+    if ( _connections[i] != NULL ) {
+      if ( _connections[i]->job.id == job_id ) {
+        con = _connections[i];
+        break;
+      }
     }
   }
 
   if ( con == NULL ) {
-    //printf("don't have job with id: %s\n", (const char*) job_id);
+    cJSON_Delete(data);
     return;
   }
 
@@ -122,6 +123,7 @@ brook_redis_on_message ( redisAsyncContext* redis_con, void* message, void* _ ) 
   brook_http_response_add_body(con, body);
 
   free(body.data);
+  cJSON_Delete(data);
 
   con->_pfd->events = POLLOUT;      // ... change events of poll socket
   return;
