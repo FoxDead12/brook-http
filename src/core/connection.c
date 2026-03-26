@@ -49,8 +49,6 @@ brook_handle_connection ( brook_conf_t* config) {
   // ... add conection to list ...
   brook_add_connection(con);
 
-  brook_log(LOG_INFO, "[%s][%d][CONNECT] stablish IP: %s Port: %d \n", con->_ip, con->_port, con->_ip, con->_port);
-
   return BROOK_OK;
 }
 
@@ -176,9 +174,6 @@ brook_connection_read ( brook_connection_t* con ) {
     // ... if its all ok s_req_done (request is done) we will create job payload ...
     con->_pfd->events &= ~POLLIN;
     brook_benstalkd_create_job(con);
-
-    brook_log(LOG_INFO, "[%s][%d][REQUEST] method: %d url: %.*s \n", con->_ip, con->_port, con->_parser->method, con->_parser->url.len, con->_parser->url.data);
-
     return BROOK_OK; // parser is finish
   } else {
     return BROOK_DONE; // parser is finish
@@ -233,9 +228,7 @@ brook_connection_write ( brook_connection_t* con ) {
     free(buffer);
     return BROOK_DONE;
   } else {
-
-    brook_log(LOG_INFO, "[%s][%d][RESPONSE] status: %d \n", con->_ip, con->_port, con->_reponse.status);
-
+    brook_log(con->_config, LOG_INFO, " %s \"%s %.*s\" %d\n", con->_ip, brook_method_str[con->_parser->method], con->_parser->url.len, con->_parser->url.data, con->_reponse.status);
     free(buffer->data);
     free(buffer);
     brook_destroy_connection(con);

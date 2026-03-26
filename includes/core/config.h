@@ -18,6 +18,9 @@
 #include "beanstalkclient.h"
 #include "hiredis/async.h"
 #include <time.h>
+#include <sys/stat.h>
+#include <errno.h>
+
 
 #define BROOK_OK    0
 #define BROOK_ERROR -1

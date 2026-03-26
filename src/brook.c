@@ -18,14 +18,14 @@ main(int argc, char **argv) {
   }
 
   // ... create config of server ...
-  brook_conf_t *config = malloc(sizeof(brook_conf_t));
+  brook_conf_t* config = malloc(sizeof(brook_conf_t));
   config->root = NULL;
 
   // ... load config file ...
   brook_load_configuration(config, argv[1]);
 
   // ... init logger ...
-  brook_log_init();
+  brook_log_init(config);
 
   // ... init socket of server and add to config ...
   config->socket = brook_socket(config->port);
@@ -33,8 +33,6 @@ main(int argc, char **argv) {
     free(config);
     return BROOK_ERROR;
   }
-
-  brook_log(LOG_INFO, "Brook server start...\n");
 
   // ... load gatekeeper file ...
   brook_gatekeeper_load(config);

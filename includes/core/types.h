@@ -14,6 +14,14 @@ typedef enum {
   PATCH
 } brook_method_e;
 
+static const char *brook_method_str[] = {
+  [DELETE] = "DELETE",
+  [GET]    = "GET",
+  [POST]   = "POST",
+  [PUT]    = "PUT",
+  [PATCH]  = "PATCH"
+};
+
 // ... struct to define a "string" will be used to buffers read ...
 typedef struct {
   size_t len;

@@ -27,6 +27,8 @@ brook_process_start ( brook_conf_t* config ) {
   pid_t current_pid = getpid();
   snprintf(brook_process_id, sizeof(brook_process_id), "brook-%d", (int)current_pid);
 
+  brook_log(config, LOG_INFO, " Process is starting ...\n");
+
   if ( brook_beanstalkd_connect(config) == BROOK_ERROR ) {
     perror("brook_beanstalkd_connect");
     return BROOK_ERROR;

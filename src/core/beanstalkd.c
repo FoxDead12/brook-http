@@ -12,15 +12,17 @@ brook_beanstalkd_connect ( brook_conf_t* config ) {
   // ... create client of beanstalkd ...
   bean_client = bsc_new(config->beanstalkd.host, port, "default", brook_benstalkd_connection_error, 1024, 1024, 256, errstr);
   if ( !bean_client ) {
-    printf("Can't create beanstalkd client: %s\n", errstr);
+    brook_log(config, LOG_ERR, " Can't create beanstalkd client: %s\n", errstr);
     return BROOK_ERROR;
   }
 
   // ... connect client ...
   if ( !bsc_connect(bean_client, errstr) ) {
-    printf("Can't connect connect to beantslakd: %s\n", errstr);
+    brook_log(config, LOG_ERR, " Can't connect connect to beantslakd: %s\n", errstr);
     return BROOK_ERROR;
   }
+
+  brook_log(config, LOG_INFO, " Process connected to beanstalkd ...\n");
 
   return BROOK_OK;
 }
@@ -129,7 +131,30 @@ brook_benstalkd_write () {
 
 void
 brook_benstalkd_connection_error ( bsc *client, bsc_error_t error ) {
-  //printf("beanstalkd connection error or protocol: %d\n", error);
+
+  const char *error_msg;
+  switch (error) {
+    case BSC_ERROR_NONE:
+      error_msg = "No error";
+      break;
+    case BSC_ERROR_INTERNAL:
+      error_msg = "Internal library error";
+      break;
+    case BSC_ERROR_SOCKET:
+      error_msg = "Socket communication failure (Network)";
+      break;
+    case BSC_ERROR_MEMORY:
+      error_msg = "Memory allocation failed";
+      break;
+    case BSC_ERROR_QUEUE_FULL:
+      error_msg = "Internal command queue is full";
+      break;
+    default:
+      error_msg = "Unknown Beanstalkd error";
+      break;
+  }
+
+  brook_log(NULL, LOG_ERR, " Beanstalkd connection lost unexpectedly. Reason: %s\n", error_msg);
   exit(BROOK_ERROR);
 }
 

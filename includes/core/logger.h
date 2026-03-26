@@ -14,16 +14,6 @@ typedef enum {
   LOG_LEVEL_LEN
 } LOG_LEVEL;
 
-// typedef struct {
-//   brook_str_t message;
-// } log_node_s;
-//
-// typedef struct {
-//   log_node_s queue[RING_BUFFER_SIZE];
-//   atomic_size_t write;
-//   size_t read;
-// } log_ring;
-
 static char * type[LOG_LEVEL_LEN] = {
   "DEBUG",
   "INFO",
@@ -31,12 +21,13 @@ static char * type[LOG_LEVEL_LEN] = {
   "ERRO"
 };
 
-
 extern time_t logger_current_time;
 extern struct tm * logger_time;
-extern FILE* logger_file;
 
-void brook_log_init();
-void brook_log (LOG_LEVEL level, const char * fmt, ...);
+extern FILE* LOGGER_FILE;
+extern int LOGGER_CURRENT_DAY;
+
+void brook_log_init(brook_conf_t *config);
+void brook_log(brook_conf_t* conf, LOG_LEVEL level, const char * fmt, ...);
 
 #endif

@@ -1,43 +1,69 @@
 #include "core/logger.h"
-#include <errno.h>
+
+FILE* LOGGER_FILE = NULL;
+int LOGGER_CURRENT_DAY = 0;
 
 time_t logger_current_time;
 struct tm* logger_time;
-FILE* logger_file = NULL;
 
 void
-brook_log_init () {
-  logger_file = fopen("/Users/dxavier/Library/Logs/BrookHttp/brook-http.log", "a");
-  // FILE* logger_dest = stdout;
+brook_log_init ( brook_conf_t* config ) {
+  // ... create path to logs files ...
+  if (mkdir(config->log, 0755) == -1) {
+    if (errno != EEXIST) {
+      fprintf(stderr, "Error creating (%s) log directory: %s\n", config->log, strerror(errno));
+      exit(1);
+    }
+  }
 
-  if (logger_file == NULL) {
-    // Se der erro, o 'errno' dir-te-á porquê (ex: Permission Denied)
-    printf("Erro ao abrir/criar: %s\n", strerror(errno));
+  // ... get current date ...
+  char date_str[20];
+  time_t t = time(NULL);
+  struct tm* tm_info = localtime(&t);
+  strftime(date_str, sizeof(date_str), "%Y-%m-%d", tm_info);
+
+  // ... save date ...
+  LOGGER_CURRENT_DAY = tm_info->tm_mday;
+
+  // ... create final path ...
+  char file_path[1024];
+  snprintf(file_path, sizeof(file_path), "%s/brook-http-%s.log", config->log, date_str);
+
+  // ... open file ...
+  LOGGER_FILE = fopen(file_path, "a");
+
+  if (LOGGER_FILE == NULL) {
+    fprintf(stderr, "Failed to initialize log file at '%s': %s\n", file_path, strerror(errno));
+    fprintf(stderr, "Warning: Logger falling back to standard output.\n");
+    exit(1);
   }
 }
 
 void
-brook_log (LOG_LEVEL level, const char * fmt, ...) {
+brook_log (brook_conf_t* conf, LOG_LEVEL level, const char * fmt, ...) {
+
+  time_t t = time(NULL);
+  struct tm *tm_info = localtime(&t);
+
+  if ( conf != NULL && tm_info->tm_mday != LOGGER_CURRENT_DAY ) {
+    brook_log_init(conf);
+  }
+
   va_list args;
   va_start(args, fmt);
 
   time(&logger_current_time);
   logger_time = localtime(&logger_current_time);
 
-  fprintf(logger_file, "[%02d/%02d/%04dT%02d:%02d:%02d][%s][%s] ",
-    logger_time->tm_mday,
-    logger_time->tm_mon + 1, // tm_mon começa em 0 (Janeiro)
-    logger_time->tm_year + 1900,
-    logger_time->tm_hour,
-    logger_time->tm_min,
-    logger_time->tm_sec,
-    brook_process_id,
-    type[level]
+  fprintf(LOGGER_FILE, "[%02d-%02d-%04dT%02d:%02d:%02d][%s][%s]",
+    tm_info->tm_mday, tm_info->tm_mon + 1, tm_info->tm_year + 1900,
+    tm_info->tm_hour, tm_info->tm_min, tm_info->tm_sec,
+    brook_process_id, type[level]
   );
 
-  vfprintf(logger_file, fmt, args);
+  vfprintf(LOGGER_FILE, fmt, args);
 
-  fflush(logger_file);
+  fflush(LOGGER_FILE);
 
   va_end(args);
 }
