@@ -3,23 +3,8 @@
 int
 brook_gatekeeper_load ( brook_conf_t* config ) {
 
-  const char* file_name = "gatekeeper.json";
-  const char* file_path = "config";
-
-  char current_path[2048] = {0};
-  char full_path[4096] = {0};
-
-  // ... get current path of work ...
-  if ( getcwd(current_path, sizeof(current_path)) == NULL ) {
-    perror("getcwd() error");
-    return 1;
-  }
-
-  // ... build path to gatekeeper.json ...
-  snprintf(full_path, sizeof(full_path), "%s/%s/%s", current_path, file_path, file_name);
-
   // ... read file ...
-  FILE* gatekeeper = fopen(full_path, "r");
+  FILE* gatekeeper = fopen(config->gatekeeper, "r");
   if ( !gatekeeper ) {
     perror("Erro ao abrir ficheiro");
     return 1;
