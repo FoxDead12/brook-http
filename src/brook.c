@@ -38,9 +38,17 @@ main(int argc, char **argv) {
   brook_gatekeeper_load(config);
 
   // ... start event loop ( for now is only one process ) ...
-  brook_process_start(config);
+  brook_multi_processes_start(config, config->workers);
+
+  while (1) {
+    int status;
+    pid_t dead_pid = wait(&status);
+    if (dead_pid > 0) {
+      brook_log(config, LOG_WARN, " Process [%d] died. Respawning a new process ...\n", dead_pid);
+      brook_multi_processes_start(config, 1);
+    }
+  }
 
   free(config);
-
   return BROOK_OK;
 }

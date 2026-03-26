@@ -155,6 +155,8 @@ brook_benstalkd_connection_error ( bsc *client, bsc_error_t error ) {
   }
 
   brook_log(NULL, LOG_ERR, " Beanstalkd connection lost unexpectedly. Reason: %s\n", error_msg);
+
+  kill(getppid(), SIGTERM);
   exit(BROOK_ERROR);
 }
 

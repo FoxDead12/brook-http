@@ -64,6 +64,7 @@ typedef struct {
   // ... configs load from config file ...
   char name[32];
   int  port;
+  int  workers;
   char gatekeeper[256];
   char log[1024];
   struct {

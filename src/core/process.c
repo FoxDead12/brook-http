@@ -9,6 +9,25 @@ char brook_process_id[32];
 brook_connection_t** _connections = NULL;
 struct pollfd* _fds = NULL;
 
+int
+brook_multi_processes_start (brook_conf_t* config, int num) {
+  pid_t pid;
+
+  for (int i = 0; i < num; i++ ) {
+    pid = fork();
+
+    if (pid < 0) {
+      perror("Erro ao criar processo filho");
+    }
+    if (pid == 0) {
+      brook_process_start(config);
+      exit(0);
+    }
+  }
+  return BROOK_OK;
+}
+
+
 /**
  * Process logic, will run event loop logic,
  * handle new connections and manager HTTP
@@ -16,6 +35,10 @@ struct pollfd* _fds = NULL;
  */
 int
 brook_process_start ( brook_conf_t* config ) {
+
+  #ifdef __linux__
+    prctl(PR_SET_PDEATHSIG, SIGTERM);
+  #endif
 
   // ... set values of global variables of process ...
   int static_fds = 3;         // ... for now is only tcp socket of server and beanstalkd client and redis client
@@ -64,6 +87,13 @@ brook_process_start ( brook_conf_t* config ) {
 
   // ... event loop start here ...
   while (1) {
+
+  #ifndef __linux__
+    if (getppid() == 1) {
+      brook_log(config, LOG_ERR, "Orphan child detected. Shutting down.\n");
+      break;
+    }
+    #endif
 
     // ... wait for events in sockets/file descriptors ...
     int nready = poll(_fds, CURRENT_FD, -1);

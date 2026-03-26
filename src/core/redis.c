@@ -35,6 +35,7 @@ brook_redis_on_disconnect (const redisAsyncContext *c, int status) {
     // A desconexão foi solicitada via redisAsyncDisconnect
     //printf("Redis desconectado manualmente.\n");
   }
+  kill(getppid(), SIGTERM);
   exit(BROOK_ERROR);
 }
 
@@ -43,6 +44,7 @@ brook_redis_on_connect (const redisAsyncContext *c, int status) {
   if ( status == -1 ) {
     perror("Can't connect connect to redis");
     brook_log(NULL, LOG_ERR, " Can't connect connect to redis: %s\n", c->errstr);
+    kill(getppid(), SIGTERM);
     exit(BROOK_ERROR);
   }
   // ... each process will has individual channel

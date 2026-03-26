@@ -22,6 +22,7 @@ brook_load_configuration ( brook_conf_t* config, const char* path ) {
     if (section == 0) { // GLOBAL
       if (strstr(line, "name:"))       clean_value(config->name, line, 32);
       if (strstr(line, "port:"))       { char p[10]; clean_value(p, line, 10); config->port = atoi(p); }
+      if (strstr(line, "workers:"))    { char p[10]; clean_value(p, line, 10); config->workers = atoi(p); }
       if (strstr(line, "gatekeeper:")) clean_value(config->gatekeeper, line, 256);
       if (strstr(line, "log:")) clean_value(config->log, line, 1024);
     }
