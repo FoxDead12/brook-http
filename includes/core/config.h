@@ -39,7 +39,7 @@ extern int MAX_FD;       // ... i don't now if will be possible has 1024 connect
 extern int CURRENT_FD;
 extern bsc* bean_client;
 extern redisAsyncContext* redis_client;
-extern char _process_brook_id[32];
+extern char brook_process_id[32];
 
 extern struct pollfd* _fds;
 extern brook_connection_t** _connections;

@@ -1,5 +1,6 @@
 #include "core/config.h"
 #include "core/process.h"
+#include "core/configure.h"
 
 int
 main(int argc, char **argv) {
@@ -8,20 +9,32 @@ main(int argc, char **argv) {
    *  Hello,
    *   Here will be execute the HTTP server called "brook"
   */
-  brook_log_init();
 
-  brook_log(LOG_INFO, "Brook server start...\n");
+  // ... check from user input ...
+  if (argc < 2) {
+    fprintf(stderr, "Error: Missing required argument [path]\n");
+    fprintf(stderr, "Usage: %s <file_path>\n", argv[0]);
+    return 1;
+  }
 
   // ... create config of server ...
   brook_conf_t *config = malloc(sizeof(brook_conf_t));
   config->root = NULL;
 
+  // ... load config file ...
+  brook_load_configuration(config, argv[1]);
+
+  // ... init logger ...
+  brook_log_init();
+
   // ... init socket of server and add to config ...
-  config->socket = brook_socket(6001);
+  config->socket = brook_socket(config->port);
   if ( config->socket == -1 ) {
     free(config);
     return BROOK_ERROR;
   }
+
+  brook_log(LOG_INFO, "Brook server start...\n");
 
   // ... load gatekeeper file ...
   brook_gatekeeper_load(config);

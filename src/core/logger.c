@@ -7,7 +7,7 @@ FILE* logger_file = NULL;
 
 void
 brook_log_init () {
-  logger_file = fopen("/Users/dx3/Library/Logs/BrookHttp/brook-http.log", "a");
+  logger_file = fopen("/Users/dxavier/Library/Logs/BrookHttp/brook-http.log", "a");
   // FILE* logger_dest = stdout;
 
   if (logger_file == NULL) {
@@ -31,7 +31,7 @@ brook_log (LOG_LEVEL level, const char * fmt, ...) {
     logger_time->tm_hour,
     logger_time->tm_min,
     logger_time->tm_sec,
-    _process_brook_id,
+    brook_process_id,
     type[level]
   );
 

@@ -4,7 +4,7 @@ redisAsyncContext* redis_client = NULL;
 
 int
 brook_redis_connect ( brook_conf_t* config ) {
-  redis_client = redisAsyncConnect("127.0.0.1", 6380);
+  redis_client = redisAsyncConnect(config->redis.host, config->redis.port);
 
   if ( redis_client == NULL || redis_client->err ) {
     //printf("Can't connect connect to redis: %d\n", redis_client->err);
@@ -45,7 +45,7 @@ brook_redis_on_connect (const redisAsyncContext *c, int status) {
     exit(BROOK_ERROR);
   }
   // ... each process will has individual channel
-  redisAsyncCommand(redis_client, brook_redis_on_message, NULL, "SUBSCRIBE %s", _process_brook_id);
+  redisAsyncCommand(redis_client, brook_redis_on_message, NULL, "SUBSCRIBE %s", brook_process_id);
   // ... redis add event of write ...
   _fds[POOL_INDEX_REDIS].events |= POLLOUT;
 }

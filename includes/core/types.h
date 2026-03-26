@@ -52,6 +52,22 @@ typedef struct brook_gatekeeper_node_s {
 } brook_gatekeeper_node_t;
 
 typedef struct {
+
+  // ... configs load from config file ...
+  char name[32];
+  int  port;
+  char gatekeeper[256];
+  char log[1024];
+  struct {
+    char host[64];
+    int  port;
+  } beanstalkd;
+  struct {
+    char host[64];
+    int  port;
+  } redis;
+
+  // ... internal configs ...
   int socket;
   brook_gatekeeper_node_t* root;
 } brook_conf_t;

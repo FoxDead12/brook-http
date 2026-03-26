@@ -4,7 +4,7 @@
 #include "core/config.h"
 #include "beanstalkclient.h"
 
-int brook_beanstalkd_connect();
+int brook_beanstalkd_connect(brook_conf_t* config);
 int brook_benstalkd_create_job(brook_connection_t* con);
 int brook_benstalkd_write();
 int brook_benstalkd_job_payload(brook_connection_t* con);

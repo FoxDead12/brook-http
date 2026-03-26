@@ -57,8 +57,6 @@ brook_handle_connection ( brook_conf_t* config) {
 int
 brook_connection_read ( brook_connection_t* con ) {
 
-  //printf("Tenho dados para ler\n");
-
   // ... get buffer from chain or create if needed ...
   // ... check free buffer to write ...
   brook_buffer_chain_t* buffer = con->_data;
@@ -70,7 +68,6 @@ brook_connection_read ( brook_connection_t* con ) {
   }
 
   if ( buffer == NULL ) {
-    //printf("Nao existe nenhum buffer\n");
     buffer = malloc(sizeof(brook_buffer_chain_t));
     buffer->data = malloc(4096);
     buffer->next = NULL;
@@ -117,7 +114,11 @@ brook_connection_read ( brook_connection_t* con ) {
     buffer->size = s_old + size_to_sum;
     buffer->free = buffer->size - buffer->len;
 
-    // ... TODO: limit header buffer max size (ex: 12500) a sanity check todo ...
+    // ... limit header buffer max size (ex: 12500) a sanity check todo ...
+    if ( buffer->size > 12288 ) {
+      brook_connection_reply(con, 400, (brook_str_t) brook_str("Header Too Big"), (brook_str_t) brook_str("The request header exceeds the maximum allowed size."));
+      return BROOK_ERROR;
+    }
 
     // ... realoc data of buffer ...
     buffer->data = realloc(d_old, buffer->size);

@@ -3,19 +3,22 @@
 bsc* bean_client = NULL;
 
 int
-brook_beanstalkd_connect () {
+brook_beanstalkd_connect ( brook_conf_t* config ) {
   char errstr[BSC_ERRSTR_LEN];
 
+  char port[10];
+  snprintf(port, sizeof(port), "%d", config->beanstalkd.port);
+
   // ... create client of beanstalkd ...
-  bean_client = bsc_new("127.0.0.1", "11301", "default", brook_benstalkd_connection_error, 1024, 1024, 256, errstr);
+  bean_client = bsc_new(config->beanstalkd.host, port, "default", brook_benstalkd_connection_error, 1024, 1024, 256, errstr);
   if ( !bean_client ) {
-    //printf("Can't create beanstalkd client: %s\n", errstr);
+    printf("Can't create beanstalkd client: %s\n", errstr);
     return BROOK_ERROR;
   }
 
   // ... connect client ...
   if ( !bsc_connect(bean_client, errstr) ) {
-    //printf("Can't connect connect to beantslakd: %s\n", errstr);
+    printf("Can't connect connect to beantslakd: %s\n", errstr);
     return BROOK_ERROR;
   }
 
@@ -67,7 +70,7 @@ brook_benstalkd_job_payload ( brook_connection_t* con ) {
     return BROOK_ERROR;
   }
 
-  cJSON_AddStringToObject(job, "channel", _process_brook_id);
+  cJSON_AddStringToObject(job, "channel", brook_process_id);
 
   // ... add payload of request to job ...
   if ( con->_parser->content_length > 0 && (con->_parser->method == POST || con->_parser->method == PATCH) ) {

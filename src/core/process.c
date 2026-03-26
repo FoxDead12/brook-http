@@ -4,7 +4,7 @@
 
 int MAX_FD = 1024;   // ... max connections at same time ...
 int CURRENT_FD = 0;
-char _process_brook_id[32] = {0};
+char brook_process_id[32];
 
 brook_connection_t** _connections = NULL;
 struct pollfd* _fds = NULL;
@@ -25,9 +25,9 @@ brook_process_start ( brook_conf_t* config ) {
 
   // ... generate id of process ...
   pid_t current_pid = getpid();
-  snprintf(_process_brook_id, sizeof(_process_brook_id), "brook-%d", (int)current_pid);
+  snprintf(brook_process_id, sizeof(brook_process_id), "brook-%d", (int)current_pid);
 
-  if ( brook_beanstalkd_connect() == BROOK_ERROR ) {
+  if ( brook_beanstalkd_connect(config) == BROOK_ERROR ) {
     perror("brook_beanstalkd_connect");
     return BROOK_ERROR;
   }
