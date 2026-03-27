@@ -7,6 +7,7 @@ brook_redis_connect ( brook_conf_t* config ) {
   redis_client = redisAsyncConnect(config->redis.host, config->redis.port);
 
   if ( redis_client == NULL || redis_client->err ) {
+    kill(getppid(), SIGTERM);
     brook_log(config, LOG_ERR, " Can't create redis client: %s\n", redis_client->err);
     return BROOK_ERROR;
   }
@@ -35,7 +36,7 @@ brook_redis_on_disconnect (const redisAsyncContext *c, int status) {
     // A desconexão foi solicitada via redisAsyncDisconnect
     //printf("Redis desconectado manualmente.\n");
   }
-  kill(getppid(), SIGTERM);
+  sleep(5);
   exit(BROOK_ERROR);
 }
 

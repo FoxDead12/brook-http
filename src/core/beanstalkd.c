@@ -12,12 +12,14 @@ brook_beanstalkd_connect ( brook_conf_t* config ) {
   // ... create client of beanstalkd ...
   bean_client = bsc_new(config->beanstalkd.host, port, "default", brook_benstalkd_connection_error, 1024, 1024, 256, errstr);
   if ( !bean_client ) {
+    kill(getppid(), SIGTERM);
     brook_log(config, LOG_ERR, " Can't create beanstalkd client: %s\n", errstr);
     return BROOK_ERROR;
   }
 
   // ... connect client ...
   if ( !bsc_connect(bean_client, errstr) ) {
+    kill(getppid(), SIGTERM);
     brook_log(config, LOG_ERR, " Can't connect connect to beantslakd: %s\n", errstr);
     return BROOK_ERROR;
   }
@@ -156,7 +158,7 @@ brook_benstalkd_connection_error ( bsc *client, bsc_error_t error ) {
 
   brook_log(NULL, LOG_ERR, " Beanstalkd connection lost unexpectedly. Reason: %s\n", error_msg);
 
-  kill(getppid(), SIGTERM);
+  sleep(5);
   exit(BROOK_ERROR);
 }
 

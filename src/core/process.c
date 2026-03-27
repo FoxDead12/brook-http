@@ -53,11 +53,15 @@ brook_process_start ( brook_conf_t* config ) {
   brook_log(config, LOG_INFO, " Process is starting ...\n");
 
   if ( brook_beanstalkd_connect(config) == BROOK_ERROR ) {
+    char *err_desc = strerror(errno);
+    brook_log(config, LOG_ERR, "Can't create beanstalkd client: %s (errno: %d)\n", err_desc, errno);
     perror("brook_beanstalkd_connect");
     return BROOK_ERROR;
   }
 
   if ( brook_redis_connect(config) == BROOK_ERROR ) {
+    char *err_desc = strerror(errno);
+    brook_log(config, LOG_ERR, "Can't create redis client: %s (errno: %d)\n", err_desc, errno);
     perror("brook_redis_connect");
     return BROOK_ERROR;
   }
