@@ -54,14 +54,14 @@ brook_process_start ( brook_conf_t* config ) {
 
   if ( brook_beanstalkd_connect(config) == BROOK_ERROR ) {
     char *err_desc = strerror(errno);
-    brook_log(config, LOG_ERR, "Can't create beanstalkd client: %s (errno: %d)\n", err_desc, errno);
+    brook_log(config, LOG_ERR, " Can't create beanstalkd client: %s (errno: %d)\n", err_desc, errno);
     perror("brook_beanstalkd_connect");
     return BROOK_ERROR;
   }
 
   if ( brook_redis_connect(config) == BROOK_ERROR ) {
     char *err_desc = strerror(errno);
-    brook_log(config, LOG_ERR, "Can't create redis client: %s (errno: %d)\n", err_desc, errno);
+    brook_log(config, LOG_ERR, " Can't create redis client: %s (errno: %d)\n", err_desc, errno);
     perror("brook_redis_connect");
     return BROOK_ERROR;
   }
@@ -89,14 +89,16 @@ brook_process_start ( brook_conf_t* config ) {
 
   CURRENT_FD += static_fds;
 
+  brook_log(config, LOG_INFO, " Process is read to work ...\n");
+
   // ... event loop start here ...
   while (1) {
 
-  #ifndef __linux__
-    if (getppid() == 1) {
-      brook_log(config, LOG_ERR, "Orphan child detected. Shutting down.\n");
-      break;
-    }
+    #ifndef __linux__
+      if (getppid() == 1) {
+        brook_log(config, LOG_ERR, " Orphan child detected. Shutting down.\n");
+        break;
+      }
     #endif
 
     // ... wait for events in sockets/file descriptors ...
