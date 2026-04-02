@@ -58,6 +58,15 @@ brook_http_response_add_header (brook_connection_t* con, brook_str_t data) {
 }
 
 int
+brook_http_response_add_header_json (brook_connection_t* con, brook_str_t key, brook_str_t data) {
+  brook_http_response_buffer_join(con, key);
+  brook_http_response_buffer_join(con, (brook_str_t) brook_str(": "));
+  brook_http_response_buffer_join(con, data);
+  brook_http_response_buffer_join(con, (brook_str_t) brook_str("\r\n"));
+  return BROOK_OK;
+}
+
+int
 brook_http_response_add_content_length ( brook_connection_t* con, uint64_t len ) {
   char string[100] = {0};
   brook_str_t _l;

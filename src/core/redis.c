@@ -121,6 +121,29 @@ brook_redis_on_message ( redisAsyncContext* redis_con, void* message, void* _ ) 
   brook_http_response_add_header(con, (brook_str_t) brook_str("Content-Type: application/json"));
   brook_http_response_add_header(con, (brook_str_t) brook_str("Server: brook-http"));
 
+  // ... add custom headers to response ...
+  cJSON* _h_item = NULL;
+  cJSON_ArrayForEach(_h_item, _j_headers) {
+    const char* key = _h_item->string;
+    if (!key) continue;
+
+    if ( cJSON_IsArray(_h_item) ) {
+      // ... value is array ...
+      cJSON* _value = NULL;
+      cJSON_ArrayForEach(_value, _h_item) {
+        if (cJSON_IsString(_value) && _value->valuestring != NULL) {
+          const char* value = _value->valuestring;
+          brook_http_response_add_header_json(con, (brook_str_t) {strlen(key), key}, (brook_str_t) {strlen(value), value});
+        }
+      }
+    } else if (cJSON_IsString(_h_item) && _h_item->valuestring != NULL) {
+      // ... value is a string ...
+      const char* value = _h_item->valuestring;
+      brook_http_response_add_header_json(con, (brook_str_t) {strlen(key), key}, (brook_str_t) {strlen(value), value});
+    }
+
+  }
+
   // ... we have json ...
   brook_str_t body;
   body.data = cJSON_PrintUnformatted(_j_payload);

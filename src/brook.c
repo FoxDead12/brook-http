@@ -37,15 +37,30 @@ main(int argc, char **argv) {
   // ... load gatekeeper file ...
   brook_gatekeeper_load(config);
 
+  #ifdef DEBUG_VSCODE
+    brook_process_start(config);
+    return BROOK_OK;
+  #endif
+
   // ... start event loop ( for now is only one process ) ...
   brook_multi_processes_start(config, config->workers);
 
   while (1) {
     int status;
     pid_t dead_pid = wait(&status);
+
     if (dead_pid > 0) {
-      brook_log(config, LOG_WARN, " Process [%d] died. Respawning a new process ...\n", dead_pid);
+      if (WIFEXITED(status)) {
+        int exit_code = WEXITSTATUS(status);
+        brook_log(config, LOG_WARN, "Process [%d] exited with code %d. Respawning...\n", dead_pid, exit_code);
+      }
+      else if (WIFSIGNALED(status)) {
+        int sig = WTERMSIG(status);
+        brook_log(config, LOG_WARN, "Process [%d] killed by signal %d (%s). Respawning...\n", dead_pid, sig, strsignal(sig));
+      }
       brook_multi_processes_start(config, 1);
+    } else if (dead_pid == -1 && errno != EINTR) {
+      break;
     }
   }
 
