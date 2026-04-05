@@ -20,8 +20,6 @@ brook_handle_connection ( brook_conf_t* config) {
     return BROOK_DONE;
   }
 
-  // printf("Nova conexao estabelecida\n");
-
   // ... create connection struct and
   brook_connection_t* con = malloc(sizeof(brook_connection_t));
   con->_config = config;

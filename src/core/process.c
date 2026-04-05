@@ -87,7 +87,7 @@ brook_process_start ( brook_conf_t* config ) {
   _fds[POOL_INDEX_REDIS].events = POLLIN | POLLOUT;
   _fds[POOL_INDEX_REDIS].revents = 0;
 
-  CURRENT_FD += static_fds;
+  // CURRENT_FD += static_fds;
 
   brook_log(config, LOG_INFO, " Process is read to work ...\n");
 
@@ -101,14 +101,14 @@ brook_process_start ( brook_conf_t* config ) {
       }
     #endif
 
+    int t = CURRENT_FD + static_fds; // ... this dont make sense only for first iteration when server start clean
+
     // ... wait for events in sockets/file descriptors ...
-    int nready = poll(_fds, CURRENT_FD, -1);
+    int nready = poll(_fds, t, -1);
     if ( nready == -1 ) {
       perror("poll");
       return BROOK_ERROR;
     }
-
-    int t = CURRENT_FD; // ... this dont make sense only for first iteration when server start clean
 
     // ... check all descriptors ...
     for ( int i = 0; i < t; i++ ) {
