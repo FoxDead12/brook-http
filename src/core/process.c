@@ -17,7 +17,7 @@ brook_multi_processes_start (brook_conf_t* config, int num) {
     pid = fork();
 
     if (pid < 0) {
-      perror("Erro ao criar processo filho");
+      perror("fork");
     }
     if (pid == 0) {
       brook_process_start(config);
