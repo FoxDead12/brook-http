@@ -43,10 +43,18 @@ enum header_state {
   s_general,
   s_C,
   s_CO,
+
   s_CON,
   s_CONTENT,
+
+  s_COO,
+  s_COOK,
+  s_COOKI,
+  s_COOKIE,
+
   s_content_length,
-  s_content_type
+  s_content_type,
+  s_cookie
 };
 
 int brook_http_parse(brook_http_parse_t* parser, unsigned char* data, size_t len);

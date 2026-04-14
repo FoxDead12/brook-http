@@ -8,7 +8,7 @@ brook_redis_connect ( brook_conf_t* config ) {
 
   if ( redis_client == NULL || redis_client->err ) {
     kill(getppid(), SIGTERM);
-    brook_log(config, LOG_ERR, " Can't create redis client: %s\n", redis_client->err);
+    brook_log(config, LOG_ERR, "Can't create redis client: %s\n", redis_client->err);
     return BROOK_ERROR;
   }
 
@@ -31,7 +31,7 @@ void
 brook_redis_on_disconnect (const redisAsyncContext *c, int status) {
   if (status != REDIS_OK) {
     // A desconexão foi causada por um erro
-    brook_log(NULL, LOG_ERR, " Redis connection lost unexpectedly. Reason: %s\n", c->errstr);
+    brook_log(NULL, LOG_ERR, "Redis connection lost unexpectedly. Reason: %s\n", c->errstr);
   } else {
     // A desconexão foi solicitada via redisAsyncDisconnect
     //printf("Redis desconectado manualmente.\n");
@@ -44,7 +44,7 @@ void
 brook_redis_on_connect (const redisAsyncContext *c, int status) {
   if ( status == -1 ) {
     perror("Can't connect connect to redis");
-    brook_log(NULL, LOG_ERR, " Can't connect connect to redis: %s\n", c->errstr);
+    brook_log(NULL, LOG_ERR, "Can't connect connect to redis: %s\n", c->errstr);
     kill(getppid(), SIGTERM);
     exit(BROOK_ERROR);
   }
@@ -53,7 +53,7 @@ brook_redis_on_connect (const redisAsyncContext *c, int status) {
   // ... redis add event of write ...
   _fds[POOL_INDEX_REDIS].events |= POLLOUT;
 
-  brook_log(NULL, LOG_INFO, " Process connected to redis ...\n");
+  brook_log(NULL, LOG_INFO, "Process connected to redis ...\n");
 
 }
 

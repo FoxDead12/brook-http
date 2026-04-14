@@ -58,6 +58,13 @@ brook_gatekeeper_load ( brook_conf_t* config ) {
     cJSON *tube = cJSON_GetObjectItem(job, "tube");
     if (!cJSON_IsString(tube)) continue;
 
+    // role_mask
+    int role_mask = 0;
+    cJSON *r = cJSON_GetObjectItem(item, "role_mask");
+    if (cJSON_IsString(r) && (r->valuestring != NULL)) {
+      role_mask = (int) strtol(r->valuestring, NULL, 16);  // ... convert base 16 to integer
+    }
+
     uint32_t method_mask = 0;
     cJSON *method = NULL;
 
@@ -76,7 +83,7 @@ brook_gatekeeper_load ( brook_conf_t* config ) {
       }
     }
 
-    config->root = brook_gatekeeper_insert_route(config->root, route->valuestring, tube->valuestring, method_mask);
+    config->root = brook_gatekeeper_insert_route(config->root, route->valuestring, tube->valuestring, method_mask, role_mask);
   }
 
   cJSON_Delete(json);
@@ -86,10 +93,11 @@ brook_gatekeeper_load ( brook_conf_t* config ) {
 }
 
 brook_gatekeeper_node_t*
-brook_gatekeeper_create_node ( const char* path, const char* tube, uint32_t method_mask ) {
+brook_gatekeeper_create_node ( const char* path, const char* tube, uint32_t method_mask, int role_mask ) {
 
   brook_gatekeeper_node_t* node = malloc(sizeof(brook_gatekeeper_node_t));
   node->methods_mask = method_mask;
+  node->role_mask = role_mask;
 
   node->url.data = strdup(path);
   node->url.len = strlen(path);
@@ -109,18 +117,18 @@ brook_gatekeeper_create_node ( const char* path, const char* tube, uint32_t meth
  * if is necessary variables need be sended in params of url
  */
 brook_gatekeeper_node_t*
-brook_gatekeeper_insert_route ( brook_gatekeeper_node_t* root, const char* path, const char* tube, uint32_t method_mask ) {
+brook_gatekeeper_insert_route ( brook_gatekeeper_node_t* root, const char* path, const char* tube, uint32_t method_mask, int role_mask ) {
 
   if ( root == NULL ) {
-    return brook_gatekeeper_create_node(path, tube, method_mask);
+    return brook_gatekeeper_create_node(path, tube, method_mask, role_mask);
   }
 
   int res = strncmp(root->url.data, path, root->url.len);
 
   if ( res < 0 ) {
-    root->left = brook_gatekeeper_insert_route(root->left, path, tube, method_mask);
+    root->left = brook_gatekeeper_insert_route(root->left, path, tube, method_mask, role_mask);
   } else if ( res > 0 ) {
-    root->rigth = brook_gatekeeper_insert_route(root->rigth, path, tube, method_mask);
+    root->rigth = brook_gatekeeper_insert_route(root->rigth, path, tube, method_mask, role_mask);
   } else {
     root->methods_mask |= method_mask;
   }

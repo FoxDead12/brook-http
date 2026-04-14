@@ -52,9 +52,9 @@ typedef struct brook_buffer_chain_s {
 
 typedef struct brook_gatekeeper_node_s {
   brook_str_t url;
-  // ... jobs options ...
   brook_str_t tube;
   uint32_t methods_mask;
+  uint32_t role_mask;
   struct brook_gatekeeper_node_s* left;
   struct brook_gatekeeper_node_s* rigth;
 } brook_gatekeeper_node_t;
@@ -96,6 +96,7 @@ typedef struct {
 
   brook_str_t url;
   brook_str_t params;
+  brook_str_t cookies;
 
 } brook_http_parse_t;
 

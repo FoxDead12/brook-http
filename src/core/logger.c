@@ -60,7 +60,7 @@ brook_log (brook_conf_t* conf, LOG_LEVEL level, const char * fmt, ...) {
   time(&logger_current_time);
   logger_time = localtime(&logger_current_time);
 
-  fprintf(LOGGER_FILE, "[%02d-%02d-%04dT%02d:%02d:%02d][%s][%s]",
+  fprintf(LOGGER_FILE, "[%02d-%02d-%04dT%02d:%02d:%02d][%s][%s] ",
     tm_info->tm_mday, tm_info->tm_mon + 1, tm_info->tm_year + 1900,
     tm_info->tm_hour, tm_info->tm_min, tm_info->tm_sec,
     brook_process_id, type[level]

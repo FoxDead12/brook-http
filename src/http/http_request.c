@@ -96,6 +96,9 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
         parser->params.data = NULL;
         parser->params.len = 0;
 
+        parser->cookies.data = NULL;
+        parser->cookies.len = 0;
+
         if ( ch == '\r' || ch == '\n' ) {
           return BROOK_ERROR;
         }
@@ -334,7 +337,21 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
           } else {
             parser->header_state = s_general;
           }
-        } else {
+        } else if ( parser->header_state == s_CO && c == 'o' ) {
+          parser->header_state = s_COO  ;
+          ++parser->index;
+        } else if ( parser->header_state == s_COO && c == 'k' ) {
+          parser->header_state = s_COOK;
+          ++parser->index;
+        } else if ( parser->header_state == s_COOK && c == 'i' ) {
+          parser->header_state = s_COOKI;
+          ++parser->index;
+        } else if ( parser->header_state == s_COOKI && c == 'e' ) {
+          parser->header_state = s_COOKIE;
+          ++parser->index;
+          parser->header_state = s_cookie;
+        }
+        else {
           parser->header_state = s_general;
         }
 
@@ -349,6 +366,9 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
         parser->state = s_req_header_value;
         if ( parser->header_state == s_content_length ) {
           parser->content_length = 0;
+        } else if ( parser->header_state == s_cookie ) {
+          parser->cookies.data = &data[i];
+          parser->cookies.len = 0;
         }
       }
 
@@ -371,14 +391,17 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
         // ... parsing value of Content-Length ...
         if ( parser->header_state == s_content_length ) {
           if ( !IS_NUM(ch) ) {
-            ////printf("o valor do content length nao e numero\n");
             return BROOK_ERROR;
           }
           uint64_t t = parser->content_length;
           t *= 10;
           t += ch - '0';
           parser->content_length = t;
+
+        } else if ( parser->header_state == s_cookie ) {
+          parser->cookies.len++;
         }
+
         break;
       }
 
