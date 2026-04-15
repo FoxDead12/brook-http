@@ -41,7 +41,7 @@ brook_process_start ( brook_conf_t* config ) {
   #endif
 
   // ... set values of global variables of process ...
-  int static_fds = 3;         // ... for now is only tcp socket of server and beanstalkd client and redis client
+  int static_fds = 4;         // ... for now is only tcp socket of server and beanstalkd client and redis client
 
   _fds = malloc(sizeof(struct pollfd) * (MAX_FD + static_fds));
   _connections = malloc(sizeof(brook_connection_t*) * (MAX_FD + static_fds));
@@ -52,6 +52,7 @@ brook_process_start ( brook_conf_t* config ) {
 
   brook_log(config, LOG_INFO, "Process is starting ...\n");
 
+  // ... connect to beanstalkd ...
   if ( brook_beanstalkd_connect(config) == BROOK_ERROR ) {
     char *err_desc = strerror(errno);
     brook_log(config, LOG_ERR, "Can't create beanstalkd client: %s (errno: %d)\n", err_desc, errno);
@@ -59,7 +60,16 @@ brook_process_start ( brook_conf_t* config ) {
     return BROOK_ERROR;
   }
 
-  if ( brook_redis_connect(config) == BROOK_ERROR ) {
+  // ... connect to redis ...
+  if ( brook_redis_connect(config, 0) == BROOK_ERROR ) {
+    char *err_desc = strerror(errno);
+    brook_log(config, LOG_ERR, "Can't create redis client: %s (errno: %d)\n", err_desc, errno);
+    perror("brook_redis_connect");
+    return BROOK_ERROR;
+  }
+
+  // ... connect to redis subescriber ...
+  if ( brook_redis_connect(config, 1) == BROOK_ERROR ) {
     char *err_desc = strerror(errno);
     brook_log(config, LOG_ERR, "Can't create redis client: %s (errno: %d)\n", err_desc, errno);
     perror("brook_redis_connect");
@@ -86,6 +96,10 @@ brook_process_start ( brook_conf_t* config ) {
   _fds[POOL_INDEX_REDIS].fd = redis_client->c.fd;
   _fds[POOL_INDEX_REDIS].events = POLLIN | POLLOUT;
   _fds[POOL_INDEX_REDIS].revents = 0;
+
+  _fds[POOL_INDEX_REDIS_SUBSCRIBER].fd = redis_client_sub->c.fd;
+  _fds[POOL_INDEX_REDIS_SUBSCRIBER].events = POLLIN | POLLOUT;
+  _fds[POOL_INDEX_REDIS_SUBSCRIBER].revents = 0;
 
   // CURRENT_FD += static_fds;
 
@@ -138,10 +152,21 @@ brook_process_start ( brook_conf_t* config ) {
         }
         // ... redis data to write
         if ( _fd->revents & POLLOUT ) {
-          brook_redis_write();
+          brook_redis_write(redis_client, POOL_INDEX_REDIS);
         }
 
-      } else {
+      } else if ( _fd->fd == redis_client_sub->c.fd ) {
+        // ... redis data to read ...
+        if ( _fd->revents & POLLIN ) {
+          redisAsyncHandleRead(redis_client_sub);
+        }
+        // ... redis data to write
+        if ( _fd->revents & POLLOUT ) {
+          brook_redis_write(redis_client_sub, POOL_INDEX_REDIS_SUBSCRIBER);
+        }
+
+      }
+      else {
         if ( _fd->revents & POLLIN ) {
           // ... events de leitura dos sockets ...
           brook_connection_t* con = _connections[i];

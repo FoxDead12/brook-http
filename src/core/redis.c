@@ -1,37 +1,105 @@
 #include "core/redis.h"
+#include "core/beanstalkd.h"
 
 redisAsyncContext* redis_client = NULL;
+redisAsyncContext* redis_client_sub = NULL;
 
 int
-brook_redis_connect ( brook_conf_t* config ) {
-  redis_client = redisAsyncConnect(config->redis.host, config->redis.port);
+brook_redis_connect ( brook_conf_t* config, int subescriber ) {
+  int result = BROOK_OK;
 
-  if ( redis_client == NULL || redis_client->err ) {
+  if (subescriber == 1) {
+    // ... is subescriber connection ...
+    result = brook_redis_create_client(config, &redis_client_sub, brook_redis_sub_on_connect);
+  } else {
+    // ... is normal connection ...
+    result = brook_redis_create_client(config, &redis_client, brook_redis_on_connect);
+  }
+
+  return result;
+}
+
+/**
+ * Method to create a client connection to a pointer
+ */
+int
+brook_redis_create_client ( brook_conf_t* config, redisAsyncContext** client, redisConnectCallback *connected_callback ) {
+
+  // ... create client ...
+  *client = redisAsyncConnect(config->redis.host, config->redis.port);
+  (*client)->data = config;
+
+  // ... point to original connection pointer ...
+  redisAsyncContext* c = *client;
+
+  // ... validate struct is beed created ...
+  if ( c == NULL || c->err ) {
     kill(getppid(), SIGTERM);
-    brook_log(config, LOG_ERR, "Can't create redis client: %s\n", redis_client->err);
+    brook_log(config, LOG_ERR, "Can't create redis client: %s\n", c->err);
     return BROOK_ERROR;
   }
 
-  redisAsyncSetConnectCallback(redis_client, brook_redis_on_connect);
-  redisAsyncSetDisconnectCallback(redis_client, brook_redis_on_disconnect);
+  // ... set callbacks to clients
+  redisAsyncSetConnectCallback(c, connected_callback);
+  redisAsyncSetDisconnectCallback(c, brook_redis_on_disconnect);
+
   return BROOK_OK;
 }
 
-int
-brook_redis_write () {
-  redisAsyncHandleWrite(redis_client);
-  // ... check if can clean event ...
-  if (redis_client->c.obuf == NULL || sdslen(redis_client->c.obuf) == 0) {
-    _fds[POOL_INDEX_REDIS].events &= ~POLLOUT;
+/**
+ * Method used to connect server to redis
+ */
+void
+brook_redis_on_connect (const redisAsyncContext *c, int status) {
+  // ... get config from redis connection ...
+  brook_conf_t *config = (brook_conf_t *)c->data;
+
+  // ... check status result ...
+  if ( status == -1 ) {
+    perror("Can't connect connect to redis");
+    brook_log(config, LOG_ERR, "Can't connect connect to redis: %s\n", c->errstr);
+    kill(getppid(), SIGTERM);
+    exit(BROOK_ERROR);
   }
-  return BROOK_OK;
+
+  brook_log(config, LOG_INFO, "Process connected to redis ...\n");
 }
 
+/**
+ * Method used to connect server to redis and create subescriber connection
+ */
+void
+brook_redis_sub_on_connect (const redisAsyncContext *c, int status) {
+  // ... get config from redis connection ...
+  brook_conf_t *config = (brook_conf_t *)c->data;
+
+  // ... check status result ...
+  if ( status == -1 ) {
+    perror("Can't connect connect to redis");
+    brook_log(config, LOG_ERR, "Can't connect connect to redis: %s\n", c->errstr);
+    kill(getppid(), SIGTERM);
+    exit(BROOK_ERROR);
+  }
+
+  // ... each process will has individual channel
+  redisAsyncCommand(redis_client_sub, brook_redis_on_subescribe_message, NULL, "SUBSCRIBE %s", brook_process_id);
+
+  // ... redis add event of write ...
+  _fds[POOL_INDEX_REDIS_SUBSCRIBER].events |= POLLOUT;
+
+  brook_log(config, LOG_INFO, "Process connected to redis ...\n");
+}
+
+/**
+ * Method called when redis client disconnect
+ */
 void
 brook_redis_on_disconnect (const redisAsyncContext *c, int status) {
+  // ... get config from redis connection ...
+  brook_conf_t *config = (brook_conf_t *)c->data;
+
   if (status != REDIS_OK) {
-    // A desconexão foi causada por um erro
-    brook_log(NULL, LOG_ERR, "Redis connection lost unexpectedly. Reason: %s\n", c->errstr);
+    brook_log(config, LOG_ERR, "Redis connection lost unexpectedly. Reason: %s\n", c->errstr);
   } else {
     // A desconexão foi solicitada via redisAsyncDisconnect
     //printf("Redis desconectado manualmente.\n");
@@ -41,23 +109,19 @@ brook_redis_on_disconnect (const redisAsyncContext *c, int status) {
 }
 
 /**
- * Method used to connect server to redis
- * and submit the subescriber to receive messages
+ * Method called from poll() event to write redis socket messages
  */
-void
-brook_redis_on_connect (const redisAsyncContext *c, int status) {
-  if ( status == -1 ) {
-    perror("Can't connect connect to redis");
-    brook_log(NULL, LOG_ERR, "Can't connect connect to redis: %s\n", c->errstr);
-    kill(getppid(), SIGTERM);
-    exit(BROOK_ERROR);
-  }
-  // ... each process will has individual channel
-  redisAsyncCommand(redis_client, brook_redis_on_subescribe_message, NULL, "SUBSCRIBE %s", brook_process_id);
-  // ... redis add event of write ...
-  _fds[POOL_INDEX_REDIS].events |= POLLOUT;
+int
+brook_redis_write (redisAsyncContext* client, int POOL_INDEX) {
+  // ... wirte data in socket ...
+  redisAsyncHandleWrite(client);
 
-  brook_log(NULL, LOG_INFO, "Process connected to redis ...\n");
+  // ... check if can clean event ...
+  if (client->c.obuf == NULL || sdslen(client->c.obuf) == 0) {
+    _fds[POOL_INDEX].events &= ~POLLOUT;
+  }
+
+  return BROOK_OK;
 }
 
 /**
@@ -165,7 +229,6 @@ brook_redis_on_subescribe_message ( redisAsyncContext* redis_con, void* message,
   return;
 }
 
-
 /**
  * Method used to get access token from redis
  */
@@ -188,10 +251,17 @@ brook_redis_get_session (brook_connection_t* con, brook_str_t token) {
 void
 brook_redis_on_get_session ( redisAsyncContext *c, void *repl, void *privdata ) {
 
+  // ... sanity check if connection is off ...
+  if ( !privdata ) {
+    return;
+  };
+
+  // ... get config from redis connection ...
+  brook_conf_t *config = (brook_conf_t *)c->data;
+
   // ... get connection from callback result ...
   redisReply *reply = repl;
   brook_connection_t *con = privdata;
-
 
   // ... validate if error append or empty response ...
   if (reply == NULL || reply->type == REDIS_REPLY_ERROR) {
@@ -199,4 +269,49 @@ brook_redis_on_get_session ( redisAsyncContext *c, void *repl, void *privdata ) 
     return;
   }
 
+  // ... parse key of redis to internal struct ...
+  if (reply->type == REDIS_REPLY_ARRAY) {
+    for (size_t i = 0; i < reply->elements; i += 2) {
+
+      // ... get key and value from record ...
+      redisReply *key = reply->element[i];
+      redisReply *val = reply->element[i+1];
+
+      // ... sanity check, key and value must be strings ...
+      if (key->type != REDIS_REPLY_STRING || val->type != REDIS_REPLY_STRING) {
+        continue;
+      }
+
+      if (strncmp(key->str, "user_roles", key->len) == 0) {
+        // ... get role mask from session ...
+        con->session.role_mask = (uint32_t) strtoul(val->str, NULL, 16);
+
+      } else if (strncmp(key->str, "user_id", key->len) == 0) {
+        // ... get user id from session ...
+        con->session.user_id = atoi(val->str);
+
+      } else if (strncmp(key->str, "user_schema", key->len) == 0) {
+        // ... get user id from session ...
+        strncpy(con->session.schema, val->str, sizeof(con->session.schema) - 1);
+
+      }
+    }
+  }
+
+  // ... check if session is ok ...
+  if ( con->session.role_mask == 0 || con->session.user_id == 0 ) {
+    brook_log(config, LOG_WARN, "Invalid session comming from redis: %.*s\n", con->session.token.len, con->session.token.data);
+    brook_connection_reply(con, 401, (brook_str_t) brook_str("Unauthorized"), (brook_str_t) brook_str("Invalid session"));
+    return;
+  }
+
+  // ... validate gatekeeper route role mask ...
+  if ( (con->_role->role_mask & con->session.role_mask) == con->_role->role_mask ) {
+    // ... session is valid submit job ...
+    brook_benstalkd_create_job(con);
+  } else {
+    brook_connection_reply(con, 403, (brook_str_t) brook_str("Forbidden"), (brook_str_t) brook_str("No permission"));
+  }
+
+  return;
 }

@@ -31,6 +31,7 @@
 
 #define POOL_INDEX_BEANSTALKD 1
 #define POOL_INDEX_REDIS 2
+#define POOL_INDEX_REDIS_SUBSCRIBER 3
 
 
 // ... internal includes ...
@@ -45,6 +46,7 @@ extern int MAX_FD;       // ... i don't now if will be possible has 1024 connect
 extern int CURRENT_FD;
 extern bsc* bean_client;
 extern redisAsyncContext* redis_client;
+extern redisAsyncContext* redis_client_sub;
 extern char brook_process_id[32];
 
 extern struct pollfd* _fds;

@@ -29,6 +29,9 @@ brook_session_get_client_session ( brook_connection_t* con ) {
     return BROOK_ERROR;
   }
 
+  // ... store token in session ...
+  con->session.token = token;
+
   return BROOK_OK;
 }
 
