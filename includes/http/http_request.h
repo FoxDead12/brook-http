@@ -16,6 +16,9 @@
 #define IS_URL_CHAR(c)      (BIT_AT(normal_url_char, (unsigned char)c))
 #define IS_NUM(c)           ((c) >= '0' && (c) <= '9')
 
+#define IS_BASE64(C)        ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || (c == '+') || (c == '/'))
+
+
 #define CONTENT_LENGTH "content-length"
 #define CONTENT_TYPE "content-type"
 

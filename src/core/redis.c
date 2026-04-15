@@ -40,6 +40,10 @@ brook_redis_on_disconnect (const redisAsyncContext *c, int status) {
   exit(BROOK_ERROR);
 }
 
+/**
+ * Method used to connect server to redis
+ * and submit the subescriber to receive messages
+ */
 void
 brook_redis_on_connect (const redisAsyncContext *c, int status) {
   if ( status == -1 ) {
@@ -49,16 +53,18 @@ brook_redis_on_connect (const redisAsyncContext *c, int status) {
     exit(BROOK_ERROR);
   }
   // ... each process will has individual channel
-  redisAsyncCommand(redis_client, brook_redis_on_message, NULL, "SUBSCRIBE %s", brook_process_id);
+  redisAsyncCommand(redis_client, brook_redis_on_subescribe_message, NULL, "SUBSCRIBE %s", brook_process_id);
   // ... redis add event of write ...
   _fds[POOL_INDEX_REDIS].events |= POLLOUT;
 
   brook_log(NULL, LOG_INFO, "Process connected to redis ...\n");
-
 }
 
+/**
+ * Method used to handle subescriber messages comming from redis
+ */
 void
-brook_redis_on_message ( redisAsyncContext* redis_con, void* message, void* _ ) {
+brook_redis_on_subescribe_message ( redisAsyncContext* redis_con, void* message, void* _ ) {
 
   redisReply *reply = message;
   if ( !reply ) return;
@@ -157,4 +163,40 @@ brook_redis_on_message ( redisAsyncContext* redis_con, void* message, void* _ ) 
 
   con->_pfd->events = POLLOUT;      // ... change events of poll socket
   return;
+}
+
+
+/**
+ * Method used to get access token from redis
+ */
+int
+brook_redis_get_session (brook_connection_t* con, brook_str_t token) {
+  // ... submit command to redis ...
+  int status = redisAsyncCommand(redis_client, brook_redis_on_get_session, con, "HGETALL user:token:%b", token.data, token.len);
+
+  // ... check if error happend generating command ...
+  if (status != REDIS_OK) {
+    return BROOK_ERROR;
+  }
+
+  // ... redis add event of write ...
+  _fds[POOL_INDEX_REDIS].events |= POLLOUT;
+
+  return BROOK_OK;
+}
+
+void
+brook_redis_on_get_session ( redisAsyncContext *c, void *repl, void *privdata ) {
+
+  // ... get connection from callback result ...
+  redisReply *reply = repl;
+  brook_connection_t *con = privdata;
+
+
+  // ... validate if error append or empty response ...
+  if (reply == NULL || reply->type == REDIS_REPLY_ERROR) {
+    brook_connection_reply(con, 401, (brook_str_t) brook_str("Unauthorized"), (brook_str_t) brook_str("Getting session"));
+    return;
+  }
+
 }

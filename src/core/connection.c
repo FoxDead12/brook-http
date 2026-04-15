@@ -177,7 +177,7 @@ brook_connection_read ( brook_connection_t* con ) {
     // ... for now only validate request after receive all message ...
     if ( con->_role->role_mask > 0 ) {
       // ... session method, need validate session of user ...
-      if ( brook_get_client_session(con) == BROOK_ERROR ) {
+      if ( brook_session_get_client_session(con) == BROOK_ERROR ) {
         return BROOK_ERROR;
       }
     } else {
