@@ -42,6 +42,7 @@ brook_handle_connection ( brook_conf_t* config) {
   con->_reponse.nwrite = 0;
   con->_reponse.status = 0;
 
+  con->_role = NULL;
 
   memset(&con->session, 0, sizeof(brook_session_t));
   memset(&con->job, 0, sizeof(brook_job_t));
@@ -136,15 +137,26 @@ brook_connection_read ( brook_connection_t* con ) {
     // ... check if i need read more data (body), because all header is parsed ...
     brook_http_parse_t* parser = con->_parser;
 
-    // ... make validations of header request ...
-    // ... validate gatekeeper ...
-    brook_gatekeeper_node_t* route = brook_gatekeeper_match_route(con->_config->root, parser->url, parser->method);
+    // ... will only run 1 time ...
+    if ( con->_role == NULL ) {
+      // ... make validations of header request ...
+      // ... validate gatekeeper ...
+      brook_gatekeeper_node_t* route = brook_gatekeeper_match_route(con->_config->root, parser->url, parser->method);
 
-    if ( route == NULL ) {
-      brook_connection_reply(con, 404, (brook_str_t) brook_str("Resource Not Found"), (brook_str_t) brook_str("The requested endpoint does not exist. Please verify the URL path and the HTTP method used."));
-      return BROOK_ERROR;
-    } else {
-      con->_role = route;
+      if ( route == NULL ) {
+        brook_connection_reply(con, 404, (brook_str_t) brook_str("Resource Not Found"), (brook_str_t) brook_str("The requested endpoint does not exist. Please verify the URL path and the HTTP method used."));
+        return BROOK_ERROR;
+      } else {
+        con->_role = route;
+      }
+
+      // ... for now only validate request after receive all message ...
+      if ( con->_role->role_mask > 0 ) {
+        // ... session method, need validate session of user ...
+        if ( brook_session_get_client_session(con) == BROOK_ERROR ) {
+          return BROOK_ERROR;
+        }
+      }
     }
 
     if ( parser->method == POST || parser->method == PUT || parser->method == PATCH ) {
@@ -174,18 +186,10 @@ brook_connection_read ( brook_connection_t* con ) {
   if ( con->_parser->state == s_req_done ) {
     // ... if its all ok s_req_done (request is done) we will create job payload ...
     con->_pfd->events &= ~POLLIN;
-
-    // ... for now only validate request after receive all message ...
-    if ( con->_role->role_mask > 0 ) {
-      // ... session method, need validate session of user ...
-      if ( brook_session_get_client_session(con) == BROOK_ERROR ) {
-        return BROOK_ERROR;
-      }
-    } else {
+    if ( con->_role->role_mask == 0 ) {
       // ... public method ...
       brook_benstalkd_create_job(con);
     }
-
     return BROOK_OK; // parser is finish
   } else {
     return BROOK_DONE; // parser is finish
@@ -294,6 +298,10 @@ brook_destroy_connection ( brook_connection_t* con ) {
 
   // ... at least free con ...
   free(con);
+
+  con->_data = NULL;
+  con->_parser = NULL;
+  con = NULL;
 
   return BROOK_OK;
 }

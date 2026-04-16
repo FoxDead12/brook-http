@@ -170,11 +170,15 @@ brook_process_start ( brook_conf_t* config ) {
         if ( _fd->revents & POLLIN ) {
           // ... events de leitura dos sockets ...
           brook_connection_t* con = _connections[i];
-          brook_connection_read(con);
+          if ( con != NULL ) {
+            brook_connection_read(con);
+          }
 
         } else if ( _fd->revents & POLLOUT ) {
           brook_connection_t* con = _connections[i];
-          brook_connection_write(con);
+          if (con != NULL) {
+            brook_connection_write(con);
+          }
 
         } else if ( _fd->revents & (POLLHUP | POLLERR) ) {
           brook_connection_t* con = _connections[i];
