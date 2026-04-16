@@ -124,6 +124,12 @@ typedef struct {
 
 } brook_job_t;
 
+typedef struct {
+  brook_str_t   token;
+  uint32_t      role_mask;
+  char          schema[32];
+  int           user_id;
+} brook_session_t;
 
 // ... struct to define the connection struct, will handle all necessary data to manager a connection ...
 typedef struct {
@@ -140,7 +146,8 @@ typedef struct {
   brook_http_response_t    _reponse;
   brook_gatekeeper_node_t* _role;
 
-  brook_job_t job;
+  brook_session_t session;
+  brook_job_t     job;
 
 } brook_connection_t;
 

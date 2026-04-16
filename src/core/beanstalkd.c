@@ -17,6 +17,9 @@ brook_beanstalkd_connect ( brook_conf_t* config ) {
     return BROOK_ERROR;
   }
 
+  // ... set data to store in beanstalkd client ...
+  bean_client->data = config;
+
   // ... connect client ...
   if ( !bsc_connect(bean_client, errstr) ) {
     kill(getppid(), SIGTERM);
@@ -64,6 +67,11 @@ brook_benstalkd_job_payload ( brook_connection_t* con ) {
     {
       "job": {
         "channel": process id
+        "session": {
+          user_id
+          role_mask
+          schema (optional)
+        }
         "payload": http body
       }
     }
@@ -134,6 +142,8 @@ brook_benstalkd_write () {
 void
 brook_benstalkd_connection_error ( bsc *client, bsc_error_t error ) {
 
+  brook_conf_t *config = (brook_conf_t *)client->data;
+
   const char *error_msg;
   switch (error) {
     case BSC_ERROR_NONE:
@@ -156,7 +166,7 @@ brook_benstalkd_connection_error ( bsc *client, bsc_error_t error ) {
       break;
   }
 
-  brook_log(NULL, LOG_ERR, "Beanstalkd connection lost unexpectedly. Reason: %s\n", error_msg);
+  brook_log(config, LOG_ERR, "Beanstalkd connection lost unexpectedly. Reason: %s\n", error_msg);
 
   sleep(5);
   exit(BROOK_ERROR);

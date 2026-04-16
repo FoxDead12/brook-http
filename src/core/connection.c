@@ -42,8 +42,9 @@ brook_handle_connection ( brook_conf_t* config) {
   con->_reponse.nwrite = 0;
   con->_reponse.status = 0;
 
-  con->job.data.data = NULL;
-  con->job.tube.data = NULL;
+
+  memset(&con->session, 0, sizeof(brook_session_t));
+  memset(&con->job, 0, sizeof(brook_job_t));
 
   // ... add conection to list ...
   brook_add_connection(con);
