@@ -137,7 +137,7 @@ brook_connection_read ( brook_connection_t* con ) {
     // ... check if i need read more data (body), because all header is parsed ...
     brook_http_parse_t* parser = con->_parser;
 
-    // ... will only run 1 time ...
+    // ... will only run 1 time, this will run after parse all http header ...
     if ( con->_role == NULL ) {
       // ... make validations of header request ...
       // ... validate gatekeeper ...
@@ -150,24 +150,16 @@ brook_connection_read ( brook_connection_t* con ) {
         con->_role = route;
       }
 
-      // ... for now only validate request after receive all message ...
-      if ( con->_role->role_mask > 0 ) {
-        // ... session method, need validate session of user ...
-        if ( brook_session_get_client_session(con) == BROOK_ERROR ) {
-          return BROOK_ERROR;
-        }
+      // ... check for size of request ...
+      if ( parser->content_length > MAX_BODY_SIZE ) {
+        brook_connection_reply(con, 413, (brook_str_t) brook_str("Payload Too Large"), (brook_str_t) brook_str("The request body exceeds the maximum size limit allowed by this server."));
+        return BROOK_ERROR;
       }
     }
 
     if ( parser->method == POST || parser->method == PUT || parser->method == PATCH ) {
       if ( parser->content_length > 0 ) {
         // need get data so check if is ok
-
-        if ( parser->content_length > MAX_BODY_SIZE ) {
-          brook_connection_reply(con, 413, (brook_str_t) brook_str("Payload Too Large"), (brook_str_t) brook_str("The request body exceeds the maximum size limit allowed by this server."));
-          return BROOK_ERROR;
-        }
-
         if ( parser->nread < parser->content_length ) {
           parser->state = s_req_body;
         } else {
@@ -186,10 +178,18 @@ brook_connection_read ( brook_connection_t* con ) {
   if ( con->_parser->state == s_req_done ) {
     // ... if its all ok s_req_done (request is done) we will create job payload ...
     con->_pfd->events &= ~POLLIN;
-    if ( con->_role->role_mask == 0 ) {
+
+    // ... for now only validate request after receive all message ...
+    if ( con->_role->role_mask > 0 ) {
+      // ... session method, need validate session of user ...
+      if ( brook_session_get_client_session(con) == BROOK_ERROR ) {
+        return BROOK_ERROR;
+      }
+    } else {
       // ... public method ...
       brook_benstalkd_create_job(con);
     }
+
     return BROOK_OK; // parser is finish
   } else {
     return BROOK_DONE; // parser is finish

@@ -234,6 +234,7 @@ brook_redis_on_subescribe_message ( redisAsyncContext* redis_con, void* message,
  */
 int
 brook_redis_get_session (brook_connection_t* con, brook_str_t token) {
+
   // ... submit command to redis ...
   int status = redisAsyncCommand(redis_client, brook_redis_on_get_session, con, "HGETALL user:token:%b", token.data, token.len);
 
@@ -262,6 +263,11 @@ brook_redis_on_get_session ( redisAsyncContext *c, void *repl, void *privdata ) 
   // ... get connection from callback result ...
   redisReply *reply = repl;
   brook_connection_t *con = privdata;
+
+  // ... check if connection was already responde ...
+  if ( con->_reponse.status > 0 ) {
+    return BROOK_DONE;
+  }
 
   // ... validate if error append or empty response ...
   if (reply == NULL || reply->type == REDIS_REPLY_ERROR) {
