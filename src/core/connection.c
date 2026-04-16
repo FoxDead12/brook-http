@@ -4,6 +4,9 @@
 #include "http/http_response.h"
 #include "http/http_session.h"
 
+/**
+ * Method calledd each time server socket contain connections waiting
+ */
 int
 brook_handle_connection ( brook_conf_t* config) {
 
@@ -53,6 +56,9 @@ brook_handle_connection ( brook_conf_t* config) {
   return BROOK_OK;
 }
 
+/**
+ * Method called each time socket contain data to read from
+ */
 int
 brook_connection_read ( brook_connection_t* con ) {
 
@@ -93,7 +99,7 @@ brook_connection_read ( brook_connection_t* con ) {
   buffer->free -= _n;
   buffer->len += _n;
 
-  // ... make http parse, consoant reading ...
+  // ... make http parse, consoant data reading ...
   if ( brook_http_parse(con->_parser, buf, _n) == BROOK_ERROR ) {
     brook_connection_reply(con, 400, (brook_str_t) brook_str("Malformed HTTP Request"), (brook_str_t) brook_str("The request syntax is invalid or contains non-compliant characters. Please verify the protocol headers and body structure."));
     return BROOK_ERROR;
@@ -157,6 +163,7 @@ brook_connection_read ( brook_connection_t* con ) {
       }
     }
 
+    // ... this can run multi times if body is bigger ...
     if ( parser->method == POST || parser->method == PUT || parser->method == PATCH ) {
       if ( parser->content_length > 0 ) {
         // need get data so check if is ok
@@ -175,7 +182,9 @@ brook_connection_read ( brook_connection_t* con ) {
     }
   }
 
+  // ... check if request is parsed ...
   if ( con->_parser->state == s_req_done ) {
+
     // ... if its all ok s_req_done (request is done) we will create job payload ...
     con->_pfd->events &= ~POLLIN;
 
