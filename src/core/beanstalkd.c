@@ -92,7 +92,7 @@ brook_benstalkd_job_payload ( brook_connection_t* con ) {
 
     cJSON_AddNumberToObject(session, "role_mask",   con->session.role_mask);
     cJSON_AddStringToObject(session, "product_key", con->session.product_key);
-    cJSON_AddNumberToObject(session, "usersession_obj_id",     con->session.user_id);
+    cJSON_AddNumberToObject(session, "user_id",     con->session.user_id);
 
     if (con->session.schema[0] != '\0') {
       cJSON_AddStringToObject(session, "schema", con->session.schema);
