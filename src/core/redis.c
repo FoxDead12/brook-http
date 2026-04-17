@@ -271,7 +271,7 @@ brook_redis_on_get_session ( redisAsyncContext *c, void *repl, void *privdata ) 
 
   // ... validate if error append or empty response ...
   if (reply == NULL || reply->type == REDIS_REPLY_ERROR) {
-    brook_connection_reply(con, 401, (brook_str_t) brook_str("Unauthorized"), (brook_str_t) brook_str("Getting session"));
+    brook_connection_reply(con, 401, (brook_str_t) brook_str("Unauthorized"), (brook_str_t) brook_str("The provided session identifier is invalid or has expired. Please re-authenticate."));
     return;
   }
 
@@ -307,7 +307,7 @@ brook_redis_on_get_session ( redisAsyncContext *c, void *repl, void *privdata ) 
   // ... check if session is ok ...
   if ( con->session.role_mask == 0 || con->session.user_id == 0 ) {
     brook_log(config, LOG_WARN, "Invalid session comming from redis: %.*s\n", con->session.token.len, con->session.token.data);
-    brook_connection_reply(con, 401, (brook_str_t) brook_str("Unauthorized"), (brook_str_t) brook_str("Invalid session"));
+    brook_connection_reply(con, 401, (brook_str_t) brook_str("Unauthorized"), (brook_str_t) brook_str("The session context is malformed or lacks the required security attributes."));
     return;
   }
 
@@ -316,7 +316,7 @@ brook_redis_on_get_session ( redisAsyncContext *c, void *repl, void *privdata ) 
     // ... session is valid submit job ...
     brook_benstalkd_create_job(con);
   } else {
-    brook_connection_reply(con, 403, (brook_str_t) brook_str("Forbidden"), (brook_str_t) brook_str("No permission"));
+    brook_connection_reply(con, 403, (brook_str_t) brook_str("Forbidden"), (brook_str_t) brook_str("The authenticated user does not have an authorized role to access this resource."));
   }
 
   return;

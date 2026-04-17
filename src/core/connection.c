@@ -92,7 +92,7 @@ brook_connection_read ( brook_connection_t* con ) {
 
   size_t _n = brook_socket_recv(con->_fd, buf, buffer->free);
   if ( _n == 0 || _n == -1) {
-    brook_connection_reply(con, 500, (brook_str_t) brook_str("Network Read Error"), (brook_str_t) brook_str("Interrupted system call or connection reset during recv operation. Check network stability."));
+    brook_connection_reply(con, 500, (brook_str_t) brook_str("Internal Server Error"), (brook_str_t) brook_str("An error occurred while reading from the network socket. The stream may have been reset by the peer."));
     return BROOK_ERROR;
   }
 
@@ -101,7 +101,7 @@ brook_connection_read ( brook_connection_t* con ) {
 
   // ... make http parse, consoant data reading ...
   if ( brook_http_parse(con->_parser, buf, _n) == BROOK_ERROR ) {
-    brook_connection_reply(con, 400, (brook_str_t) brook_str("Malformed HTTP Request"), (brook_str_t) brook_str("The request syntax is invalid or contains non-compliant characters. Please verify the protocol headers and body structure."));
+    brook_connection_reply(con, 400, (brook_str_t) brook_str("Bad Request"), (brook_str_t) brook_str("The HTTP request could not be parsed due to invalid syntax or non-compliant headers."));
     return BROOK_ERROR;
   }
 
@@ -121,7 +121,7 @@ brook_connection_read ( brook_connection_t* con ) {
 
     // ... limit header buffer max size (ex: 12500) a sanity check todo ...
     if ( buffer->size > 12288 ) {
-      brook_connection_reply(con, 400, (brook_str_t) brook_str("Header Too Big"), (brook_str_t) brook_str("The request header exceeds the maximum allowed size."));
+      brook_connection_reply(con, 431, (brook_str_t) brook_str("Request Header Fields Too Large"), (brook_str_t) brook_str("he infrastructure rejected the request because the header section exceeds the configured size limit."));
       return BROOK_ERROR;
     }
 
@@ -135,7 +135,7 @@ brook_connection_read ( brook_connection_t* con ) {
 
     // ... repeate process, to get new pointers in parser (parser need has memory in one sequencial array) ...
     if ( brook_http_parse(con->_parser, buf, buffer->len) == BROOK_ERROR ) {
-      brook_connection_reply(con, 400, (brook_str_t) brook_str("Malformed HTTP Request"), (brook_str_t) brook_str("The request syntax is invalid or contains non-compliant characters. Please verify the protocol headers and body structure."));
+      brook_connection_reply(con, 400, (brook_str_t) brook_str("Bad Request"), (brook_str_t) brook_str("The HTTP request could not be parsed due to invalid syntax or non-compliant headers."));
       return BROOK_ERROR;
     }
 
@@ -150,7 +150,7 @@ brook_connection_read ( brook_connection_t* con ) {
       brook_gatekeeper_node_t* route = brook_gatekeeper_match_route(con->_config->root, parser->url, parser->method);
 
       if ( route == NULL ) {
-        brook_connection_reply(con, 404, (brook_str_t) brook_str("Resource Not Found"), (brook_str_t) brook_str("The requested endpoint does not exist. Please verify the URL path and the HTTP method used."));
+        brook_connection_reply(con, 404, (brook_str_t) brook_str("Resource Not Found"), (brook_str_t) brook_str("The server could not identify a route matching the provided path and method combination."));
         return BROOK_ERROR;
       } else {
         con->_role = route;

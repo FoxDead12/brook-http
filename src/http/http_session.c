@@ -11,7 +11,7 @@ brook_session_get_client_session ( brook_connection_t* con ) {
   // ... need parse token of user ...
   brook_str_t token = brook_session_parse_token_from_cookies(con);
   if ( token.len < 1 ) {
-    brook_connection_reply(con, 401, (brook_str_t) brook_str("Unauthorized"), (brook_str_t) brook_str("Token not found"));
+    brook_connection_reply(con, 401, (brook_str_t) brook_str("Unauthorized"), (brook_str_t) brook_str("Authentication credentials are missing. A valid security token is required to access this resource."));
     return BROOK_ERROR;
   }
 
@@ -19,13 +19,13 @@ brook_session_get_client_session ( brook_connection_t* con ) {
 
   // ... check token formater ...
   if ( brook_session_validate_token_formater(con, token) == BROOK_ERROR ) {
-    brook_connection_reply(con, 401, (brook_str_t) brook_str("Unauthorized"), (brook_str_t) brook_str("Token invalid format"));
+    brook_connection_reply(con, 401, (brook_str_t) brook_str("Unauthorized"), (brook_str_t) brook_str("The provided authentication token does not conform to the expected format."));
     return BROOK_ERROR;
   }
 
   // ... send message to redis get session ...
   if ( brook_redis_get_session(con, token) == BROOK_ERROR ) {
-    brook_connection_reply(con, 401, (brook_str_t) brook_str("Unauthorized"), (brook_str_t) brook_str("Cant send redis message"));
+    brook_connection_reply(con, 500, (brook_str_t) brook_str("Internal Server Error"), (brook_str_t) brook_str("The server encountered an error while communicating with the authentication subsystem."));
     return BROOK_ERROR;
   }
 

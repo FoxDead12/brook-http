@@ -78,7 +78,7 @@ brook_benstalkd_job_payload ( brook_connection_t* con ) {
   */
   cJSON* job = cJSON_CreateObject();
   if ( job == NULL ) {
-    brook_connection_reply(con, 400, (brook_str_t) brook_str("Invalid JSON"), (brook_str_t) brook_str("The provided payload is not a valid JSON."));
+    brook_connection_reply(con, 500, (brook_str_t) brook_str("Internal Server Error"), (brook_str_t) brook_str("An unexpected error occurred while processing the request resources."));
     return BROOK_ERROR;
   }
 
@@ -110,7 +110,7 @@ brook_benstalkd_job_payload ( brook_connection_t* con ) {
     free(tmp);
     if ( payload == NULL ) {
       cJSON_Delete(job);
-      brook_connection_reply(con, 400, (brook_str_t) brook_str("Invalid JSON"), (brook_str_t) brook_str("The provided payload is not a valid JSON."));
+      brook_connection_reply(con, 400, (brook_str_t) brook_str("Bad Request"), (brook_str_t) brook_str("The request payload could not be parsed as valid JSON."));
       return BROOK_ERROR;
     }
 
@@ -192,7 +192,7 @@ brook_benstalkd_on_put ( bsc *client, struct bsc_put_info *info ) {
       ++con->job.retray;
     } else {
       // ... need call response ...
-      brook_connection_reply(con, 500, (brook_str_t) brook_str("Job Submission Failed"), (brook_str_t) brook_str("The system was unable to persist the job after multiple retry attempts. Please check the queue status."));
+      brook_connection_reply(con, 500, (brook_str_t) brook_str("Internal Server Error"), (brook_str_t) brook_str("The server was unable to enqueue the job. Please resubmit your request."));
     }
   }
 }
