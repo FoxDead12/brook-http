@@ -15,8 +15,6 @@ brook_session_get_client_session ( brook_connection_t* con ) {
     return BROOK_ERROR;
   }
 
-  brook_log(con->_config, LOG_DEBUG, "token encontrado: %.*s\n", token.len, token.data);
-
   // ... check token formater ...
   if ( brook_session_validate_token_formater(con, token) == BROOK_ERROR ) {
     brook_connection_reply(con, 401, (brook_str_t) brook_str("Unauthorized"), (brook_str_t) brook_str("The provided authentication token does not conform to the expected format."));

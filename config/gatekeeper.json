@@ -25,10 +25,19 @@
   {
     "method": ["POST"],
     "route": "/storix/register",
-    "role_mask": "0x5",
+    "role_mask": "0x2",
     "product_key": "storix",
     "job": {
       "tube": "storix-register"
+    }
+  },
+  {
+    "method": ["GET"],
+    "route": "/storix/session",
+    "role_mask": "0x1",
+    "product_key": "storix",
+    "job": {
+      "tube": "storix-user-session"
     }
   }
 ]

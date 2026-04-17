@@ -85,6 +85,22 @@ brook_benstalkd_job_payload ( brook_connection_t* con ) {
 
   cJSON_AddStringToObject(job, "channel", brook_process_id);
 
+  // ... add session data to job ...
+  if (con->session.user_id != 0 ) {
+
+    cJSON *session = cJSON_CreateObject();
+
+    cJSON_AddNumberToObject(session, "role_mask",   con->session.role_mask);
+    cJSON_AddStringToObject(session, "product_key", con->session.product_key);
+    cJSON_AddNumberToObject(session, "usersession_obj_id",     con->session.user_id);
+
+    if (con->session.schema[0] != '\0') {
+      cJSON_AddStringToObject(session, "schema", con->session.schema);
+    }
+
+    cJSON_AddItemToObject(job, "session", session);
+  }
+
   // ... add payload of request to job ...
   if ( con->_parser->content_length > 0 && (con->_parser->method == POST || con->_parser->method == PATCH) ) {
     // ... transform http body in json object ...
