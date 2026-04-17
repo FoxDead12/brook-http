@@ -38,7 +38,7 @@ O Gatekeeper permite a anexação automática de atributos fixos ao _job_ antes 
 
 Esta capacidade torna-se **fundamental** num ecossistema multi-app, uma vez que o servidor utiliza um **sistema de autenticação partilhado** por todas as aplicações. Através da injeção destes atributos, o servidor consegue distinguir e segmentar o processamento de tarefas, mesmo quando estas provêm de fontes que partilham a mesma infraestrutura de segurança.
 
-Exemplo de atributos estáticos:
+Exemplo de atributos estáticos: (ainda por desenvolver)
 ```
 {
 	"method":  ["POST"],
