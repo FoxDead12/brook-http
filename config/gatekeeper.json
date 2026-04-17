@@ -1,30 +1,66 @@
 [
   {
-    "method": ["GET", "PATCH", "DELETE"],
-    "route": "/first-example",
+    "method": ["POST"],
+    "route": "/dx3/login",
     "job": {
-      "tube": "firt-job"
+      "tube": "auth-login",
+      "attributes": {
+        "app": "dx3"
+      }
     }
   },
   {
     "method": ["POST"],
-    "route": "/first-example",
+    "route": "/storix/login",
     "job": {
-      "tube": "firt-job"
+      "tube": "auth-login",
+      "attributes": {
+        "app": "storix"
+      }
+    }
+  },
+
+  {
+    "method": ["POST"],
+    "route": "/dx3/register",
+    "job": {
+      "tube": "auth-register",
+      "attributes": {
+        "app": "dx3"
+      }
     }
   },
   {
-    "method": ["POST", "PATCH"],
-    "route": "/second-example",
+    "method": ["POST"],
+    "route": "/storix/register",
     "job": {
-      "tube": "second-job"
+      "tube": "auth-register",
+      "attributes": {
+        "app": "storix"
+      }
+    }
+  },
+
+
+
+
+
+
+  {
+    "method": ["GET"],
+    "route": "/dx3/email",
+    "role_mask": "0x1", // ... is a protected route, so use a role mask validation
+    "role_app": "dx3", // ... is a protected route so we need define wich app session is valid
+    "job": {
+      "tube": "language-ops"
     }
   },
   {
-    "method": ["GET", "PATCH"],
-    "route": "/third-example",
+    "method": ["POS"],
+    "route": "/storix/upload",
+    "role_mask": "0x1",
     "job": {
-      "tube": "third-job"
+      "tube": "upload-ops"
     }
   }
 ]
