@@ -4,8 +4,8 @@
 #include "config.h"
 
 int brook_gatekeeper_load(brook_conf_t* config);
-brook_gatekeeper_node_t* brook_gatekeeper_create_node ( const char* path, const char* tube, uint32_t method_mask, int role_mask );
-brook_gatekeeper_node_t* brook_gatekeeper_insert_route(brook_gatekeeper_node_t* root, const char* path, const char* tube, uint32_t method_mask, int role_mask);
+brook_gatekeeper_node_t* brook_gatekeeper_create_node(const char* path, const char* tube, char* product_key, uint32_t method_mask, int role_mask);
+brook_gatekeeper_node_t* brook_gatekeeper_insert_route(brook_gatekeeper_node_t* root, const char* path, const char* tube, char* product_key, uint32_t method_mask, int role_mask);
 brook_gatekeeper_node_t* brook_gatekeeper_match_route(brook_gatekeeper_node_t *root, brook_str_t url, uint32_t method);
-
+int brook_gatekeeper_validate_session(brook_connection_t* con);
 #endif

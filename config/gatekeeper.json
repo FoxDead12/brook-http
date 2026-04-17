@@ -12,5 +12,23 @@
     "job": {
       "tube": "dx3-mailer-ops"
     }
+  },
+
+
+  {
+    "method": ["POST"],
+    "route": "/storix/login",
+    "job": {
+      "tube": "storix-login"
+    }
+  },
+  {
+    "method": ["POST"],
+    "route": "/storix/register",
+    "role_mask": "0x5",
+    "product_key": "storix",
+    "job": {
+      "tube": "storix-register"
+    }
   }
 ]

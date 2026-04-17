@@ -33,12 +33,12 @@ As rotas **protegidas** exigem que a ligação inclua uma sessão ativa (normalm
 ## Gatekeeper Struct File to Multiple Apps
 Esta configuração permite que o mesmo servidor valide e processe pedidos provenientes de diferentes aplicações web, garantindo a separação de contextos e a atribuição correta de tarefas.
 
-**Injeção de Atributos Estáticos no Job**
+**Injeção de Atributos Estáticos no Job (ainda por desenvolver esta secao)**
 O Gatekeeper permite a anexação automática de atributos fixos ao _job_ antes da sua submissão para o tubo. Esta funcionalidade é essencial para identificar a origem do pedido ou transmitir metadados constantes de forma transparente para o cliente.
 
 Esta capacidade torna-se **fundamental** num ecossistema multi-app, uma vez que o servidor utiliza um **sistema de autenticação partilhado** por todas as aplicações. Através da injeção destes atributos, o servidor consegue distinguir e segmentar o processamento de tarefas, mesmo quando estas provêm de fontes que partilham a mesma infraestrutura de segurança.
 
-Exemplo de atributos estáticos: (ainda por desenvolver)
+Exemplo de atributos estáticos:
 ```
 {
 	"method":  ["POST"],
@@ -54,7 +54,7 @@ Exemplo de atributos estáticos: (ainda por desenvolver)
 ```
 
 **Proteção de Rotas por Aplicação**
-Para cenários onde a segurança deve ser isolada por contexto, o ficheiro permite validar o acesso com base na aplicação de origem. Nestes casos, o sistema não valida apenas o _token_, mas também se a sessão pertence especificamente à aplicação definida no campo `role_app`.
+Para cenários onde a segurança deve ser isolada por contexto, o ficheiro permite validar o acesso com base na aplicação de origem. Nestes casos, o sistema não valida apenas o _token_, mas também se a sessão pertence especificamente à aplicação definida no campo `product_key`.
 
 Exemplo de rota protegida por App e Permissão:
 ```
@@ -62,9 +62,11 @@ Exemplo de rota protegida por App e Permissão:
 	"method":  ["POS"],
 	"route":  "/url/exemplo",
 	"role_mask":  "0x1",
-	"role_app": "web-app-name", --> novo campo para validar se a sessão contem este campo com o mesmo valor
+	"product_key": "web-app-name", --> novo campo para validar se a sessão contem este campo com o mesmo valor
 	"job":  {
 		"tube":  "nome-do-tubo"
 	}
 }
 ```
+
+

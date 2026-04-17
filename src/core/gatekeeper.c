@@ -65,6 +65,14 @@ brook_gatekeeper_load ( brook_conf_t* config ) {
       role_mask = (int) strtol(r->valuestring, NULL, 16);  // ... convert base 16 to integer
     }
 
+    // product key, identifier of web app route is defined
+    const char* product_key = "NO_PRODUCT_KEY";     // ... default product key ...
+    cJSON *product_key_j = cJSON_GetObjectItem(item, "product_key");
+    if (product_key_j) {
+      product_key = product_key_j->valuestring;
+    }
+
+
     uint32_t method_mask = 0;
     cJSON *method = NULL;
 
@@ -83,7 +91,7 @@ brook_gatekeeper_load ( brook_conf_t* config ) {
       }
     }
 
-    config->root = brook_gatekeeper_insert_route(config->root, route->valuestring, tube->valuestring, method_mask, role_mask);
+    config->root = brook_gatekeeper_insert_route(config->root, route->valuestring, tube->valuestring, product_key, method_mask, role_mask);
   }
 
   cJSON_Delete(json);
@@ -93,7 +101,7 @@ brook_gatekeeper_load ( brook_conf_t* config ) {
 }
 
 brook_gatekeeper_node_t*
-brook_gatekeeper_create_node ( const char* path, const char* tube, uint32_t method_mask, int role_mask ) {
+brook_gatekeeper_create_node ( const char* path, const char* tube, char* product_key, uint32_t method_mask, int role_mask ) {
 
   brook_gatekeeper_node_t* node = malloc(sizeof(brook_gatekeeper_node_t));
   node->methods_mask = method_mask;
@@ -104,6 +112,9 @@ brook_gatekeeper_create_node ( const char* path, const char* tube, uint32_t meth
 
   node->tube.data = strdup(tube);
   node->tube.len = strlen(tube);
+
+  node->product_key.data = strdup(product_key);
+  node->product_key.len = strlen(product_key);
 
   node->left = NULL;
   node->rigth = NULL;
@@ -117,18 +128,18 @@ brook_gatekeeper_create_node ( const char* path, const char* tube, uint32_t meth
  * if is necessary variables need be sended in params of url
  */
 brook_gatekeeper_node_t*
-brook_gatekeeper_insert_route ( brook_gatekeeper_node_t* root, const char* path, const char* tube, uint32_t method_mask, int role_mask ) {
+brook_gatekeeper_insert_route ( brook_gatekeeper_node_t* root, const char* path, const char* tube, char* product_key, uint32_t method_mask, int role_mask ) {
 
   if ( root == NULL ) {
-    return brook_gatekeeper_create_node(path, tube, method_mask, role_mask);
+    return brook_gatekeeper_create_node(path, tube, product_key, method_mask, role_mask);
   }
 
   int res = strncmp(root->url.data, path, root->url.len);
 
   if ( res < 0 ) {
-    root->left = brook_gatekeeper_insert_route(root->left, path, tube, method_mask, role_mask);
+    root->left = brook_gatekeeper_insert_route(root->left, path, tube, product_key, method_mask, role_mask);
   } else if ( res > 0 ) {
-    root->rigth = brook_gatekeeper_insert_route(root->rigth, path, tube, method_mask, role_mask);
+    root->rigth = brook_gatekeeper_insert_route(root->rigth, path, tube, product_key, method_mask, role_mask);
   } else {
     root->methods_mask |= method_mask;
   }
@@ -161,4 +172,21 @@ brook_gatekeeper_match_route ( brook_gatekeeper_node_t *root, brook_str_t url, u
   } else {
     return brook_gatekeeper_match_route(root->rigth, url, method);
   }
+}
+
+int
+brook_gatekeeper_validate_session ( brook_connection_t* con ) {
+
+  brook_gatekeeper_node_t* gatekeeper_role = con->_role;
+
+  // ... validate role mask of session with route ...
+  if ( (gatekeeper_role->role_mask & con->session.role_mask) != gatekeeper_role->role_mask ) {
+    return BROOK_ERROR;
+  }
+
+  if ( strcmp(gatekeeper_role->product_key.data, con->session.product_key) != 0 ) {
+    return BROOK_ERROR;
+  }
+
+  return BROOK_OK;
 }

@@ -1,5 +1,6 @@
 #include "core/redis.h"
 #include "core/beanstalkd.h"
+#include "core/gatekeeper.h"
 
 redisAsyncContext* redis_client = NULL;
 redisAsyncContext* redis_client_sub = NULL;
@@ -267,7 +268,7 @@ brook_redis_on_get_session ( redisAsyncContext *c, void *repl, void *privdata ) 
 
   // ... check if connection was already responde ...
   if ( con->_reponse.status > 0 ) {
-    return BROOK_DONE;
+    return;
   }
 
   // ... validate if error append or empty response ...
@@ -292,29 +293,32 @@ brook_redis_on_get_session ( redisAsyncContext *c, void *repl, void *privdata ) 
       if (strncmp(key->str, "user_roles", key->len) == 0) {
         // ... get role mask from session ...
         con->session.role_mask = (uint32_t) strtoul(val->str, NULL, 16);
-
       } else if (strncmp(key->str, "user_id", key->len) == 0) {
         // ... get user id from session ...
         con->session.user_id = atoi(val->str);
-
       } else if (strncmp(key->str, "user_schema", key->len) == 0) {
-        // ... get user id from session ...
+        // ... get schema from session ...
         strncpy(con->session.schema, val->str, sizeof(con->session.schema) - 1);
-
+      } else if (strncmp(key->str, "product_key", key->len) == 0) {
+        // ... get product key session ...
+        strncpy(con->session.product_key, val->str, sizeof(con->session.product_key) - 1);
       }
     }
   }
 
-  // ... check if session is ok ...
-  if ( con->session.role_mask == 0 || con->session.user_id == 0 ) {
+  // ... check if returned session contain the expeced data ...
+  if (
+    con->session.role_mask == 0 ||
+    con->session.user_id == 0   ||
+    con->session.product_key[0] == '\0'
+  ) {
     brook_log(config, LOG_WARN, "Invalid session comming from redis: %.*s\n", con->session.token.len, con->session.token.data);
     brook_connection_reply(con, 401, (brook_str_t) brook_str("Unauthorized"), (brook_str_t) brook_str("The session context is malformed or lacks the required security attributes."));
     return;
   }
 
   // ... validate gatekeeper route role mask ...
-  if ( (con->_role->role_mask & con->session.role_mask) == con->_role->role_mask ) {
-    // ... session is valid submit job ...
+  if ( brook_gatekeeper_validate_session(con) == BROOK_OK ) {
     brook_benstalkd_create_job(con);
   } else {
     brook_connection_reply(con, 403, (brook_str_t) brook_str("Forbidden"), (brook_str_t) brook_str("The authenticated user does not have an authorized role to access this resource."));

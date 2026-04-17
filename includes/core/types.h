@@ -54,7 +54,10 @@ typedef struct brook_gatekeeper_node_s {
   brook_str_t url;
   brook_str_t tube;
   uint32_t methods_mask;
-  uint32_t role_mask;
+
+  uint32_t    role_mask;
+  brook_str_t product_key;
+
   struct brook_gatekeeper_node_s* left;
   struct brook_gatekeeper_node_s* rigth;
 } brook_gatekeeper_node_t;
@@ -128,6 +131,7 @@ typedef struct {
   brook_str_t   token;
   uint32_t      role_mask;
   char          schema[32];
+  char          product_key[32];
   int           user_id;
 } brook_session_t;
 
