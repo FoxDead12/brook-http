@@ -91,8 +91,12 @@ brook_connection_read ( brook_connection_t* con ) {
   unsigned char* buf = buffer->data + buffer->len;
 
   size_t _n = brook_socket_recv(con->_fd, buf, buffer->free);
-  if ( _n == 0 || _n == -1) {
+  if ( _n == -1) {
+    brook_log(con->_config, LOG_ERR, "Socket receive error: %s (errno: %d) at %s:%d", strerror(errno), errno, __FILE__, __LINE__);
     brook_connection_reply(con, 500, (brook_str_t) brook_str("Internal Server Error"), (brook_str_t) brook_str("An error occurred while reading from the network socket. The stream may have been reset by the peer."));
+    return BROOK_ERROR;
+  } else if ( _n == 0 ) {
+    brook_log(con->_config, LOG_DEBUG, "Connection closed by peer (client disconnected) at %s:%d", __FILE__, __LINE__);
     return BROOK_ERROR;
   }
 

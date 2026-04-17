@@ -240,6 +240,7 @@ brook_redis_get_session (brook_connection_t* con, brook_str_t token) {
 
   // ... check if error happend generating command ...
   if (status != REDIS_OK) {
+    brook_log(con->_config, LOG_ERR, "Redis command submission failed: %s (Status: %d) at %s:%d", redis_client->errstr ? redis_client->errstr : "Unknown error", status, __FILE__, __LINE__);
     return BROOK_ERROR;
   }
 

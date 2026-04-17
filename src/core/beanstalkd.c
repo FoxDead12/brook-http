@@ -78,6 +78,7 @@ brook_benstalkd_job_payload ( brook_connection_t* con ) {
   */
   cJSON* job = cJSON_CreateObject();
   if ( job == NULL ) {
+    brook_log(con->_config, LOG_ERR, "Unable to allocate memory for cJSON object at %s:%d", __FILE__, __LINE__);
     brook_connection_reply(con, 500, (brook_str_t) brook_str("Internal Server Error"), (brook_str_t) brook_str("An unexpected error occurred while processing the request resources."));
     return BROOK_ERROR;
   }
@@ -192,6 +193,7 @@ brook_benstalkd_on_put ( bsc *client, struct bsc_put_info *info ) {
       ++con->job.retray;
     } else {
       // ... need call response ...
+      brook_log(con->_config, LOG_ERR, "Job queue failed, maximum retry attempts (%d) exceeded. Last Beanstalkd response code: %d. file: %s:%d", con->job.max_retray, info->response.code, __FILE__, __LINE__);
       brook_connection_reply(con, 500, (brook_str_t) brook_str("Internal Server Error"), (brook_str_t) brook_str("The server was unable to enqueue the job. Please resubmit your request."));
     }
   }
