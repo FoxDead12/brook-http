@@ -39,5 +39,14 @@
     "job": {
       "tube": "storix-user-session"
     }
+  },
+  {
+    "method": ["GET"],
+    "route": "/storix/files",
+    "role_mask": "0x1",
+    "product_key": "storix",
+    "job": {
+      "tube": "storix-files-list"
+    }
   }
 ]
