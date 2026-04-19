@@ -85,6 +85,11 @@ typedef struct {
 } brook_conf_t;
 
 typedef struct {
+  brook_str_t key;
+  brook_str_t value;
+} brook_params_t;
+
+typedef struct {
   unsigned char state;          // ... state of parse
   unsigned short header_state;  // ... state of header parse
 
@@ -98,8 +103,12 @@ typedef struct {
   uint64_t content_length;
 
   brook_str_t url;
-  brook_str_t params;
   brook_str_t cookies;
+
+  brook_params_t* params;
+  int params_n;
+  int params_capacity;
+
 
 } brook_http_parse_t;
 

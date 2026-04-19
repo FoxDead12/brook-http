@@ -306,6 +306,10 @@ brook_destroy_connection ( brook_connection_t* con ) {
     free(con->job.data.data);
   }
 
+  if ( con->_parser->params != NULL ) {
+    free(con->_parser->params);
+  }
+
   // ... free http parser ...
   free(con->_parser);
 

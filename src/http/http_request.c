@@ -93,8 +93,7 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
         parser->url.data = NULL;
         parser->url.len = 0;
 
-        parser->params.data = NULL;
-        parser->params.len = 0;
+        parser->params = NULL;
 
         parser->cookies.data = NULL;
         parser->cookies.len = 0;
@@ -189,18 +188,17 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
               parser->url.len = 0;
               parser->index = 2;
             } else {
-              ////printf("invalid url start '/'\n");
-              return BROOK_ERROR;
+              return BROOK_ERROR; // ... url dont start with '/'
             }
           } else if ( ch == '?' ) {
             // ... this is a necessary field, so assume its ok
             parser->state = s_req_params;
             parser->index = 0;              // ... need force reset of index (url is done)
-            parser->params.data = &data[i];
-            parser->params.len = 0;
+            parser->params = NULL;
+            parser->params_n = 0;
+            parser->params_capacity = 0;
             continue;
           } else if ( !IS_URL_CHAR(ch) ) {
-            ////printf("invalid tokens url\n");
             return BROOK_ERROR;
           }
           ++parser->url.len;
@@ -214,19 +212,62 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
 
       case s_req_params:
       {
+
+        // ... we dont expected space in middle of string ...
         if ( ch == ' ' || ch == '\t' ) {
+          // ... end of params string ...
           parser->state = s_req_minor;
-        } else {
-          if ( !IS_URL_CHAR(ch) ) {
-            ////printf("invalid tokens url\n");
-            return BROOK_ERROR;
-          }
-          ++parser->params.len;
+          parser->index = 0;
+          continue;
         }
 
-        if ( parser->state != s_req_params ) {
-          parser->index = 0;
+        // ... validate if is url char only ASCII
+        if ( !IS_URL_CHAR(ch) ) {
+          return BROOK_ERROR;
         }
+
+        if ( parser->index == 0 ) { // we just start get a key
+
+          if ( parser->params_n >= 1024 ) { // ... sanity check ...
+            return BROOK_ERROR;
+          }
+
+          ++parser->params_n;
+          if ( parser->params_n >= parser->params_capacity ) {
+            parser->params_capacity += 16;
+            brook_params_t* tmp = realloc(parser->params, parser->params_capacity * sizeof(brook_params_t));
+            if ( tmp == NULL || !tmp ) {
+              brook_log(NULL, LOG_ERR, "Failed to reallocate URL params: %s (errno: %d) at %s:%d", strerror(errno), errno, __FILE__, __LINE__);
+              return BROOK_ERROR;
+            }
+            parser->params = tmp;
+          }
+          parser->params[parser->params_n - 1].key.data = &data[i];
+          parser->params[parser->params_n - 1].key.len = 1;
+          parser->index = 1;
+
+        } else if ( parser->index == 1 ) {  // ... parsing key ...
+          // ... check if found equal
+          if (ch == '=') {
+            parser->index = 2;
+          } else {
+            ++parser->params[parser->params_n - 1].key.len;
+          }
+
+        } else if ( parser->index == 2 ) { // ... start parsing value
+          parser->params[parser->params_n - 1].value.data = &data[i];
+          parser->params[parser->params_n - 1].value.len = 1;
+          parser->index = 3;
+
+        } else if ( parser->index == 3 ) { // ... parsing value
+          if ( ch == '&' ) {
+            // ... existe another key and value to parse ...
+            parser->index = 0;
+          } else {
+            ++parser->params[parser->params_n - 1].value.len;
+          }
+        }
+
         break;
       }
 

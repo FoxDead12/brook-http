@@ -72,7 +72,8 @@ brook_benstalkd_job_payload ( brook_connection_t* con ) {
           role_mask
           schema (optional)
         }
-        "payload": http body
+        "payload": http body,
+        "params": http params
       }
     }
   */
@@ -134,11 +135,39 @@ brook_benstalkd_job_payload ( brook_connection_t* con ) {
     cJSON_AddItemToObject(job, "payload", payload);
   }
 
+  // ... add params ...
+  if ( con->_parser->params != NULL ) {
+    cJSON *params = cJSON_CreateObject();
+
+    for (size_t i = 0; i < con->_parser->params_n; i++) {
+      brook_str_t key = con->_parser->params[i].key;
+      brook_str_t value = con->_parser->params[i].value;
+
+      // ... transform key string ...
+      char* key_string = malloc(key.len + 1);
+      memcpy(key_string, key.data, key.len);
+      key_string[key.len] = '\0';
+
+      // ... transform key string ...
+      char* value_string = malloc(value.len);
+      memcpy(value_string, value.data, value.len);
+      value_string[value.len] = '\0';
+
+      cJSON_AddStringToObject(params, key_string, value_string);
+      free(key_string);
+      free(value_string);
+    }
+
+    cJSON_AddItemToObject(job, "params", params);
+  }
+
+  // ... sanity check to clean data ...
   if (con->job.data.data != NULL) {
     free(con->job.data.data);
     con->job.data.data = NULL;
   }
 
+  // ... generate json string to send ...
   con->job.data.data = (unsigned char*) cJSON_PrintUnformatted(job);
   con->job.data.len = strlen(con->job.data.data);
 
