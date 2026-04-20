@@ -180,7 +180,7 @@ brook_gatekeeper_validate_session ( brook_connection_t* con ) {
   brook_gatekeeper_node_t* gatekeeper_role = con->_role;
 
   // ... validate role mask of session with route ...
-  if ( (gatekeeper_role->role_mask & con->session.role_mask) != gatekeeper_role->role_mask ) {
+  if ( (gatekeeper_role->role_mask & con->session.role_mask) == 0 ) {
     return BROOK_ERROR;
   }
 
