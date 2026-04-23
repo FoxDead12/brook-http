@@ -257,7 +257,16 @@ brook_connection_write ( brook_connection_t* con ) {
     free(buffer);
     return BROOK_DONE;
   } else {
-    brook_log(con->_config, LOG_INFO, "%s \"%s %.*s\" %d\n", con->_ip, brook_method_str[con->_parser->method], con->_parser->url.len, con->_parser->url.data, con->_reponse.status);
+    brook_log(con->_config, LOG_INFO,
+      "%s \"%s %.*s%.*s\" %d\n",
+      con->_ip,
+      brook_method_str[con->_parser->method],
+      con->_parser->url.len,
+      con->_parser->url.data,
+      con->_parser->params_s.len,
+      con->_parser->params_s.data,
+      con->_reponse.status
+    );
     free(buffer->data);
     free(buffer);
     brook_destroy_connection(con);

@@ -94,6 +94,8 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
         parser->url.len = 0;
 
         parser->params = NULL;
+        parser->params_s.data = NULL;
+        parser->params_s.len = 0;
 
         parser->cookies.data = NULL;
         parser->cookies.len = 0;
@@ -194,9 +196,14 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
             // ... this is a necessary field, so assume its ok
             parser->state = s_req_params;
             parser->index = 0;              // ... need force reset of index (url is done)
+            // ... params array variables ...
             parser->params = NULL;
             parser->params_n = 0;
             parser->params_capacity = 0;
+
+            // ... store params string position ...
+            parser->params_s.data = &data[i];
+            parser->params_s.len = 1;
             continue;
           } else if ( !IS_URL_CHAR(ch) ) {
             return BROOK_ERROR;
@@ -233,15 +240,19 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
           }
 
           ++parser->params_n;
+
           if ( parser->params_n >= parser->params_capacity ) {
             parser->params_capacity += 16;
+
             brook_params_t* tmp = realloc(parser->params, parser->params_capacity * sizeof(brook_params_t));
             if ( tmp == NULL || !tmp ) {
               brook_log(NULL, LOG_ERR, "Failed to reallocate URL params: %s (errno: %d) at %s:%d", strerror(errno), errno, __FILE__, __LINE__);
               return BROOK_ERROR;
             }
+
             parser->params = tmp;
           }
+
           parser->params[parser->params_n - 1].key.data = &data[i];
           parser->params[parser->params_n - 1].key.len = 1;
           parser->index = 1;
@@ -268,6 +279,7 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
           }
         }
 
+        ++parser->params_s.len;
         break;
       }
 
