@@ -263,8 +263,8 @@ brook_connection_write ( brook_connection_t* con ) {
       brook_method_str[con->_parser->method],
       con->_parser->url.len,
       con->_parser->url.data,
-      con->_parser->params_s.len,
-      con->_parser->params_s.data,
+      con->_parser->params_s.data ? con->_parser->params_s.len : 0,
+      con->_parser->params_s.data ? con->_parser->params_s.data : "",
       con->_reponse.status
     );
     free(buffer->data);
