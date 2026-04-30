@@ -190,3 +190,36 @@ brook_gatekeeper_validate_session ( brook_connection_t* con ) {
 
   return BROOK_OK;
 }
+
+/**
+ * Free the gatekeeper tree recursively
+ * Prevents memory leak of config->root
+ */
+void
+brook_gatekeeper_free_tree ( brook_gatekeeper_node_t* root ) {
+  if ( root == NULL ) {
+    return;
+  }
+
+  // ... recursively free children ...
+  if ( root->left ) {
+    brook_gatekeeper_free_tree(root->left);
+  }
+  if ( root->rigth ) {
+    brook_gatekeeper_free_tree(root->rigth);
+  }
+
+  // ... free string allocations ...
+  if ( root->url.data ) {
+    free(root->url.data);
+  }
+  if ( root->tube.data ) {
+    free(root->tube.data);
+  }
+  if ( root->product_key.data ) {
+    free(root->product_key.data);
+  }
+
+  // ... free the node itself ...
+  free(root);
+}

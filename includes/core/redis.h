@@ -8,6 +8,7 @@
 
 
 int brook_redis_connect(brook_conf_t* config, int subescriber);
+int brook_redis_retry_connect(brook_conf_t* config, int subescriber);
 int brook_redis_create_client(brook_conf_t* config, redisAsyncContext** client, redisConnectCallback *connected_callback);
 void brook_redis_on_connect(const redisAsyncContext *c, int status);
 void brook_redis_sub_on_connect(const redisAsyncContext *c, int status);

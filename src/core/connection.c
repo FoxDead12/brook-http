@@ -51,8 +51,17 @@ brook_handle_connection ( brook_conf_t* config) {
   memset(&con->session, 0, sizeof(brook_session_t));
   memset(&con->job, 0, sizeof(brook_job_t));
 
+  // ... init trace context for observability ...
+  brook_trace_init(&con->trace, "http_connection");
+
   // ... add conection to list ...
-  brook_add_connection(con);
+  int add_result = brook_add_connection(con);
+  if ( add_result == BROOK_ERROR ) {
+    // ... cleanup on failure to prevent memory leak ...
+    free(con->_parser);
+    free(con);
+    return BROOK_ERROR;
+  }
 
   return BROOK_OK;
 }

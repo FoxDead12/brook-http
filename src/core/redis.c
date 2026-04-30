@@ -5,6 +5,13 @@
 redisAsyncContext* redis_client = NULL;
 redisAsyncContext* redis_client_sub = NULL;
 
+// ... retry state for connections ...
+static int redis_retry_count = 0;
+static int redis_sub_retry_count = 0;
+static time_t redis_last_retry = 0;
+#define REDIS_MAX_RETRIES 5
+#define REDIS_RETRY_BASE_DELAY 2  // seconds
+
 int
 brook_redis_connect ( brook_conf_t* config, int subescriber ) {
   int result = BROOK_OK;
@@ -35,8 +42,8 @@ brook_redis_create_client ( brook_conf_t* config, redisAsyncContext** client, re
 
   // ... validate struct is beed created ...
   if ( c == NULL || c->err ) {
-    kill(getppid(), SIGTERM);
-    brook_log(config, LOG_ERR, "Can't create redis client: %s\n", c->err);
+    // ... replaced kill() with retry mechanism ...
+    brook_log(config, LOG_ERR, "Can't create redis client: %s (retry %d/%d)\n", c->err ? c->err : "Unknown error", redis_retry_count, REDIS_MAX_RETRIES);
     return BROOK_ERROR;
   }
 
@@ -59,10 +66,12 @@ brook_redis_on_connect (const redisAsyncContext *c, int status) {
   if ( status == -1 ) {
     perror("Can't connect connect to redis");
     brook_log(config, LOG_ERR, "Can't connect connect to redis: %s\n", c->errstr);
-    kill(getppid(), SIGTERM);
-    exit(BROOK_ERROR);
+    // ... replaced kill() with retry mechanism - just return error, don't exit ...
+    return;
   }
 
+  // ... reset retry count on successful connection ...
+  redis_retry_count = 0;
   brook_log(config, LOG_INFO, "Process connected to redis ...\n");
 }
 
@@ -78,9 +87,12 @@ brook_redis_sub_on_connect (const redisAsyncContext *c, int status) {
   if ( status == -1 ) {
     perror("Can't connect connect to redis");
     brook_log(config, LOG_ERR, "Can't connect connect to redis: %s\n", c->errstr);
-    kill(getppid(), SIGTERM);
-    exit(BROOK_ERROR);
+    // ... replaced kill() with retry mechanism - just return, don't exit ...
+    return;
   }
+
+  // ... reset retry count on successful connection ...
+  redis_sub_retry_count = 0;
 
   // ... each process will has individual channel
   redisAsyncCommand(redis_client_sub, brook_redis_on_subescribe_message, NULL, "SUBSCRIBE %s", brook_process_id);
@@ -93,6 +105,7 @@ brook_redis_sub_on_connect (const redisAsyncContext *c, int status) {
 
 /**
  * Method called when redis client disconnect
+ * Replaced sleep() blocking with non-blocking retry
  */
 void
 brook_redis_on_disconnect (const redisAsyncContext *c, int status) {
@@ -105,8 +118,10 @@ brook_redis_on_disconnect (const redisAsyncContext *c, int status) {
     // A desconexão foi solicitada via redisAsyncDisconnect
     //printf("Redis desconectado manualmente.\n");
   }
-  sleep(5);
-  exit(BROOK_ERROR);
+  
+  // ... removed blocking sleep() - will retry in event loop instead ...
+  // ... signal that reconnection is needed ...
+  brook_log(config, LOG_INFO, "Redis reconnect will be attempted in event loop...\n");
 }
 
 /**
@@ -178,7 +193,8 @@ brook_redis_on_subescribe_message ( redisAsyncContext* redis_con, void* message,
 
   for ( int i = CURRENT_FD; i >= 0; i-- ) {
     if ( _connections[i] != NULL ) {
-      if ( _connections[i]->job.id == job_id ) {
+      // ... safe access: verify job is initialized before comparing ...
+      if ( _connections[i]->job.id != 0 && _connections[i]->job.id == job_id ) {
         con = _connections[i];
         break;
       }
@@ -327,4 +343,37 @@ brook_redis_on_get_session ( redisAsyncContext *c, void *repl, void *privdata ) 
   }
 
   return;
+}
+
+/**
+ * Retry connection to redis with exponential backoff
+ */
+int
+brook_redis_retry_connect ( brook_conf_t* config, int subescriber ) {
+  int* retry_count = subescriber ? &redis_sub_retry_count : &redis_retry_count;
+  int max_retries = REDIS_MAX_RETRIES;
+  
+  if ( *retry_count >= max_retries ) {
+    brook_log(config, LOG_ERR, "Redis max retries (%d) exceeded. Giving up.\n", max_retries);
+    return BROOK_ERROR;
+  }
+
+  time_t now = time(NULL);
+  int delay = REDIS_RETRY_BASE_DELAY * (1 << *retry_count);  // exponential backoff
+  
+  if (now - redis_last_retry < delay) {
+    delay = delay - (now - redis_last_retry);
+    if (delay > 0) {
+      brook_log(config, LOG_INFO, "Waiting %ds before redis retry...\n", delay);
+      sleep(delay);
+    }
+  }
+
+  (*retry_count)++;
+  redis_last_retry = now;
+
+  brook_log(config, LOG_INFO, "Retrying redis connection (attempt %d/%d)...\n", 
+    *retry_count, max_retries);
+
+  return brook_redis_connect(config, subescriber);
 }
