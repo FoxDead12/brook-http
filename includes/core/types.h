@@ -70,19 +70,6 @@ typedef struct {
   int  workers;
   char gatekeeper[256];
   char log[1024];
-  
-  // ... connection pool settings ...
-  struct {
-    int  max_idle;           // ... max idle connections in pool
-    int  min_idle;           // ... min idle connections to maintain
-    int  max_lifetime;       // ... max lifetime in seconds
-    int  connect_timeout;     // ... connection timeout in ms
-    int  read_timeout;      // ... read timeout in ms
-    int  write_timeout;      // ... write timeout in ms
-    int  retry_max;         // ... max retry attempts
-    int  retry_delay;        // ... base retry delay in ms
-  } pool;
-
   struct {
     char host[64];
     int  port;
@@ -95,9 +82,6 @@ typedef struct {
   // ... internal configs ...
   int socket;
   brook_gatekeeper_node_t* root;
-
-  // ... connection pool stats ...
-  brook_pool_stats_t pool_stats;
 } brook_conf_t;
 
 typedef struct {
@@ -161,24 +145,6 @@ typedef struct {
   int           user_id;
 } brook_session_t;
 
-// ... trace context for observability ...
-typedef struct {
-  char trace_id[37];        // ... UUID v4 format
-  char span_id[17];         // ... span identifier
-  uint64_t start_time;      // ... trace start timestamp (monotonic)
-  char component[32];       // ... component name for logging
-} brook_trace_t;
-
-// ... connection pool stats ...
-typedef struct {
-  uint32_t total_connections;
-  uint32_t active_connections;
-  uint32_t idle_connections;
-  uint32_t connection_errors;
-  uint32_t timeout_errors;
-  uint64_t last_error_time;
-} brook_pool_stats_t;
-
 // ... struct to define the connection struct, will handle all necessary data to manager a connection ...
 typedef struct {
   struct pollfd* _pfd;
@@ -196,9 +162,6 @@ typedef struct {
 
   brook_session_t session;
   brook_job_t     job;
-
-  // ... observability ...
-  brook_trace_t trace;    // ... trace context for request tracking
 
 } brook_connection_t;
 

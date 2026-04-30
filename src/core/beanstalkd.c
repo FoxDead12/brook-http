@@ -2,12 +2,6 @@
 
 bsc* bean_client = NULL;
 
-// ... retry state for connections ...
-static int beanstalkd_retry_count = 0;
-static time_t beanstalkd_last_retry = 0;
-#define BEANSTALKD_MAX_RETRIES 5
-#define BEANSTALKD_RETRY_BASE_DELAY 2  // seconds
-
 int
 brook_beanstalkd_connect ( brook_conf_t* config ) {
   char errstr[BSC_ERRSTR_LEN];
@@ -18,8 +12,8 @@ brook_beanstalkd_connect ( brook_conf_t* config ) {
   // ... create client of beanstalkd ...
   bean_client = bsc_new(config->beanstalkd.host, port, "default", brook_benstalkd_connection_error, 1024, 1024, 256, errstr);
   if ( !bean_client ) {
-    // ... replaced kill() with retry mechanism ...
-    brook_log(config, LOG_ERR, "Can't create beanstalkd client: %s (retry %d/%d)\n", errstr, beanstalkd_retry_count, BEANSTALKD_MAX_RETRIES);
+    kill(getppid(), SIGTERM);
+    brook_log(config, LOG_ERR, "Can't create beanstalkd client: %s\n", errstr);
     return BROOK_ERROR;
   }
 
@@ -28,46 +22,14 @@ brook_beanstalkd_connect ( brook_conf_t* config ) {
 
   // ... connect client ...
   if ( !bsc_connect(bean_client, errstr) ) {
-    // ... replaced kill() with retry mechanism ...
-    brook_log(config, LOG_ERR, "Can't connect to beanstalkd: %s (retry %d/%d)\n", errstr, beanstalkd_retry_count, BEANSTALKD_MAX_RETRIES);
+    kill(getppid(), SIGTERM);
+    brook_log(config, LOG_ERR, "Can't connect connect to beantslakd: %s\n", errstr);
     return BROOK_ERROR;
   }
 
-  // ... reset retry count on successful connection ...
-  beanstalkd_retry_count = 0;
   brook_log(config, LOG_INFO, "Process connected to beanstalkd ...\n");
 
   return BROOK_OK;
-}
-
-/**
- * Retry connection to beanstalkd with exponential backoff
- */
-int
-brook_beanstalkd_retry_connect ( brook_conf_t* config ) {
-  if ( beanstalkd_retry_count >= BEANSTALKD_MAX_RETRIES ) {
-    brook_log(config, LOG_ERR, "Beanstalkd max retries (%d) exceeded. Giving up.\n", BEANSTALKD_MAX_RETRIES);
-    return BROOK_ERROR;
-  }
-
-  time_t now = time(NULL);
-  int delay = BEANSTALKD_RETRY_BASE_DELAY * (1 << beanstalkd_retry_count);  // exponential backoff
-  
-  if (now - beanstalkd_last_retry < delay) {
-    delay = delay - (now - beanstalkd_last_retry);
-    if (delay > 0) {
-      brook_log(config, LOG_INFO, "Waiting %ds before beanstalkd retry...\n", delay);
-      sleep(delay);
-    }
-  }
-
-  beanstalkd_retry_count++;
-  beanstalkd_last_retry = now;
-
-  brook_log(config, LOG_INFO, "Retrying beanstalkd connection (attempt %d/%d)...\n", 
-    beanstalkd_retry_count, BEANSTALKD_MAX_RETRIES);
-
-  return brook_beanstalkd_connect(config);
 }
 
 int
