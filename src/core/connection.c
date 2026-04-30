@@ -40,6 +40,7 @@ brook_handle_connection ( brook_conf_t* config) {
   con->_parser->nread = 0;
   con->_parser->state = 0;
   con->_parser->header_state = 0;
+  con->_parser->params = NULL;
 
   con->_reponse._data = NULL;
   con->_reponse.nwrite = 0;
@@ -92,10 +93,12 @@ brook_connection_read ( brook_connection_t* con ) {
 
   size_t _n = brook_socket_recv(con->_fd, buf, buffer->free);
   if ( _n == -1) {
+    // ... some error append when socket reading ...
     brook_log(con->_config, LOG_ERR, "Socket receive error: %s (errno: %d) at %s:%d\n", strerror(errno), errno, __FILE__, __LINE__);
     brook_connection_reply(con, 500, (brook_str_t) brook_str("Internal Server Error"), (brook_str_t) brook_str("An error occurred while reading from the network socket. The stream may have been reset by the peer."));
     return BROOK_ERROR;
   } else if ( _n == 0 ) {
+    // ... client disconnect socket ...
     brook_log(con->_config, LOG_DEBUG, "Connection closed by peer (client disconnected) at %s:%d\n", __FILE__, __LINE__);
     brook_destroy_connection(con);
     return BROOK_ERROR;
@@ -245,6 +248,7 @@ brook_connection_write ( brook_connection_t* con ) {
 
   size_t b = send(con->_fd, buf, len, 0);
   con->_reponse._data->nread += b;
+  con->_reponse.nwrite += b;
 
   // ... if we dont send all buffer will return to send the next of buffer
   if ( con->_reponse._data->len != con->_reponse._data->nread ) {
@@ -259,15 +263,35 @@ brook_connection_write ( brook_connection_t* con ) {
     return BROOK_DONE;
   } else {
 
-    brook_log(con->_config, LOG_INFO,
-      "%s \"%s %.*s%.*s\" %d\n",
-      con->_ip,
-      brook_method_str[con->_parser->method],
-      con->_parser->url.len,
-      con->_parser->url.data,
-      con->_parser->params_s.data ? con->_parser->params_s.len : 0,
-      con->_parser->params_s.data ? con->_parser->params_s.data : "",
-      con->_reponse.status
+    brook_log(
+      con->_config,
+      LOG_INFO,
+      "FD: %d IP: %s " \
+      "Method: %s Url: %.*s%.*s " \
+      "Content-Length: %d "
+      "Access-Token: %.*s " \
+      "Product Key: %.s " \
+      "Status: %d Bytes: %d\n"
+      ,
+        con->_fd,
+        con->_ip,
+
+        brook_method_str[con->_parser->method],
+        con->_parser->url.len,
+        con->_parser->url.data,
+        con->_parser->params_s.data ? con->_parser->params_s.len : 0,
+        con->_parser->params_s.data ? con->_parser->params_s.data : "",
+
+        con->_parser->content_length,
+
+        con->session.token.data ? con->session.token.len : 0,
+        con->session.token.data ? con->session.token.data : "",
+
+        con->session.product_key,
+
+        con->_reponse.status,
+        con->_reponse.nwrite
+
     );
 
     free(buffer->data);
