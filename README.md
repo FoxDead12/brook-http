@@ -1,23 +1,5 @@
-<h1 align="left">BROOK HTTP</h1>
+## BROOK
 
-###
+Servidor HTTP de alta performance e eficiente tendo como objetivo a submissão de jobs. A arquitetura deste servidor foi baseada pelo nginx, fazendo uso de eventos dos files descriptors e a implementação de worker processes. O servidor deve ser usado com o nginx a fazer proxy pois não serve ficheiros estaticos e nem possui ecriptção SSL e apenas aceita conexões localhost.
 
-<p align="left">Implementação de um servidor http em C. <br>É um projeto pessoal mas com o intuito de uso real em produção, tendo foco em eficiência e escalável.<br>O objetivo principal deste servidor e conseguir aguentar imensas conexões simultaneamente mas com o foco de submição de jobs para uma fila (beanstalkd), a ideia é conseguir fazer um sistema escalavel para sistemas com muita carga.</p>
-
-###
-
-<h2 align="left">Tecnologias</h2>
-
-###
-
-<p align="left">Linguagem C</p>
-
-###
-
-<p align="left">beanstalkd</p>
-
-###
-
-<p align="left">Redis</p>
-
-###
+A sua função é conseguir submeter jobs para um serviço de queue beanstalkd

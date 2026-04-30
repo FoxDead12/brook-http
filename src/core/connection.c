@@ -92,11 +92,12 @@ brook_connection_read ( brook_connection_t* con ) {
 
   size_t _n = brook_socket_recv(con->_fd, buf, buffer->free);
   if ( _n == -1) {
-    brook_log(con->_config, LOG_ERR, "Socket receive error: %s (errno: %d) at %s:%d", strerror(errno), errno, __FILE__, __LINE__);
+    brook_log(con->_config, LOG_ERR, "Socket receive error: %s (errno: %d) at %s:%d\n", strerror(errno), errno, __FILE__, __LINE__);
     brook_connection_reply(con, 500, (brook_str_t) brook_str("Internal Server Error"), (brook_str_t) brook_str("An error occurred while reading from the network socket. The stream may have been reset by the peer."));
     return BROOK_ERROR;
   } else if ( _n == 0 ) {
-    brook_log(con->_config, LOG_DEBUG, "Connection closed by peer (client disconnected) at %s:%d", __FILE__, __LINE__);
+    brook_log(con->_config, LOG_DEBUG, "Connection closed by peer (client disconnected) at %s:%d\n", __FILE__, __LINE__);
+    brook_destroy_connection(con);
     return BROOK_ERROR;
   }
 
@@ -257,6 +258,7 @@ brook_connection_write ( brook_connection_t* con ) {
     free(buffer);
     return BROOK_DONE;
   } else {
+
     brook_log(con->_config, LOG_INFO,
       "%s \"%s %.*s%.*s\" %d\n",
       con->_ip,
@@ -267,8 +269,10 @@ brook_connection_write ( brook_connection_t* con ) {
       con->_parser->params_s.data ? con->_parser->params_s.data : "",
       con->_reponse.status
     );
+
     free(buffer->data);
     free(buffer);
+
     brook_destroy_connection(con);
     return BROOK_OK;
   }
