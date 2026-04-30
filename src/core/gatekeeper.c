@@ -101,19 +101,19 @@ brook_gatekeeper_load ( brook_conf_t* config ) {
 }
 
 brook_gatekeeper_node_t*
-brook_gatekeeper_create_node ( const char* path, const char* tube, char* product_key, uint32_t method_mask, int role_mask ) {
+brook_gatekeeper_create_node ( const char* path, const char* tube, const char* product_key, uint32_t method_mask, int role_mask ) {
 
   brook_gatekeeper_node_t* node = malloc(sizeof(brook_gatekeeper_node_t));
   node->methods_mask = method_mask;
   node->role_mask = role_mask;
 
-  node->url.data = strdup(path);
+  node->url.data = (unsigned char*) strdup(path);
   node->url.len = strlen(path);
 
-  node->tube.data = strdup(tube);
+  node->tube.data = (unsigned char*) strdup(tube);
   node->tube.len = strlen(tube);
 
-  node->product_key.data = strdup(product_key);
+  node->product_key.data = (unsigned char*) strdup(product_key);
   node->product_key.len = strlen(product_key);
 
   node->left = NULL;
@@ -128,13 +128,13 @@ brook_gatekeeper_create_node ( const char* path, const char* tube, char* product
  * if is necessary variables need be sended in params of url
  */
 brook_gatekeeper_node_t*
-brook_gatekeeper_insert_route ( brook_gatekeeper_node_t* root, const char* path, const char* tube, char* product_key, uint32_t method_mask, int role_mask ) {
+brook_gatekeeper_insert_route ( brook_gatekeeper_node_t* root, const char* path, const char* tube, const char* product_key, uint32_t method_mask, int role_mask ) {
 
   if ( root == NULL ) {
     return brook_gatekeeper_create_node(path, tube, product_key, method_mask, role_mask);
   }
 
-  int res = strncmp(root->url.data, path, root->url.len);
+  int res = strncmp((char*) root->url.data, path, root->url.len);
 
   if ( res < 0 ) {
     root->left = brook_gatekeeper_insert_route(root->left, path, tube, product_key, method_mask, role_mask);
@@ -156,9 +156,9 @@ brook_gatekeeper_match_route ( brook_gatekeeper_node_t *root, brook_str_t url, u
   int res = 0;
   if ( root->url.len > url.len ) {
     // ... this case problably don't crash because is inside a buffer
-    res = strncmp(root->url.data, url.data, root->url.len);
+    res = strncmp((char*) root->url.data, (char*) url.data, root->url.len);
   } else {
-    res = strncmp(root->url.data, url.data, url.len);
+    res = strncmp((char*) root->url.data, (char*) url.data, url.len);
   }
 
   if ( res == 0 ) {
@@ -184,7 +184,7 @@ brook_gatekeeper_validate_session ( brook_connection_t* con ) {
     return BROOK_ERROR;
   }
 
-  if ( strcmp(gatekeeper_role->product_key.data, con->session.product_key) != 0 ) {
+  if ( strcmp((char*) gatekeeper_role->product_key.data, con->session.product_key) != 0 ) {
     return BROOK_ERROR;
   }
 

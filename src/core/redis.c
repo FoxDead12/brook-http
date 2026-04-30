@@ -131,6 +131,8 @@ brook_redis_write (redisAsyncContext* client, int POOL_INDEX) {
 void
 brook_redis_on_subescribe_message ( redisAsyncContext* redis_con, void* message, void* _ ) {
 
+  (void) redis_con;
+
   redisReply *reply = message;
   if ( !reply ) return;
   if ( !reply->element[2]->str ) return;
@@ -204,20 +206,20 @@ brook_redis_on_subescribe_message ( redisAsyncContext* redis_con, void* message,
       cJSON_ArrayForEach(_value, _h_item) {
         if (cJSON_IsString(_value) && _value->valuestring != NULL) {
           const char* value = _value->valuestring;
-          brook_http_response_add_header_json(con, (brook_str_t) {strlen(key), key}, (brook_str_t) {strlen(value), value});
+          brook_http_response_add_header_json(con, (brook_str_t) {strlen(key), (unsigned char*) key}, (brook_str_t) {strlen(value), (unsigned char*) value});
         }
       }
     } else if (cJSON_IsString(_h_item) && _h_item->valuestring != NULL) {
       // ... value is a string ...
       const char* value = _h_item->valuestring;
-      brook_http_response_add_header_json(con, (brook_str_t) {strlen(key), key}, (brook_str_t) {strlen(value), value});
+      brook_http_response_add_header_json(con, (brook_str_t) {strlen(key), (unsigned char*) key}, (brook_str_t) {strlen(value), (unsigned char*) value});
     }
 
   }
 
   // ... we have json ...
   brook_str_t body;
-  body.data = cJSON_PrintUnformatted(_j_payload);
+  body.data = (unsigned char*) cJSON_PrintUnformatted(_j_payload);
   body.len = strlen((const char*) body.data);
 
   brook_http_response_add_content_length(con, body.len);

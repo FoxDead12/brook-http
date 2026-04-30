@@ -82,7 +82,7 @@ static const uint8_t normal_url_char[32] = {
 int
 brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len ) {
 
-  for ( int i = 0; i < len; i++ ) {
+  for ( size_t i = 0; i < len; i++ ) {
 
     unsigned char ch = data[i];
 

@@ -139,7 +139,7 @@ brook_benstalkd_job_payload ( brook_connection_t* con ) {
   if ( con->_parser->params != NULL ) {
     cJSON *params = cJSON_CreateObject();
 
-    for (size_t i = 0; i < con->_parser->params_n; i++) {
+    for (int i = 0; i < con->_parser->params_n; i++) {
       brook_str_t key = con->_parser->params[i].key;
       brook_str_t value = con->_parser->params[i].value;
 
@@ -169,7 +169,7 @@ brook_benstalkd_job_payload ( brook_connection_t* con ) {
 
   // ... generate json string to send ...
   con->job.data.data = (unsigned char*) cJSON_PrintUnformatted(job);
-  con->job.data.len = strlen(con->job.data.data);
+  con->job.data.len = strlen((char*) con->job.data.data);
 
   cJSON_Delete(job);
   return BROOK_OK;
@@ -219,21 +219,21 @@ brook_benstalkd_connection_error ( bsc *client, bsc_error_t error ) {
 }
 
 void
-brook_benstalkd_on_use ( bsc *client, struct bsc_use_info *info ) {
+brook_benstalkd_on_use ( bsc* _, struct bsc_use_info *info ) {
   brook_connection_t* con = (brook_connection_t*) info->user_data;
   con->job.state = s_job_used;
 }
 
 void
-brook_benstalkd_on_put ( bsc *client, struct bsc_put_info *info ) {
+brook_benstalkd_on_put ( bsc* _, struct bsc_put_info *info ) {
   brook_connection_t* con = (brook_connection_t*) info->user_data;
   if (info->response.code == BSC_PUT_RES_INSERTED) {
     con->job.state = s_job_put;
     con->job.id = info->response.id;
   } else {
     if ( con->job.retray < con->job.max_retray ) {
-      bsc_use(bean_client, brook_benstalkd_on_use, con, con->job.tube.data);
-      bsc_put(bean_client, brook_benstalkd_on_put, con, con->job.priority, con->job.delay, con->job.ttr, con->job.data.len, con->job.data.data, false);
+      bsc_use(bean_client, brook_benstalkd_on_use, con, (char*) con->job.tube.data);
+      bsc_put(bean_client, brook_benstalkd_on_put, con, con->job.priority, con->job.delay, con->job.ttr, con->job.data.len, (char*) con->job.data.data, false);
       _fds[POOL_INDEX_BEANSTALKD].events |= POLLOUT;
       ++con->job.retray;
     } else {

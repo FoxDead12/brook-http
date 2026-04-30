@@ -34,13 +34,12 @@ brook_session_get_client_session ( brook_connection_t* con ) {
 }
 
 int
-brook_session_validate_token_formater ( brook_connection_t* con, brook_str_t token ) {
+brook_session_validate_token_formater ( brook_connection_t* _, brook_str_t token ) {
 
-  // const regex_cookie = /^([A-Za-z0-9]+-[A-Za-z0-9+\/]{86}==)$/;
   int state = s_token_user_id;
   int index = 0;
 
-  for ( int i = 0; i < token.len; i++ ) {
+  for ( size_t i = 0; i < token.len; i++ ) {
 
     // ... get char ...
     unsigned char c = token.data[i];
@@ -116,7 +115,7 @@ brook_session_parse_token_from_cookies ( brook_connection_t* con ) {
   brook_str_t token = {0, NULL};
 
   // ... search in cookies the token key ...
-  for ( int i = 0; i < con->_parser->cookies.len; i++ ) {
+  for ( size_t i = 0; i < con->_parser->cookies.len; i++ ) {
     // ... get char ...
     unsigned char c = con->_parser->cookies.data[i];
     if ( index >= 0 ) {
@@ -127,7 +126,7 @@ brook_session_parse_token_from_cookies ( brook_connection_t* con ) {
       if ( c == key[index] ) {
         index++;
       } else if ( index > index_max && c == '=' ) {
-        if ( i + 1 < con->_parser->cookies.len ) {
+        if ( i + (size_t)1 < con->_parser->cookies.len ) {
           token.data = &con->_parser->cookies.data[i + 1];
           token.len = 0;
         } else {

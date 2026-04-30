@@ -90,8 +90,8 @@ brook_connection_read ( brook_connection_t* con ) {
   }
 
   unsigned char* buf = buffer->data + buffer->len;
+  ssize_t _n = brook_socket_recv(con->_fd, buf, buffer->free);
 
-  size_t _n = brook_socket_recv(con->_fd, buf, buffer->free);
   if ( _n == -1) {
     // ... some error append when socket reading ...
     brook_log(con->_config, LOG_ERR, "Socket receive error: %s (errno: %d) at %s:%d\n", strerror(errno), errno, __FILE__, __LINE__);
@@ -104,8 +104,8 @@ brook_connection_read ( brook_connection_t* con ) {
     return BROOK_ERROR;
   }
 
-  buffer->free -= _n;
-  buffer->len += _n;
+  buffer->free -= (size_t) _n;
+  buffer->len  += (size_t) _n;
 
   // ... make http parse, consoant data reading ...
   if ( brook_http_parse(con->_parser, buf, _n) == BROOK_ERROR ) {
@@ -279,13 +279,13 @@ brook_connection_write ( brook_connection_t* con ) {
         brook_method_str[con->_parser->method],
         con->_parser->url.len,
         con->_parser->url.data,
-        con->_parser->params_s.data ? con->_parser->params_s.len : 0,
-        con->_parser->params_s.data ? con->_parser->params_s.data : "",
+        con->_parser->params_s.data ? (char*) con->_parser->params_s.len : 0,
+        con->_parser->params_s.data ? (char*) con->_parser->params_s.data : "",
 
         con->_parser->content_length,
 
-        con->session.token.data ? con->session.token.len : 0,
-        con->session.token.data ? con->session.token.data : "",
+        con->session.token.data ? (char*) con->session.token.len : 0,
+        con->session.token.data ? (char*) con->session.token.data : "",
 
         con->session.product_key,
 

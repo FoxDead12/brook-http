@@ -41,7 +41,7 @@ brook_http_response_add_status (brook_connection_t* con, uint16_t status) {
   brook_str_t _h;
 
   _h.data = http;
-  _h.len = snprintf(http, sizeof(http), "HTTP/1.1 %d %s", status, brook_http_status_code_str(status));
+  _h.len = snprintf((char*) http, sizeof(http), "HTTP/1.1 %d %s", status, brook_http_status_code_str(status));
 
   brook_http_response_buffer_join(con, _h);
   brook_http_response_buffer_join(con, (brook_str_t) brook_str("\r\n"));
@@ -91,7 +91,6 @@ brook_http_response_buffer_join (brook_connection_t* con, brook_str_t data) {
 
   size_t bwrite = 0;
   size_t len = 0;
-  int work = 0;
 
   while ( bwrite < data.len ) {
     // add to buffer response the data receive in buffer
@@ -143,7 +142,7 @@ brook_http_response_buffer_join (brook_connection_t* con, brook_str_t data) {
   return BROOK_OK;
 }
 
-static const char* brook_http_status_code_str (uint16_t code) {
+char* brook_http_status_code_str (uint16_t code) {
   switch (code) {
     case 100: return "Continue";
     case 101: return "Switching Protocols";
