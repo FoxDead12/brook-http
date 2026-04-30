@@ -81,6 +81,7 @@ brook_socket_close (int socket) {
 int
 brook_socket_accept (int socket, struct sockaddr* _addr, socklen_t* _addr_len) {
 
+  // ... accept connection ...
   int _socket = accept(socket, _addr, _addr_len);
 
   // ... don't catch the connection is possible, multi process will try catch att same time ...

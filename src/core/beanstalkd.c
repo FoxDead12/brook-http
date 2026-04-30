@@ -23,7 +23,7 @@ brook_beanstalkd_connect ( brook_conf_t* config ) {
   // ... connect client ...
   if ( !bsc_connect(bean_client, errstr) ) {
     kill(getppid(), SIGTERM);
-    brook_log(config, LOG_ERR, "Can't connect connect to beantslakd: %s\n", errstr);
+    brook_log(config, LOG_ERR, "Can't connect to beantslakd: %s\n", errstr);
     return BROOK_ERROR;
   }
 
@@ -44,7 +44,10 @@ brook_benstalkd_create_job ( brook_connection_t* con ) {
   con->job.max_retray = 3;
   con->job.retray = 0;
 
-  brook_benstalkd_job_payload(con);
+  // ... create job payload ...
+  if ( brook_benstalkd_job_payload(con) == BROOK_ERROR ) {
+    return BROOK_ERROR;
+  }
 
   con->job.tube = con->_role->tube;
 

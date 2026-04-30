@@ -20,39 +20,33 @@ brook_handle_connection ( brook_conf_t* config) {
 
   // ... accept connection ...
   int _socket = brook_socket_accept(config->socket, (struct sockaddr*) &_addr, &addr_len);
-  if ( _socket == BROOK_DONE ) {
-    return BROOK_DONE;
-  }
+  if ( _socket == BROOK_DONE ) return BROOK_DONE;
 
-  // ... create connection struct and
-  brook_connection_t* con = malloc(sizeof(brook_connection_t));
+  // ... create connection struct clean ...
+  brook_connection_t* con = calloc(1, sizeof(brook_connection_t));
+  if ( !con ) return BROOK_ERROR;
+
+  // ... initial attributions ...
   con->_config = config;
-  con->_fd = _socket;
-  con->_status = 0;
-  con->_data = NULL;
-  con->_port = ntohs(_addr.sin_port);
+  con->_fd    = _socket;
+  con->_port  = ntohs(_addr.sin_port);
   inet_ntop(AF_INET, &(_addr.sin_addr), con->_ip, INET_ADDRSTRLEN);
 
-  con->_parser = malloc(sizeof(brook_http_parse_t));
-  con->_parser->content_length = 0;
-  con->_parser->http_minor = 0;
-  con->_parser->method = 0;
-  con->_parser->nread = 0;
-  con->_parser->state = 0;
-  con->_parser->header_state = 0;
-  con->_parser->params = NULL;
+  // ... init memory clean ...
+  con->_parser = calloc(1, sizeof(brook_http_parse_t));
 
-  con->_reponse._data = NULL;
-  con->_reponse.nwrite = 0;
-  con->_reponse.status = 0;
-
-  con->_role = NULL;
-
-  memset(&con->session, 0, sizeof(brook_session_t));
-  memset(&con->job, 0, sizeof(brook_job_t));
+  if ( !con->_parser ) {
+    free(con);
+    return BROOK_OK;
+  }
 
   // ... add conection to list ...
-  brook_add_connection(con);
+  if ( brook_add_connection(con) == BROOK_ERROR ) {
+    // ... list is full ...
+    free(con->_parser);
+    free(con);
+    return BROOK_ERROR;
+  }
 
   return BROOK_OK;
 }
@@ -93,15 +87,19 @@ brook_connection_read ( brook_connection_t* con ) {
   ssize_t _n = brook_socket_recv(con->_fd, buf, buffer->free);
 
   if ( _n == -1) {
+
     // ... some error append when socket reading ...
     brook_log(con->_config, LOG_ERR, "Socket receive error: %s (errno: %d) at %s:%d\n", strerror(errno), errno, __FILE__, __LINE__);
     brook_connection_reply(con, 500, (brook_str_t) brook_str("Internal Server Error"), (brook_str_t) brook_str("An error occurred while reading from the network socket. The stream may have been reset by the peer."));
     return BROOK_ERROR;
+
   } else if ( _n == 0 ) {
+
     // ... client disconnect socket ...
     brook_log(con->_config, LOG_DEBUG, "Connection closed by peer (client disconnected) at %s:%d\n", __FILE__, __LINE__);
     brook_destroy_connection(con);
     return BROOK_ERROR;
+
   }
 
   buffer->free -= (size_t) _n;
@@ -116,6 +114,10 @@ brook_connection_read ( brook_connection_t* con ) {
   // ... only make this logic when is parsing header ...
   if ( con->_parser->state < s_req_headers_done ) {
     // we have a problem, header is big than 4096 bytes
+
+    // ... clear parser memory to retray ...
+    memset(con->_parser, 0, sizeof(brook_http_parse_t));
+
     // so will realoc buffer to a bigger size
     size_t size_to_sum = 4096;
 
@@ -204,7 +206,9 @@ brook_connection_read ( brook_connection_t* con ) {
       }
     } else {
       // ... public method ...
-      brook_benstalkd_create_job(con);
+      if ( brook_benstalkd_create_job(con) == BROOK_ERROR ) {
+        return BROOK_ERROR;
+      }
     }
 
     return BROOK_OK; // parser is finish

@@ -47,7 +47,7 @@ main (int argc, char **argv) {
 
   while (1) {
     int status;
-    pid_t dead_pid = wait(&status);
+    pid_t dead_pid = waitpid(-1, &status, WNOHANG);
 
     if (dead_pid > 0) {
       if (WIFEXITED(status)) {

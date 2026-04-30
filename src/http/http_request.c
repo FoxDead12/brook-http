@@ -90,23 +90,11 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
 
       case s_req_start:
       {
-        parser->url.data = NULL;
-        parser->url.len = 0;
-
-        parser->params = NULL;
-        parser->params_s.data = NULL;
-        parser->params_s.len = 0;
-
-        parser->cookies.data = NULL;
-        parser->cookies.len = 0;
 
         if ( ch == '\r' || ch == '\n' ) {
           return BROOK_ERROR;
         }
         parser->index = 1;
-        parser->method = 0;
-        parser->nheader = 0;
-        parser->nread = 0;
 
         switch (tokens[ch]) {
           case 'g': parser->method = GET; break;
@@ -196,11 +184,6 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
             // ... this is a necessary field, so assume its ok
             parser->state = s_req_params;
             parser->index = 0;              // ... need force reset of index (url is done)
-            // ... params array variables ...
-            parser->params = NULL;
-            parser->params_n = 0;
-            parser->params_capacity = 0;
-
             // ... store params string position ...
             parser->params_s.data = &data[i];
             parser->params_s.len = 1;
