@@ -2,12 +2,12 @@
 #include "core/beanstalkd.h"
 #include "core/redis.h"
 
-int MAX_FD = 1024;   // ... max connections at same time ...
-int CURRENT_FD = 0;
-char brook_process_id[32];
-
-brook_connection_t** _connections = NULL;
-struct pollfd* _fds = NULL;
+char                 brook_process_id[32] = {0};
+int                  CURRENT_FD           = 0;
+int                  MAX_FD               = 1024;   // ... max connections at same time ...
+struct pollfd*       _fds                 = NULL;
+brook_connection_t** _connections         = NULL;
+int                  keep_running         = 1;
 
 int
 brook_multi_processes_start (brook_conf_t* config, int num) {
@@ -19,6 +19,7 @@ brook_multi_processes_start (brook_conf_t* config, int num) {
     if (pid < 0) {
       perror("fork");
     }
+
     if (pid == 0) {
       brook_process_start(config);
       exit(0);
@@ -27,6 +28,14 @@ brook_multi_processes_start (brook_conf_t* config, int num) {
   return BROOK_OK;
 }
 
+/**
+ * Brook worker process singal shutdown handles
+ */
+void
+brook_processes_shut_down_signals ( int _ ) {
+  keep_running = 0;
+  return;
+}
 
 /**
  * Process logic, will run event loop logic,
@@ -36,43 +45,58 @@ brook_multi_processes_start (brook_conf_t* config, int num) {
 int
 brook_process_start ( brook_conf_t* config ) {
 
+  // ... set signals to controll shutdown ...
+  signal(SIGINT, brook_processes_shut_down_signals);
+  signal(SIGTERM, brook_processes_shut_down_signals);
+
   #ifdef __linux__
-    prctl(PR_SET_PDEATHSIG, SIGTERM);
+      prctl(PR_SET_PDEATHSIG, SIGTERM);
   #endif
 
   // ... set values of global variables of process ...
-  int static_fds = 4;         // ... for now is only tcp socket of server and beanstalkd client and redis client
+  int static_fds = 4;         // ... for now is only tcp socket of server and beanstalkd client and two redis client
 
-  _fds = malloc(sizeof(struct pollfd) * (MAX_FD + static_fds));
-  _connections = malloc(sizeof(brook_connection_t*) * (MAX_FD + static_fds));
+  // ... alloc memory to all files descriptors connections ...
+  {
+    _fds = malloc(sizeof(struct pollfd) * (MAX_FD + static_fds));
+
+    if ( !_fds ) {
+      brook_log(config, LOG_ERR, "Malloc failed at %s:%d: %s\n", __FILE__, __LINE__, strerror(errno));
+      return BROOK_ERROR;
+    }
+  }
+
+  // ... alloc memory to store all connections HTTP info ...
+  {
+    _connections = malloc(sizeof(brook_connection_t*) * (MAX_FD + static_fds));
+
+    if ( !_connections ) {
+      brook_log(config, LOG_ERR, "Malloc failed at %s:%d: %s\n", __FILE__, __LINE__, strerror(errno));
+      return BROOK_ERROR;
+    }
+  }
 
   // ... generate id of process ...
   pid_t current_pid = getpid();
   snprintf(brook_process_id, sizeof(brook_process_id), "brook-%d", (int)current_pid);
 
-  brook_log(config, LOG_INFO, "Process is starting ...\n");
+  brook_log(config, LOG_INFO, "Process is setuping ...\n");
 
   // ... connect to beanstalkd ...
   if ( brook_beanstalkd_connect(config) == BROOK_ERROR ) {
-    char *err_desc = strerror(errno);
-    brook_log(config, LOG_ERR, "Can't create beanstalkd client: %s (errno: %d)\n", err_desc, errno);
-    perror("brook_beanstalkd_connect");
+    brook_log(config, LOG_ERR, "Can't create beanstalkd client: %s (errno: %d)\n", strerror(errno), errno);
     return BROOK_ERROR;
   }
 
   // ... connect to redis ...
   if ( brook_redis_connect(config, 0) == BROOK_ERROR ) {
-    char *err_desc = strerror(errno);
-    brook_log(config, LOG_ERR, "Can't create redis client: %s (errno: %d)\n", err_desc, errno);
-    perror("brook_redis_connect");
+    brook_log(config, LOG_ERR, "Can't create redis client: %s (errno: %d)\n", strerror(errno), errno);
     return BROOK_ERROR;
   }
 
   // ... connect to redis subescriber ...
   if ( brook_redis_connect(config, 1) == BROOK_ERROR ) {
-    char *err_desc = strerror(errno);
-    brook_log(config, LOG_ERR, "Can't create redis client: %s (errno: %d)\n", err_desc, errno);
-    perror("brook_redis_connect");
+    brook_log(config, LOG_ERR, "Can't create redis client: %s (errno: %d)\n", strerror(errno), errno);
     return BROOK_ERROR;
   }
 
@@ -101,35 +125,37 @@ brook_process_start ( brook_conf_t* config ) {
   _fds[POOL_INDEX_REDIS_SUBSCRIBER].events = POLLIN | POLLOUT;
   _fds[POOL_INDEX_REDIS_SUBSCRIBER].revents = 0;
 
-  // CURRENT_FD += static_fds;
-
-  brook_log(config, LOG_INFO, "Process is read to work ...\n");
+  brook_log(config, LOG_INFO, "Process start to work ...\n");
 
   // ... event loop start here ...
-  while (1) {
+  while (keep_running == 1) {
 
-    #ifndef __linux__
-      if (getppid() == 1) {
-        brook_log(config, LOG_ERR, " Orphan child detected. Shutting down.\n");
-        break;
-      }
-    #endif
+#ifndef __linux__
+    if (getppid() == 1) {
+      keep_running = 0;
+      break;
+    }
+#endif
 
-    int t = CURRENT_FD + static_fds; // ... this dont make sense only for first iteration when server start clean
+    int t = CURRENT_FD + static_fds;
 
     // ... wait for events in sockets/file descriptors ...
     int nready = poll(_fds, t, -1);
+
     if ( nready == -1 ) {
-      perror("poll");
-      return BROOK_ERROR;
+      keep_running = 0;
+      break;
     }
 
     // ... check all descriptors ...
     for ( int i = 0; i < t; i++ ) {
+
       struct pollfd* _fd = &_fds[i];
 
       // ... ignore empty index's ...
-      if ( _fd->fd == -1 ) continue;
+      if ( _fd->fd == -1 ) {
+        continue;
+      }
 
       if ( _fd->fd == config->socket && _fd->revents & POLLIN ) {
         // ... need accept TCP connection ...
@@ -191,5 +217,50 @@ brook_process_start ( brook_conf_t* config ) {
     }
   }
 
+brook_process_cleanup(config);
+
+  return BROOK_OK;
+}
+
+/**
+ * Method to close process, worker process
+ */
+int
+brook_process_cleanup ( brook_conf_t* config ) {
+
+  brook_log(config, LOG_INFO, "Cleaning up process %s before exit...\n", brook_process_id);
+
+  // ... close all connections ...
+  for (int i = 0; i < MAX_FD; i++) {
+    if (_connections && _connections[i] != NULL) {
+      brook_destroy_connection(_connections[i]);
+    }
+  }
+
+  if (_fds) {
+    free(_fds);
+    _fds = NULL;
+  }
+
+  if (_connections) {
+    free(_connections);
+    _connections = NULL;
+  }
+
+  if (bean_client != NULL) {
+    if (bean_client->fd >= 0) {
+      close(bean_client->fd);
+    }
+    free(bean_client);
+    bean_client = NULL;
+  }
+
+  close(redis_client->c.fd);
+  close(redis_client_sub->c.fd);
+
+  brook_log(config, LOG_INFO, "Process %s terminated safely.\n", brook_process_id);
+
+  // ... block for processor controll ...
+  sleep(2);
   return BROOK_OK;
 }

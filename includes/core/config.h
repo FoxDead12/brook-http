@@ -33,7 +33,6 @@
 #define POOL_INDEX_REDIS 2
 #define POOL_INDEX_REDIS_SUBSCRIBER 3
 
-
 // ... internal includes ...
 #include "types.h"
 #include "socket.h"
@@ -42,14 +41,15 @@
 #include "logger.h"
 
 // ... server settings ...
-extern int MAX_FD;       // ... i don't now if will be possible has 1024 connections, depende of systems settings
-extern int CURRENT_FD;
-extern bsc* bean_client;
-extern redisAsyncContext* redis_client;
-extern redisAsyncContext* redis_client_sub;
-extern char brook_process_id[32];
-
-extern struct pollfd* _fds;
+// ... global variables to each process ...
+extern int                  MAX_FD;       // ... i don't now if will be possible has 1024 connections, depende of systems settings
+extern int                  CURRENT_FD;
+extern bsc*                 bean_client;
+extern redisAsyncContext*   redis_client;
+extern redisAsyncContext*   redis_client_sub;
+extern char                 brook_process_id[32];
+extern struct pollfd*       _fds;
 extern brook_connection_t** _connections;
+extern int                  keep_running;
 
 #endif

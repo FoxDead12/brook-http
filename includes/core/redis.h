@@ -3,6 +3,7 @@
 
 #include "core/config.h"
 #include "hiredis/async.h"
+#include "hiredis/hiredis.h"
 #include <hiredis/sds.h>
 #include "http/http_response.h"
 

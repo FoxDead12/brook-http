@@ -36,6 +36,7 @@ brook_handle_connection ( brook_conf_t* config) {
   con->_parser = calloc(1, sizeof(brook_http_parse_t));
 
   if ( !con->_parser ) {
+    close(_socket);
     free(con);
     return BROOK_OK;
   }
@@ -43,6 +44,7 @@ brook_handle_connection ( brook_conf_t* config) {
   // ... add conection to list ...
   if ( brook_add_connection(con) == BROOK_ERROR ) {
     // ... list is full ...
+    close(_socket);
     free(con->_parser);
     free(con);
     return BROOK_ERROR;
@@ -69,7 +71,21 @@ brook_connection_read ( brook_connection_t* con ) {
 
   if ( buffer == NULL ) {
     buffer = malloc(sizeof(brook_buffer_chain_t));
+
+    if (!buffer) {
+      brook_log(con->_config, LOG_ERR, "Malloc failed at %s:%d: %s\n", __FILE__, __LINE__, strerror(errno));
+      brook_destroy_connection(con);
+      return BROOK_ERROR;
+    }
+
     buffer->data = malloc(4096);
+
+    if (!buffer->data) {
+      brook_log(con->_config, LOG_ERR, "Malloc failed at %s:%d: %s\n", __FILE__, __LINE__, strerror(errno));
+      brook_destroy_connection(con);
+      return BROOK_ERROR;
+    }
+
     buffer->next = NULL;
     buffer->size = 4096;
     buffer->len = 0;
@@ -96,7 +112,6 @@ brook_connection_read ( brook_connection_t* con ) {
   } else if ( _n == 0 ) {
 
     // ... client disconnect socket ...
-    brook_log(con->_config, LOG_DEBUG, "Connection closed by peer (client disconnected) at %s:%d\n", __FILE__, __LINE__);
     brook_destroy_connection(con);
     return BROOK_ERROR;
 
@@ -136,7 +151,14 @@ brook_connection_read ( brook_connection_t* con ) {
     }
 
     // ... realoc data of buffer ...
-    buffer->data = realloc(d_old, buffer->size);
+    unsigned char* tmp = realloc(d_old, buffer->size);
+
+    if (!tmp) {
+      brook_log(con->_config, LOG_ERR, "Realloc failed at %s:%d: %s\n", __FILE__, __LINE__, strerror(errno));
+      brook_destroy_connection(con);
+      return BROOK_ERROR;
+    }
+    buffer->data = tmp;
 
     // ... reset state of parser, to start over ...
     con->_parser->state = s_req_start;
@@ -159,7 +181,7 @@ brook_connection_read ( brook_connection_t* con ) {
       // ... validate gatekeeper ...
       brook_gatekeeper_node_t* route = brook_gatekeeper_match_route(con->_config->root, parser->url, parser->method);
 
-      if ( route == NULL ) {
+      if ( !route ) {
         brook_connection_reply(con, 404, (brook_str_t) brook_str("Resource Not Found"), (brook_str_t) brook_str("The server could not identify a route matching the provided path and method combination."));
         return BROOK_ERROR;
       } else {
@@ -174,22 +196,17 @@ brook_connection_read ( brook_connection_t* con ) {
     }
 
     // ... this can run multi times if body is bigger ...
-    if ( parser->method == POST || parser->method == PUT || parser->method == PATCH ) {
-      if ( parser->content_length > 0 ) {
-        // need get data so check if is ok
-        if ( parser->nread < parser->content_length ) {
-          parser->state = s_req_body;
-        } else {
-          parser->state = s_req_done;
-        }
-
+    if ( parser->content_length > 0 && (parser->method == POST || parser->method == PUT || parser->method == PATCH) ) {
+      // need get data so check if is ok
+      if ( parser->nread < parser->content_length ) {
+        parser->state = s_req_body;
       } else {
-        // its all parsed, now flow to send job
         parser->state = s_req_done;
       }
     } else {
       parser->state = s_req_done;
     }
+
   }
 
   // ... check if request is parsed ...
@@ -201,19 +218,14 @@ brook_connection_read ( brook_connection_t* con ) {
     // ... for now only validate request after receive all message ...
     if ( con->_role->role_mask > 0 ) {
       // ... session method, need validate session of user ...
-      if ( brook_session_get_client_session(con) == BROOK_ERROR ) {
-        return BROOK_ERROR;
-      }
+      return brook_session_get_client_session(con);
     } else {
       // ... public method ...
-      if ( brook_benstalkd_create_job(con) == BROOK_ERROR ) {
-        return BROOK_ERROR;
-      }
+      return brook_benstalkd_create_job(con);
     }
 
-    return BROOK_OK; // parser is finish
   } else {
-    return BROOK_DONE; // parser is finish
+    return BROOK_DONE; // parser is not finish
   }
 }
 

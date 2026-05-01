@@ -35,8 +35,8 @@ brook_redis_create_client ( brook_conf_t* config, redisAsyncContext** client, re
 
   // ... validate struct is beed created ...
   if ( c == NULL || c->err ) {
-    kill(getppid(), SIGTERM);
     brook_log(config, LOG_ERR, "Can't create redis client: %s\n", c->err);
+    keep_running = 0;
     return BROOK_ERROR;
   }
 
@@ -57,10 +57,10 @@ brook_redis_on_connect (const redisAsyncContext *c, int status) {
 
   // ... check status result ...
   if ( status == -1 ) {
-    perror("Can't connect connect to redis");
     brook_log(config, LOG_ERR, "Can't connect connect to redis: %s\n", c->errstr);
-    kill(getppid(), SIGTERM);
-    exit(BROOK_ERROR);
+    keep_running = 0;
+    return;
+
   }
 
   brook_log(config, LOG_INFO, "Process connected to redis ...\n");
@@ -76,10 +76,9 @@ brook_redis_sub_on_connect (const redisAsyncContext *c, int status) {
 
   // ... check status result ...
   if ( status == -1 ) {
-    perror("Can't connect connect to redis");
     brook_log(config, LOG_ERR, "Can't connect connect to redis: %s\n", c->errstr);
-    kill(getppid(), SIGTERM);
-    exit(BROOK_ERROR);
+    keep_running = 0;
+    return;
   }
 
   // ... each process will has individual channel
@@ -105,8 +104,8 @@ brook_redis_on_disconnect (const redisAsyncContext *c, int status) {
     // A desconexão foi solicitada via redisAsyncDisconnect
     //printf("Redis desconectado manualmente.\n");
   }
-  sleep(5);
-  exit(BROOK_ERROR);
+
+  keep_running = 0;
 }
 
 /**
