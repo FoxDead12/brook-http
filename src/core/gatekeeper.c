@@ -100,6 +100,30 @@ brook_gatekeeper_load ( brook_conf_t* config ) {
   return BROOK_OK;
 }
 
+void
+brook_gatekeeper_free (brook_gatekeeper_node_t* root) {
+  if (root == NULL) {
+    return;
+  }
+
+  brook_gatekeeper_free(root->left);
+  brook_gatekeeper_free(root->rigth);
+
+  if (root->url.data) {
+    free(root->url.data);
+  }
+
+  if (root->tube.data) {
+    free(root->tube.data);
+  }
+
+  if (root->product_key.data) {
+    free(root->product_key.data);
+  }
+
+  free(root);
+}
+
 brook_gatekeeper_node_t*
 brook_gatekeeper_create_node ( const char* path, const char* tube, const char* product_key, uint32_t method_mask, int role_mask ) {
 

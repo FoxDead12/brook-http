@@ -74,7 +74,6 @@ main (int argc, char **argv) {
       }
 
       default: {
-
         // ... get returned code of process ...
         int exit_code = WEXITSTATUS(status);
 
@@ -98,6 +97,8 @@ main (int argc, char **argv) {
   brook_log(config, LOG_INFO, "All workers terminated. Cleaning up.\n");
   brook_log(config, LOG_INFO, "Main process shutdown.\n");
 
+  // ... clean memory ...
+  brook_gatekeeper_free(config->root);
   free(config);
   return BROOK_OK;
 }
