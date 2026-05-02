@@ -7,7 +7,6 @@ int                  CURRENT_FD           = 0;
 int                  MAX_FD               = 1024;   // ... max connections at same time ...
 struct pollfd*       _fds                 = NULL;
 brook_connection_t** _connections         = NULL;
-int                  keep_running         = 1;
 
 int
 brook_multi_processes_start (brook_conf_t* config, int num) {
@@ -18,11 +17,14 @@ brook_multi_processes_start (brook_conf_t* config, int num) {
 
     if (pid < 0) {
       perror("fork");
+      return BROOK_ERROR;
     }
 
     if (pid == 0) {
       brook_process_start(config);
+      sleep(2);
       exit(0);
+      return BROOK_OK;
     }
   }
   return BROOK_OK;
@@ -48,10 +50,6 @@ brook_process_start ( brook_conf_t* config ) {
   // ... set signals to controll shutdown ...
   signal(SIGINT, brook_processes_shut_down_signals);
   signal(SIGTERM, brook_processes_shut_down_signals);
-
-  #ifdef __linux__
-      prctl(PR_SET_PDEATHSIG, SIGTERM);
-  #endif
 
   // ... set values of global variables of process ...
   int static_fds = 4;         // ... for now is only tcp socket of server and beanstalkd client and two redis client
@@ -130,12 +128,12 @@ brook_process_start ( brook_conf_t* config ) {
   // ... event loop start here ...
   while (keep_running == 1) {
 
-#ifndef __linux__
-    if (getppid() == 1) {
-      keep_running = 0;
-      break;
-    }
-#endif
+    // #ifndef __linux__
+    //     if (getppid() == 1) {
+    //       keep_running = 0;
+    //       break;
+    //     }
+    // #endif
 
     int t = CURRENT_FD + static_fds;
 
@@ -217,7 +215,8 @@ brook_process_start ( brook_conf_t* config ) {
     }
   }
 
-brook_process_cleanup(config);
+  // ... clean memory ...
+  brook_process_cleanup(config);
 
   return BROOK_OK;
 }
@@ -261,6 +260,5 @@ brook_process_cleanup ( brook_conf_t* config ) {
   brook_log(config, LOG_INFO, "Process %s terminated safely.\n", brook_process_id);
 
   // ... block for processor controll ...
-  sleep(2);
   return BROOK_OK;
 }

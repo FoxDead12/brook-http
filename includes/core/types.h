@@ -47,7 +47,6 @@ typedef struct brook_buffer_chain_s {
   size_t nread;     // ... only will use when is reading from buffer
   unsigned char* data;
   struct brook_buffer_chain_s* next;
-
 } brook_buffer_chain_t;
 
 typedef struct brook_gatekeeper_node_s {
