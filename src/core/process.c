@@ -8,6 +8,9 @@ int                  MAX_FD               = 1024;   // ... max connections at sa
 struct pollfd*       _fds                 = NULL;
 brook_connection_t** _connections         = NULL;
 
+/**
+ * Method to create worker processes
+ */
 int
 brook_multi_processes_start (brook_conf_t* config, int num) {
   pid_t pid;
@@ -128,6 +131,7 @@ brook_process_start ( brook_conf_t* config ) {
   // ... event loop start here ...
   while (keep_running == 1) {
 
+    // ... set num of current file descriptors ...
     int t = CURRENT_FD + static_fds;
 
     // ... wait for events in sockets/file descriptors ...

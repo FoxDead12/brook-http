@@ -100,5 +100,6 @@ main (int argc, char **argv) {
   // ... clean memory ...
   brook_gatekeeper_free(config->root);
   free(config);
+
   return BROOK_OK;
 }
