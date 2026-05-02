@@ -128,13 +128,6 @@ brook_process_start ( brook_conf_t* config ) {
   // ... event loop start here ...
   while (keep_running == 1) {
 
-    // #ifndef __linux__
-    //     if (getppid() == 1) {
-    //       keep_running = 0;
-    //       break;
-    //     }
-    // #endif
-
     int t = CURRENT_FD + static_fds;
 
     // ... wait for events in sockets/file descriptors ...
