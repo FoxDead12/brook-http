@@ -37,7 +37,8 @@ brook_multi_processes_start (brook_conf_t* config, int num) {
  * Brook worker process singal shutdown handles
  */
 void
-brook_processes_shut_down_signals ( int _ ) {
+brook_processes_shut_down_signals ( int sing ) {
+  (void)(sing);
   keep_running = 0;
   return;
 }

@@ -8,7 +8,8 @@ int keep_running = 1; // ... variable to controll process, main and workers ...
  * Brook main process singal shutdown handles
  */
 void
-brook_shut_down_signals ( int _ ) {
+brook_shut_down_signals ( int sing ) {
+  (void)(sing);
   keep_running = 0;
   return;
 }

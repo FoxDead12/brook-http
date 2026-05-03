@@ -254,7 +254,9 @@ brook_benstalkd_job_payload ( brook_connection_t* con ) {
 
 
 void
-brook_beanstalkd_on_tube_use ( bsc* _, struct bsc_use_info* info ) {
+brook_beanstalkd_on_tube_use ( bsc* _client, struct bsc_use_info* info ) {
+
+  (void)(_client);
 
   // ... parse connection from beanstalkd callback ...
   brook_connection_t* con = (brook_connection_t*) info->user_data;

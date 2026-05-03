@@ -14,12 +14,7 @@ typedef enum {
   LOG_LEVEL_LEN
 } LOG_LEVEL;
 
-static char * type[LOG_LEVEL_LEN] = {
-  "DEBUG",
-  "INFO",
-  "WARN",
-  "ERRO"
-};
+extern char* type[LOG_LEVEL_LEN];
 
 extern time_t logger_current_time;
 extern struct tm * logger_time;

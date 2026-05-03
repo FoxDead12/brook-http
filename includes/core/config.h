@@ -20,10 +20,8 @@
 #include <time.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <sys/wait.h>
 
-#ifdef __linux__
-  #include <sys/prctl.h>
-#endif
 
 #define BROOK_OK    0
 #define BROOK_ERROR -1

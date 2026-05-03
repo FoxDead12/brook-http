@@ -128,9 +128,10 @@ brook_redis_write (redisAsyncContext* client, int POOL_INDEX) {
  * Method used to handle subescriber messages comming from redis
  */
 void
-brook_redis_on_subescribe_message ( redisAsyncContext* redis_con, void* message, void* _ ) {
+brook_redis_on_subescribe_message ( redisAsyncContext* redis_con, void* message, void* privdata ) {
 
   (void) redis_con;
+  (void) privdata;
 
   redisReply *reply = message;
   if ( !reply ) return;

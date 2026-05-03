@@ -76,6 +76,16 @@ static const uint8_t normal_url_char[32] = {
 /* 120  x   121  y   122  z   123  {   124  |   125  }   126  ~   127 del */
         1    |   2    |   4    |   8    |   16   |   32   |   64   |   0, };
 
+
+char* brook_method_str[] = {
+  [DELETE] = "DELETE",
+  [GET]    = "GET",
+  [POST]   = "POST",
+  [PUT]    = "PUT",
+  [PATCH]  = "PATCH"
+};
+
+
 /**
  * Function to parse http data from buffers
  */
@@ -399,13 +409,16 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
         if (ch == ' ' || ch == '\t') {
           break;
         }
-        parser->state = s_req_header_value;
+
         if ( parser->header_state == s_content_length ) {
           parser->content_length = 0;
         } else if ( parser->header_state == s_cookie ) {
           parser->cookies.data = &data[i];
           parser->cookies.len = 0;
         }
+
+        parser->state = s_req_header_value;
+        [[fallthrough]];
       }
 
       case s_req_header_value:

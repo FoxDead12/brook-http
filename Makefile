@@ -10,7 +10,7 @@ BUILD_DIR = build
 OBJ_DIR = $(BUILD_DIR)/obj
 
 # Flags base
-CFLAGS = -I$(INC_DIR) -Wall -Wextra -O2
+CFLAGS = -I$(INC_DIR) -Wall -Wextra -O2 -Wall -W -pedantic -Wundef -Wshadow -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wmissing-noreturn -Wredundant-decls -Wnested-externs -Winline -Wlong-long
 LDFLAGS = -lcjson -lbeanstalkclient -lhiredis
 
 # 3. Ajustes específicos por OS

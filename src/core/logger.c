@@ -6,6 +6,13 @@ int LOGGER_CURRENT_DAY = 0;
 time_t logger_current_time;
 struct tm* logger_time;
 
+char* type[LOG_LEVEL_LEN] = {
+  "DEBUG",
+  "INFO",
+  "WARN",
+  "ERRO"
+};
+
 void
 brook_log_init ( brook_conf_t* config ) {
   // ... create path to logs files ...
@@ -26,7 +33,7 @@ brook_log_init ( brook_conf_t* config ) {
   LOGGER_CURRENT_DAY = tm_info->tm_mday;
 
   // ... create final path ...
-  char file_path[1024];
+  char file_path[2048];
   snprintf(file_path, sizeof(file_path), "%s/brook-http-%s.log", config->log, date_str);
 
   if (LOGGER_FILE != NULL && LOGGER_FILE != stdout && LOGGER_FILE != stderr) {

@@ -353,6 +353,7 @@ brook_destroy_connection ( brook_connection_t* con ) {
     free(tmp->data);
     free(tmp);
   }
+  con->_data = NULL;
 
   // ... free job ...
   if ( con->job.data.data != NULL ) {
@@ -365,12 +366,10 @@ brook_destroy_connection ( brook_connection_t* con ) {
 
   // ... free http parser ...
   free(con->_parser);
+  con->_parser = NULL;
 
   // ... at least free con ...
   free(con);
-
-  con->_data = NULL;
-  con->_parser = NULL;
   con = NULL;
 
   return BROOK_OK;

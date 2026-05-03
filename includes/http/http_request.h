@@ -9,7 +9,7 @@
   (1 << ((unsigned int) (i) & 7))))
 
   // ... to allow UTF8 + ASCII bytes
-// #define IS_URL_CHAR(c)                                                         \
+// #define IS_URL_CHAR(c)
 //   (BIT_AT(normal_url_char, (unsigned char)c) || ((c) & 0x80))
 
 // ... to only allow ASCII bytes
@@ -23,6 +23,8 @@
 #define CONTENT_TYPE "content-type"
 
 #define MAX_BODY_SIZE 1048576 // 1 MB
+
+extern char* brook_method_str[];
 
 enum state {
   s_req_start,

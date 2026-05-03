@@ -7,6 +7,7 @@ brook_gatekeeper_load ( brook_conf_t* config ) {
   FILE* gatekeeper = fopen(config->gatekeeper, "r");
   if ( !gatekeeper ) {
     perror("Erro ao abrir ficheiro");
+    brook_log(config, LOG_ERR, "File open failed at %s:%d: %s\n", __FILE__, __LINE__, strerror(errno));
     return 1;
   }
 
@@ -15,11 +16,18 @@ brook_gatekeeper_load ( brook_conf_t* config ) {
   long size = ftell(gatekeeper);
   rewind(gatekeeper);
 
-  // ...
+  // ... alloc memory to store all file content ...
   char* buffer = malloc(size + 1);
-  fread(buffer, 1, size, gatekeeper);
+  if (!buffer) {
+    brook_log(config, LOG_ERR, "Malloc failed at %s:%d: %s\n", __FILE__, __LINE__, strerror(errno));
+    return BROOK_ERROR;
+  }
+
+  size_t read_n = fread(buffer, 1, size, gatekeeper);
+
   fclose(gatekeeper);
-  buffer[size] = '\0';
+
+  buffer[read_n] = '\0';
 
   // ... parse JSON ...
   cJSON* json = cJSON_Parse(buffer);
