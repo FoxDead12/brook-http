@@ -189,7 +189,13 @@ brook_process_start ( brook_conf_t* config ) {
 
       }
       else {
-        if ( _fd->revents & POLLIN ) {
+        if ( _fd->revents & (POLLHUP | POLLERR ) ) {
+          brook_connection_t* con = _connections[i];
+          if ( con != NULL ) {
+            brook_destroy_connection(con);
+          }
+
+        } else if ( _fd->revents & POLLIN ) {
           // ... events de leitura dos sockets ...
           brook_connection_t* con = _connections[i];
           if ( con != NULL ) {
@@ -200,12 +206,6 @@ brook_process_start ( brook_conf_t* config ) {
           brook_connection_t* con = _connections[i];
           if (con != NULL) {
             brook_connection_write(con);
-          }
-
-        } else if ( _fd->revents & (POLLHUP | POLLERR) ) {
-          brook_connection_t* con = _connections[i];
-          if ( con != NULL ) {
-            brook_destroy_connection(con);
           }
 
         }
