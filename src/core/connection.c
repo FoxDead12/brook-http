@@ -213,7 +213,7 @@ brook_connection_read ( brook_connection_t* con ) {
   if ( con->_parser->state == s_req_done ) {
 
     // ... if its all ok s_req_done (request is done) we will create job payload ...
-    // con->_pfd->events &= ~POLLIN;
+    con->_pfd->events &= ~POLLIN;
 
     // ... for now only validate request after receive all message ...
     if ( con->_role->role_mask > 0 ) {
