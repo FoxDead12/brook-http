@@ -262,7 +262,19 @@ brook_connection_write ( brook_connection_t* con ) {
   unsigned char* buf = con->_reponse._data->data + con->_reponse._data->nread;
   size_t len = con->_reponse._data->len - con->_reponse._data->nread;
 
-  size_t b = send(con->_fd, buf, len, 0);
+  ssize_t b = send(con->_fd, buf, len, 0);
+  if (b < 0) {
+    if (errno == EAGAIN || errno == EWOULDBLOCK) {
+      return BROOK_DONE;
+    }
+    brook_destroy_connection(con);
+    return BROOK_ERROR;
+  }
+
+  if (b == 0) {
+    return BROOK_DONE;
+  }
+
   con->_reponse._data->nread += b;
   con->_reponse.nwrite += b;
 
@@ -295,12 +307,12 @@ brook_connection_write ( brook_connection_t* con ) {
         brook_method_str[con->_parser->method],
         con->_parser->url.len,
         con->_parser->url.data,
-        con->_parser->params_s.data ? (char*) con->_parser->params_s.len : 0,
+        con->_parser->params_s.data ? (int) con->_parser->params_s.len : 0,
         con->_parser->params_s.data ? (char*) con->_parser->params_s.data : "",
 
         con->_parser->content_length,
 
-        con->session.token.data ? (char*) con->session.token.len : 0,
+        con->session.token.data ? (int) con->session.token.len : 0,
         con->session.token.data ? (char*) con->session.token.data : "",
 
         con->session.product_key,
