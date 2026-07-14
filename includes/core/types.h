@@ -49,6 +49,8 @@ typedef struct brook_gatekeeper_node_s {
   uint32_t    role_mask;
   brook_str_t product_key;
 
+  brook_str_t  job_options;
+
   struct brook_gatekeeper_node_s* left;
   struct brook_gatekeeper_node_s* rigth;
 } brook_gatekeeper_node_t;
