@@ -62,6 +62,8 @@ brook_gatekeeper_load ( brook_conf_t* config ) {
     cJSON *job = cJSON_GetObjectItem(item, "job");
     if (!cJSON_IsObject(job)) continue;
 
+    char* job_options = cJSON_PrintUnformatted(job);
+
     // tube
     cJSON *tube = cJSON_GetObjectItem(job, "tube");
     if (!cJSON_IsString(tube)) continue;
@@ -99,7 +101,7 @@ brook_gatekeeper_load ( brook_conf_t* config ) {
       }
     }
 
-    config->root = brook_gatekeeper_insert_route(config->root, route->valuestring, tube->valuestring, product_key, method_mask, role_mask);
+    config->root = brook_gatekeeper_insert_route(config->root, route->valuestring, tube->valuestring, product_key, method_mask, role_mask, job_options);
   }
 
   cJSON_Delete(json);
@@ -133,7 +135,7 @@ brook_gatekeeper_free (brook_gatekeeper_node_t* root) {
 }
 
 brook_gatekeeper_node_t*
-brook_gatekeeper_create_node ( const char* path, const char* tube, const char* product_key, uint32_t method_mask, int role_mask ) {
+brook_gatekeeper_create_node ( const char* path, const char* tube, const char* product_key, uint32_t method_mask, int role_mask, char* job_options ) {
 
   brook_gatekeeper_node_t* node = malloc(sizeof(brook_gatekeeper_node_t));
   node->methods_mask = method_mask;
@@ -148,6 +150,9 @@ brook_gatekeeper_create_node ( const char* path, const char* tube, const char* p
   node->product_key.data = (unsigned char*) strdup(product_key);
   node->product_key.len = strlen(product_key);
 
+  node->job_options.data = (unsigned char*) strdup(job_options);
+  node->job_options.len = strlen(job_options);
+
   node->left = NULL;
   node->rigth = NULL;
   return node;
@@ -160,18 +165,18 @@ brook_gatekeeper_create_node ( const char* path, const char* tube, const char* p
  * if is necessary variables need be sended in params of url
  */
 brook_gatekeeper_node_t*
-brook_gatekeeper_insert_route ( brook_gatekeeper_node_t* root, const char* path, const char* tube, const char* product_key, uint32_t method_mask, int role_mask ) {
+brook_gatekeeper_insert_route ( brook_gatekeeper_node_t* root, const char* path, const char* tube, const char* product_key, uint32_t method_mask, int role_mask, char* job_options ) {
 
   if ( root == NULL ) {
-    return brook_gatekeeper_create_node(path, tube, product_key, method_mask, role_mask);
+    return brook_gatekeeper_create_node(path, tube, product_key, method_mask, role_mask, job_options);
   }
 
   int res = strncmp((char*) root->url.data, path, root->url.len);
 
   if ( res < 0 ) {
-    root->left = brook_gatekeeper_insert_route(root->left, path, tube, product_key, method_mask, role_mask);
+    root->left = brook_gatekeeper_insert_route(root->left, path, tube, product_key, method_mask, role_mask, job_options);
   } else if ( res > 0 ) {
-    root->rigth = brook_gatekeeper_insert_route(root->rigth, path, tube, product_key, method_mask, role_mask);
+    root->rigth = brook_gatekeeper_insert_route(root->rigth, path, tube, product_key, method_mask, role_mask, job_options);
   } else {
     root->methods_mask |= method_mask;
   }

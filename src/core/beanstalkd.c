@@ -237,6 +237,10 @@ brook_benstalkd_job_payload ( brook_connection_t* con ) {
     cJSON_AddItemToObject(job, "params", params);
   }
 
+  // Add options of job
+  cJSON *job_options = cJSON_Parse((const char*) con->_role->job_options.data);
+  cJSON_AddItemToObject(job, "options", job_options);
+
   // ... generate json string to send ...
   con->job.data.data = (unsigned char*) cJSON_PrintUnformatted(job);
   cJSON_Delete(job);
