@@ -178,7 +178,8 @@ brook_gatekeeper_insert_route ( brook_gatekeeper_node_t* root, const char* path,
   } else if ( res > 0 ) {
     root->rigth = brook_gatekeeper_insert_route(root->rigth, path, tube, product_key, method_mask, role_mask, job_options);
   } else {
-    root->methods_mask |= method_mask;
+    // root->methods_mask |= method_mask;
+    root->left = brook_gatekeeper_insert_route(root->left, path, tube, product_key, method_mask, role_mask, job_options);
   }
 
   return root;
@@ -202,7 +203,7 @@ brook_gatekeeper_match_route ( brook_gatekeeper_node_t *root, brook_str_t url, u
     if ( root->methods_mask & (1 << method) ) {
       return root;
     } else {
-      return NULL;
+      return brook_gatekeeper_match_route(root->left, url, method);
     }
   } else if ( res < 0 ) {
     return brook_gatekeeper_match_route(root->left, url, method);
