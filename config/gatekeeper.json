@@ -48,5 +48,223 @@
     "job": {
       "tube": "storix-files-list"
     }
+  },
+
+  {
+    "method":       ["POST"],
+    "route":        "/protokol/login",
+    "product_key":  "protokol",
+    "job": {
+      "tube":       "protokol-login"
+    }
+  },
+  {
+    "method":       ["GET"],
+    "route":        "/protokol/session",
+    "product_key":  "protokol",
+    "role_mask":    "0x3",
+    "job": {
+      "tube":       "protokol-session"
+    }
+  },
+  {
+    "method":       ["GET"],
+    "route":        "/protokol/job",
+    "product_key":  "protokol",
+    "job": {
+      "tube":       "protokol-vacancies-get-all"
+    }
+  },
+  {
+    "method":       ["GET"],
+    "route":        "/protokol/vacancy",
+    "product_key":  "protokol",
+    "job": {
+      "tube":       "protokol-vacancies-get"
+    }
+  },
+  {
+    "method":       ["GET"],
+    "route":        "/protokol/new",
+    "product_key":  "protokol",
+    "job": {
+      "tube":       "protokol-news-get-all"
+    }
+  },
+  {
+    "method":       ["POST"],
+    "route":        "/protokol/navigation",
+    "product_key":  "protokol",
+    "job": {
+      "tube":       "protokol-navigation-get"
+    }
+  },
+
+  {
+    "method":       ["POST"],
+    "route":        "/protokol/job/send",
+    "product_key":  "protokol",
+    "job": {
+      "tube":       "protokol-vacancies-send"
+    }
+  },
+  {
+    "method":       ["POST"],
+    "route":        "/protokol/events-services/send",
+    "product_key":  "protokol",
+    "job": {
+      "tube":       "protokol-events-services-send"
+    }
+  },
+  {
+    "method":       ["POST"],
+    "route":        "/protokol/service/send",
+    "product_key":  "protokol",
+    "job": {
+      "tube":       "protokol-service-send"
+    }
+  },
+  {
+    "method":       ["POST"],
+    "route":        "/protokol/spontaneous_application/send",
+    "product_key":  "protokol",
+    "job": {
+      "tube":       "protokol-spontaneous-application-send"
+    }
+  },
+  {
+    "method":       ["POST"],
+    "route":        "/protokol/partner/send",
+    "product_key":  "protokol",
+    "job": {
+      "tube":       "protokol-partner-send"
+    }
+  },
+  {
+    "method":       ["GET"],
+    "route":        "/protokol/dashboard/vacancies",
+    "product_key":  "protokol",
+    "role_mask":    "0x3",
+    "job": {
+      "tube":       "protokol-dashboard-vacancies-get-all"
+    }
+  },
+  {
+    "method":       ["GET"],
+    "route":        "/protokol/dashboard/vacancy",
+    "product_key":  "protokol",
+    "role_mask":    "0x3",
+    "job": {
+      "tube":       "protokol-dashboard-vacancy-get"
+    }
+  },
+  {
+    "method":       ["POST"],
+    "route":        "/protokol/dashboard/vacancy",
+    "product_key":  "protokol",
+    "role_mask":    "0x3",
+    "job": {
+      "tube":       "protokol-dashboard-vacancy-create"
+    }
+  },
+  {
+    "method":       ["PATCH"],
+    "route":        "/protokol/dashboard/vacancy",
+    "product_key":  "protokol",
+    "role_mask":    "0x3",
+    "job": {
+      "tube":       "protokol-dashboard-vacancy-edit"
+    }
+  },
+  {
+    "method":       ["DELETE"],
+    "route":        "/protokol/dashboard/vacancy",
+    "product_key":  "protokol",
+    "role_mask":    "0x3",
+    "job": {
+      "tube":       "protokol-dashboard-vacancy-delete"
+    }
+  },
+  {
+    "method":       ["GET"],
+    "route":        "/protokol/dashboard/news",
+    "product_key":  "protokol",
+    "role_mask":    "0x3",
+    "job": {
+      "tube":       "protokol-dashboard-news-get-all"
+    }
+  },
+  {
+    "method":       ["GET"],
+    "route":        "/protokol/dashboard/new",
+    "product_key":  "protokol",
+    "role_mask":    "0x3",
+    "job": {
+      "tube":       "protokol-dashboard-new-get"
+    }
+  },
+  {
+    "method":       ["POST"],
+    "route":        "/protokol/dashboard/new",
+    "product_key":  "protokol",
+    "role_mask":    "0x3",
+    "job": {
+      "tube":       "protokol-dashboard-new-create"
+    }
+  },
+  {
+    "method":       ["PATCH"],
+    "route":        "/protokol/dashboard/new",
+    "product_key":  "protokol",
+    "role_mask":    "0x3",
+    "job": {
+      "tube":       "protokol-dashboard-new-edit"
+    }
+  },
+  {
+    "method":       ["DELETE"],
+    "route":        "/protokol/dashboard/new",
+    "product_key":  "protokol",
+    "role_mask":    "0x3",
+    "job": {
+      "tube":       "protokol-dashboard-new-delete"
+    }
+  },
+
+  {
+    "method":       ["GET"],
+    "route":        "/protokol/dashboard/users",
+    "product_key":  "protokol",
+    "role_mask":    "0x2",
+    "job": {
+      "tube":       "protokol-dashboard-users-get-all"
+    }
+  },
+  {
+    "method":       ["DELETE"],
+    "route":        "/protokol/dashboard/user",
+    "product_key":  "protokol",
+    "role_mask":    "0x2",
+    "job": {
+      "tube":       "protokol-dashboard-user-delete"
+    }
+  },
+  {
+    "method":       ["POST"],
+    "route":        "/protokol/dashboard/register",
+    "product_key":  "protokol",
+    "role_mask":    "0x2",
+    "job": {
+      "tube":       "protokol-dashboard-register"
+    }
+  },
+  {
+    "method":       ["PATCH"],
+    "route":        "/protokol/dashboard/password",
+    "product_key":  "protokol",
+    "role_mask":    "0x3",
+    "job": {
+      "tube":       "protokol-dashboard-password-change"
+    }
   }
 ]
