@@ -49,6 +49,24 @@
       "tube": "storix-files-list"
     }
   },
+  {
+    "method": ["GET"],
+    "route": "/storix/download",
+    "role_mask": "0x1",
+    "product_key": "storix",
+    "job": {
+      "tube": "storix-download"
+    }
+  },
+  {
+    "method": ["POST"],
+    "route": "/storix/upload",
+    "role_mask": "0x1",
+    "product_key": "storix",
+    "job": {
+      "tube": "storix-upload"
+    }
+  },
 
   {
     "method":       ["POST"],

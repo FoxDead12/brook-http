@@ -334,6 +334,9 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
           case 'c':
             parser->header_state = s_C;
             break;
+          case 'x':
+            parser->header_state = s_X;
+            break;
           default:
             parser->header_state = s_general;
             break;
@@ -396,6 +399,26 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
           parser->header_state = s_COOKIE;
           ++parser->index;
           parser->header_state = s_cookie;
+        } else if ( parser->header_state == s_X && c == '-' ) {
+          parser->header_state = s_X_;
+        } else if ( parser->header_state == s_X_ && c == 'f' ) {
+          parser->header_state = s_XF;
+        } else if ( parser->header_state == s_XF && c == 'i' ) {
+          parser->header_state = s_XFI;
+        } else if ( parser->header_state == s_XFI && c == 'l' ) {
+          parser->header_state = s_XFIL;
+        } else if ( parser->header_state == s_XFIL && c == 'e' ) {
+          parser->header_state = s_XFILE;
+        } else if ( parser->header_state == s_XFILE && c == '-' ) {
+          parser->header_state = s_XFILE_;
+        } else if ( parser->header_state == s_XFILE_ && c == 'p' ) {
+          parser->header_state = s_XFILEP;
+        } else if ( parser->header_state == s_XFILEP && c == 'a' ) {
+          parser->header_state = s_XFILEPA;
+        } else if ( parser->header_state == s_XFILEPA && c == 't' ) {
+          parser->header_state = s_XFILEPAT;
+        } else if ( parser->header_state == s_XFILEPAT && c == 'h' ) {
+          parser->header_state = s_file_path;
         }
         else {
           parser->header_state = s_general;
@@ -415,6 +438,9 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
         } else if ( parser->header_state == s_cookie ) {
           parser->cookies.data = &data[i];
           parser->cookies.len = 0;
+        } else if ( parser->header_state == s_file_path ) {
+          parser->file_path.data = &data[i];
+          parser->file_path.len = 0;
         }
 
         parser->state = s_req_header_value;
@@ -449,6 +475,8 @@ brook_http_parse ( brook_http_parse_t* parser, unsigned char* data, size_t len )
 
         } else if ( parser->header_state == s_cookie ) {
           parser->cookies.len++;
+        } else if ( parser->header_state == s_file_path ) {
+          parser->file_path.len++;
         }
 
         break;
