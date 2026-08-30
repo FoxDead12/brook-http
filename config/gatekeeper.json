@@ -67,6 +67,49 @@
       "tube": "storix-upload"
     }
   },
+  {
+    "method": ["PATCH"],
+    "route": "/storix/session-refresh",
+    "job": {
+      "tube": "storix-refresh-token"
+    }
+  },
+  {
+    "method": ["GET", "POST", "PATCH", "DELETE"],
+    "route": "/storix/folders",
+    "role_mask": "0x1",
+    "product_key": "storix",
+    "job": {
+      "tube": "storix-folders-ops"
+    }
+  },
+  {
+    "method": ["DELETE"],
+    "route": "/storix/files",
+    "role_mask": "0x1",
+    "product_key": "storix",
+    "job": {
+      "tube": "storix-file-delete"
+    }
+  },
+  {
+    "method": ["GET"],
+    "route": "/storix/download-zip",
+    "role_mask": "0x1",
+    "product_key": "storix",
+    "job": {
+      "tube": "storix-download-zip"
+    }
+  },
+  {
+    "method": ["GET", "POST"],
+    "route": "/storix/share",
+    "role_mask": "0x1",
+    "product_key": "storix",
+    "job": {
+      "tube": "storix-share-ops"
+    }
+  },
 
   {
     "method":       ["POST"],
