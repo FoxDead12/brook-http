@@ -97,6 +97,7 @@ typedef struct {
 
   brook_str_t url;
   brook_str_t cookies;
+  brook_str_t file_path;
 
   brook_str_t params_s;
   brook_params_t* params;

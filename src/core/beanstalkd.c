@@ -1,4 +1,5 @@
 #include "core/beanstalkd.h"
+#include "http/http_request.h"
 
 bsc* bean_client = NULL;
 
@@ -141,6 +142,7 @@ brook_benstalkd_job_payload ( brook_connection_t* con ) {
   }
 
   cJSON_AddStringToObject(job, "channel", brook_process_id);
+  cJSON_AddStringToObject(job, "method", brook_method_str[con->_parser->method]);
 
   // ... add session data to job ...
   if (con->session.user_id != 0 ) {
@@ -197,6 +199,17 @@ brook_benstalkd_job_payload ( brook_connection_t* con ) {
     }
 
     cJSON_AddItemToObject(job, "payload", payload);
+  }
+
+  // ... add file path, set by nginx (client_body_in_file_only) when request body was buffered to disk ...
+  if ( con->_parser->file_path.len > 0 ) {
+
+    char file_path[4096];
+    size_t file_path_len = (con->_parser->file_path.len < sizeof(file_path) - 1) ? con->_parser->file_path.len : sizeof(file_path) - 1;
+    memcpy(file_path, con->_parser->file_path.data, file_path_len);
+    file_path[file_path_len] = '\0';
+
+    cJSON_AddStringToObject(job, "file_path", file_path);
   }
 
   // ... add params ...
