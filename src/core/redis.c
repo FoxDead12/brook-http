@@ -191,7 +191,11 @@ brook_redis_on_subescribe_message ( redisAsyncContext* redis_con, void* message,
   }
 
   brook_http_response_add_status(con, status);
-  brook_http_response_add_header(con, (brook_str_t) brook_str("Content-Type: application/json"));
+
+  // ... only add the default json content-type if the job didn't already provide its own ...
+  if ( !cJSON_GetObjectItem(_j_headers, "Content-Type") ) {
+    brook_http_response_add_header(con, (brook_str_t) brook_str("Content-Type: application/json"));
+  }
   brook_http_response_add_header(con, (brook_str_t) brook_str("Server: brook-http"));
 
   // ... add custom headers to response ...
